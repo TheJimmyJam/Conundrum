@@ -246,6 +246,24 @@ export async function getDailyLeaderboard(dailySetId: string, limit = 50): Promi
   }))
 }
 
+export async function getDailyLeaderboardFriends(dailySetId: string, limit = 50): Promise<LeaderboardEntry[]> {
+  const { data, error } = await supabase.rpc('get_daily_leaderboard_friends', {
+    p_daily_set_id: dailySetId,
+    p_limit: limit,
+  })
+  if (error) throw error
+  return (data ?? []).map((row: any) => ({
+    rank: Number(row.rank),
+    user_id: row.user_id,
+    username: row.username ?? 'unknown',
+    display_name: row.display_name ?? null,
+    avatar_url: null,
+    score: row.score,
+    correct_count: row.correct_count,
+    duration_ms: row.duration_ms,
+  }))
+}
+
 export async function getMyDailyRank(dailySetId: string): Promise<number | null> {
   const { data, error } = await supabase.rpc('get_my_daily_rank', {
     p_daily_set_id: dailySetId,
