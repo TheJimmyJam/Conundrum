@@ -113,6 +113,40 @@ export async function getSessionById(sessionId: string): Promise<GameSession | n
   return data
 }
 
+export async function getSessionResponses(sessionId: string) {
+  // Fetch responses with correct answers via security-definer RPC
+  const { data: rows, error: rpcErr } = await supabase.rpc('get_session_responses', {
+    p_session_id: sessionId,
+  })
+  if (rpcErr) throw rpcErr
+
+  // Fetch options for all questions in this session
+  const questionIds = (rows ?? []).map((r: any) => r.question_id)
+  const { data: optRows, error: optErr } = await supabase
+    .from('question_options')
+    .select('id, question_id, option_text, sort_order')
+    .in('question_id', questionIds)
+  if (optErr) throw optErr
+
+  const optsByQuestion = new Map<string, any[]>()
+  for (const opt of optRows ?? []) {
+    if (!optsByQuestion.has(opt.question_id)) optsByQuestion.set(opt.question_id, [])
+    optsByQuestion.get(opt.question_id)!.push(opt)
+  }
+
+  return (rows ?? []).map((r: any) => ({
+    question_id: r.question_id,
+    selected_option_id: r.selected_option_id,
+    correct_option_id: r.correct_option_id,
+    is_correct: r.is_correct,
+    points_awarded: r.points_awarded,
+    response_time_ms: r.response_time_ms,
+    prompt: r.prompt ?? '',
+    explanation: r.explanation ?? null,
+    options: (optsByQuestion.get(r.question_id) ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order),
+  }))
+}
+
 export async function getMySessionHistory(userId: string, limit = 20) {
   const { data, error } = await supabase
     .from('game_sessions')
