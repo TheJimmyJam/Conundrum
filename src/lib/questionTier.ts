@@ -1,8 +1,17 @@
-// ─── Question difficulty tiers ───────────────────────────────────────────────
-// Tier 1 = easiest, 10 = hardest.
-// In the admin Rankings view, tiers are assigned via NTILE(10) (percentile).
-// For the play badge, we derive tier from a stored correct_rate using the same
-// absolute thresholds that roughly match the percentile distribution.
+// ─── Einstein Scale ───────────────────────────────────────────────────────────
+// The Einstein Scale is Conundrum's 10-tier difficulty ranking system.
+// Tiers are derived from real player answer data (correct_rate per question).
+// Tier 1 = easiest (≥90% correct), Tier 10 = hardest (<10% correct).
+//
+// As the question vault accumulates enough answer data, tiers can be assigned
+// via NTILE(10) percentile rather than absolute thresholds, making the scale
+// a true relative ranking of every question in the vault.
+//
+// Goal: surface the #1 hardest question in existence, category champions,
+// and all sorts of difficulty-based trivia insights.
+
+// The public-facing name for this difficulty ranking system
+export const EINSTEIN_SCALE_NAME = 'Einstein Scale'
 
 export type TierInfo = {
   tier: number          // 1–10, or 0 = unranked

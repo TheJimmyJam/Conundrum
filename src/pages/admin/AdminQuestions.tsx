@@ -26,7 +26,7 @@ import {
   type AdminSetQuestion,
   type RankedQuestion,
 } from '../../lib/api'
-import { getTierInfo } from '../../lib/questionTier'
+import { getTierInfo, EINSTEIN_SCALE_NAME } from '../../lib/questionTier'
 import type { Category } from '../../types'
 
 const PAGE_SIZE = 50
@@ -240,7 +240,7 @@ function RankingsTab({ categories }: { categories: Category[] }) {
     <div>
       <div className="flex items-center gap-2 mb-2">
         <p className="text-gray-500 text-sm flex-1">
-          {totalRanked.toLocaleString()} questions ranked · tiers assigned by percentile (NTILE 10)
+          {totalRanked.toLocaleString()} questions ranked on the {EINSTEIN_SCALE_NAME} · tiers assigned by correct-rate percentile (NTILE 10)
         </p>
       </div>
 
@@ -290,7 +290,7 @@ function RankingsTab({ categories }: { categories: Category[] }) {
           <table className="w-full text-sm">
             <thead className="border-b border-gray-100">
               <tr>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">Tier</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">Einstein</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Question</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden md:table-cell">Category</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden sm:table-cell">Plays</th>

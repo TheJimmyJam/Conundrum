@@ -16,7 +16,7 @@ import {
   type AdminSetQuestion,
   type DailyQuestionUsage,
 } from '../../lib/api'
-import { getTierInfo, tierFromRate } from '../../lib/questionTier'
+import { getTierInfo, tierFromRate, EINSTEIN_SCALE_NAME } from '../../lib/questionTier'
 
 const SLOT_COUNT = 10
 
@@ -793,7 +793,7 @@ export default function AdminDailySet() {
                           )}
                           {tier === null && (
                             <span className="text-xs px-2 py-0.5 rounded-full border bg-gray-100 text-gray-400 border-gray-200">
-                              Unranked
+                              Not yet on {EINSTEIN_SCALE_NAME}
                             </span>
                           )}
                           <span className="text-xs text-gray-400">{q.category_name}</span>

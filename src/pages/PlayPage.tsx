@@ -9,7 +9,7 @@ import {
   getDailySetQuestions,
   finalizeSession,
 } from '../lib/api'
-import { getTierInfo } from '../lib/questionTier'
+import { getTierInfo, EINSTEIN_SCALE_NAME } from '../lib/questionTier'
 import { msUntilNextReset, formatCountdown } from '../lib/dailyTime'
 
 type Phase = 'loading' | 'already_played' | 'no_set' | 'playing' | 'submitting' | 'error'
@@ -155,6 +155,7 @@ export default function PlayPage() {
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${info.color} ${info.textColor} ${info.borderColor}`}>
                 {info.name}
               </span>
+              <span className="text-xs text-gray-300 font-medium">{EINSTEIN_SCALE_NAME}</span>
               {pct !== null && (
                 <span className="text-xs text-gray-400">{pct}% of players got this right</span>
               )}
