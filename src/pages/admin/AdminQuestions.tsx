@@ -20,7 +20,7 @@ import {
   adminGetDailySets,
   adminGetSetQuestions,
   adminReorderSetQuestions,
-  adminAddQuestionToSet,
+  adminScheduleQuestionAsCommunity,
   adminGetQuestionRankings,
   type AdminDailySet,
   type AdminSetQuestion,
@@ -123,151 +123,80 @@ function SortableQuestionRow({
   )
 }
 
-// ── Add-to-Daily modal ───────────────────────────────────────────────────────
+// ── Schedule as Community Question modal ────────────────────────────────────
 
-function AddToDailyModal({
+function ScheduleCommunityModal({
   question,
   onClose,
-  onAdded,
+  onScheduled,
 }: {
   question: Question
   onClose: () => void
-  onAdded: (msg: string) => void
+  onScheduled: (msg: string) => void
 }) {
-  const today = new Date().toISOString().slice(0, 10)
-  const [sets, setSets] = useState<AdminDailySet[]>([])
-  const [setQs, setSetQs] = useState<Record<string, AdminSetQuestion[]>>({})
-  const [loading, setLoading] = useState(true)
-  const [selectedSet, setSelectedSet] = useState<string>('')
-  const [selectedSlot, setSelectedSlot] = useState<number>(0)
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrowStr = tomorrow.toISOString().slice(0, 10)
+
+  const [date, setDate] = useState(tomorrowStr)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    adminGetDailySets()
-      .then(all => {
-        const upcoming = all.filter(s => s.set_date >= today).sort((a, b) => a.set_date.localeCompare(b.set_date))
-        setSets(upcoming)
-        // Load questions for each set to know which slots are taken
-        Promise.all(upcoming.map(s => adminGetSetQuestions(s.id).then(qs => ({ id: s.id, qs }))))
-          .then(results => {
-            const map: Record<string, AdminSetQuestion[]> = {}
-            results.forEach(r => { map[r.id] = r.qs })
-            setSetQs(map)
-          })
-      })
-      .finally(() => setLoading(false))
-  }, [])
-
-  function openSlots(setId: string): number[] {
-    const taken = new Set((setQs[setId] ?? []).map(q => q.slot))
-    const also = (setQs[setId] ?? []).some(q => q.question_id === question.id)
-    if (also) return []
-    return Array.from({ length: 10 }, (_, i) => i + 1).filter(s => !taken.has(s))
-  }
-
-  async function handleAdd() {
-    if (!selectedSet || !selectedSlot) return setError('Select a set and an open slot.')
+  async function handleSchedule() {
+    if (!date) return setError('Pick a date.')
     setSaving(true)
     setError(null)
     try {
-      await adminAddQuestionToSet(selectedSet, question.id, selectedSlot)
-      const setInfo = sets.find(s => s.id === selectedSet)
-      const dateStr = setInfo ? new Date(setInfo.set_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
-      onAdded(`✓ Added to ${dateStr} — slot ${selectedSlot}.`)
+      await adminScheduleQuestionAsCommunity(question.id, date)
+      const dateStr = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      onScheduled(`✓ Queued as community question for ${dateStr}.`)
       onClose()
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to add')
+      setError(err?.message ?? 'Failed to schedule')
     } finally {
       setSaving(false)
     }
   }
 
-  const slots = selectedSet ? openSlots(selectedSet) : []
-  const alreadyIn = selectedSet ? (setQs[selectedSet] ?? []).some(q => q.question_id === question.id) : false
-
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-md shadow-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-gray-900">Add to Upcoming Daily</h3>
+          <div>
+            <h3 className="font-bold text-gray-900">Queue as Community Question</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Adds to the single daily community question slot</p>
+          </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
         </div>
-        <p className="text-sm text-gray-600 mb-4 bg-gray-50 rounded-xl px-3 py-2 line-clamp-2">{question.prompt}</p>
 
-        {loading ? (
-          <div className="flex justify-center py-6">
-            <div className="animate-spin rounded-full h-5 w-5 border-4 border-indigo-600 border-t-transparent" />
-          </div>
-        ) : sets.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">No upcoming sets. Create one in Daily Sets first.</p>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Daily Set *</label>
-              <select
-                value={selectedSet}
-                onChange={e => { setSelectedSet(e.target.value); setSelectedSlot(0) }}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              >
-                <option value="">Choose a date…</option>
-                {sets.map(s => {
-                  const dateStr = new Date(s.set_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-                  const qsForSet = setQs[s.id]
-                  const isFull = qsForSet && qsForSet.length >= 10
-                  const hasQ = qsForSet && qsForSet.some(q => q.question_id === question.id)
-                  return (
-                    <option key={s.id} value={s.id} disabled={isFull || hasQ}>
-                      {dateStr} — {s.title ?? 'Untitled'} ({qsForSet?.length ?? '?'}/10){isFull ? ' (full)' : ''}{hasQ ? ' (already added)' : ''}
-                    </option>
-                  )
-                })}
-              </select>
-            </div>
+        <p className="text-sm text-gray-700 bg-gray-50 rounded-xl px-3 py-2.5 line-clamp-3 mb-5">{question.prompt}</p>
 
-            {selectedSet && alreadyIn && (
-              <p className="text-xs text-amber-600">This question is already in that set.</p>
-            )}
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Feature date *</label>
+          <input
+            type="date"
+            value={date}
+            min={tomorrowStr}
+            onChange={e => { setDate(e.target.value); setError(null) }}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          <p className="text-xs text-gray-400 mt-1">Only one community question can be scheduled per day.</p>
+        </div>
 
-            {selectedSet && !alreadyIn && (
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Slot *</label>
-                {slots.length === 0 ? (
-                  <p className="text-xs text-red-500">No open slots in this set.</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {slots.map(slot => (
-                      <button
-                        key={slot}
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`w-9 h-9 rounded-lg text-sm font-bold border transition-colors ${
-                          selectedSlot === slot
-                            ? 'bg-indigo-600 text-white border-indigo-600'
-                            : 'border-gray-200 text-gray-600 hover:border-indigo-400'
-                        }`}
-                      >
-                        {slot}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+        {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
-
-            <div className="flex gap-2 pt-1">
-              <button
-                onClick={handleAdd}
-                disabled={saving || !selectedSet || !selectedSlot || alreadyIn}
-                className="bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {saving ? 'Adding…' : 'Add to Daily'}
-              </button>
-              <button onClick={onClose} className="border border-gray-200 text-gray-600 text-sm px-4 py-2.5 rounded-xl hover:bg-gray-50">
-                Cancel
-              </button>
-            </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSchedule}
+            disabled={saving || !date}
+            className="bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {saving ? 'Scheduling…' : 'Queue Question'}
+          </button>
+          <button onClick={onClose} className="border border-gray-200 text-gray-600 text-sm px-4 py-2.5 rounded-xl hover:bg-gray-50">
+            Cancel
+          </button>
+        </div>
           </div>
         )}
       </div>
@@ -896,10 +825,10 @@ export default function AdminQuestions() {
                         <td className="px-4 py-3.5 text-center">
                           <button
                             onClick={() => setAddToDailyQ(q)}
-                            title="Add to upcoming daily set"
+                            title="Queue as community question of the day"
                             className="text-xs text-indigo-500 hover:text-indigo-700 font-semibold hover:underline"
                           >
-                            + Daily
+                            📰 Queue
                           </button>
                         </td>
                       </tr>
@@ -923,12 +852,12 @@ export default function AdminQuestions() {
         )}
       </div>
 
-      {/* Add to Daily modal */}
+      {/* Schedule as community question modal */}
       {addToDailyQ && (
-        <AddToDailyModal
+        <ScheduleCommunityModal
           question={addToDailyQ}
           onClose={() => setAddToDailyQ(null)}
-          onAdded={msg => { showToast(msg) }}
+          onScheduled={msg => { showToast(msg) }}
         />
       )}
 
