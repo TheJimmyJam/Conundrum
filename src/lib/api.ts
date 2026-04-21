@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { tierFromRate } from './questionTier'
+import { getActiveDailyDate } from './dailyTime'
 import type {
   Profile,
   Category,
@@ -58,11 +59,12 @@ export async function getCategories(): Promise<Category[]> {
 // ─── Daily Set ───────────────────────────────────────────────────────────────
 
 export async function getTodaysDailySet(): Promise<DailySet | null> {
-  const today = new Date().toISOString().split('T')[0]
+  // Uses Eastern Time with 6:00 AM reset — before 6 AM ET shows previous day's set
+  const activeDate = getActiveDailyDate()
   const { data, error } = await supabase
     .from('daily_sets')
     .select('*')
-    .eq('set_date', today)
+    .eq('set_date', activeDate)
     .eq('is_published', true)
     .maybeSingle()
   if (error) throw error

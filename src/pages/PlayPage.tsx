@@ -10,6 +10,7 @@ import {
   finalizeSession,
 } from '../lib/api'
 import { getTierInfo } from '../lib/questionTier'
+import { msUntilNextReset, formatCountdown } from '../lib/dailyTime'
 
 type Phase = 'loading' | 'already_played' | 'no_set' | 'playing' | 'submitting' | 'error'
 
@@ -113,23 +114,7 @@ export default function PlayPage() {
       </div>
     </div>
   )
-  if (phase === 'already_played') return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="text-center">
-        <div className="text-5xl mb-4">✅</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">You've already played today!</h2>
-        <p className="text-gray-500 mb-6">Come back tomorrow for a fresh set.</p>
-        <div className="flex gap-3 justify-center">
-          <button onClick={() => navigate(`/results/${existingSessionId}`)} className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-700">
-            View your results
-          </button>
-          <button onClick={() => navigate('/endless')} className="border border-indigo-600 text-indigo-600 px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-50">
-            Play Endless Mode
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+  if (phase === 'already_played') return <AlreadyPlayedScreen sessionId={existingSessionId} />
 
   const question = questions[currentIndex]
   if (!question || phase === 'submitting') return <LoadingScreen label="Calculating score…" />
@@ -207,13 +192,56 @@ function LoadingScreen({ label = 'Loading today\'s round…' }: { label?: string
   )
 }
 
+function AlreadyPlayedScreen({ sessionId }: { sessionId: string | null }) {
+  const navigate = useNavigate()
+  const [countdown, setCountdown] = useState(() => formatCountdown(msUntilNextReset()))
+
+  useEffect(() => {
+    const tick = setInterval(() => {
+      setCountdown(formatCountdown(msUntilNextReset()))
+    }, 1000)
+    return () => clearInterval(tick)
+  }, [])
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="text-center">
+        <div className="text-5xl mb-4">✅</div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">You've already played today!</h2>
+        <p className="text-gray-500 mb-1">Next round unlocks at <span className="font-semibold text-gray-700">6:00 AM ET</span></p>
+        <p className="text-3xl font-bold text-indigo-600 font-mono mb-7 tabular-nums">{countdown}</p>
+        <div className="flex gap-3 justify-center">
+          {sessionId && (
+            <button onClick={() => navigate(`/results/${sessionId}`)} className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-700">
+              View your results
+            </button>
+          )}
+          <button onClick={() => navigate('/endless')} className="border border-indigo-600 text-indigo-600 px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-50">
+            Play Endless Mode
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function NoSetScreen() {
+  const [countdown, setCountdown] = useState(() => formatCountdown(msUntilNextReset()))
+
+  useEffect(() => {
+    const tick = setInterval(() => {
+      setCountdown(formatCountdown(msUntilNextReset()))
+    }, 1000)
+    return () => clearInterval(tick)
+  }, [])
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="text-center">
         <div className="text-5xl mb-4">🕐</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">No trivia set today — yet.</h2>
-        <p className="text-gray-500">Check back soon. Today's round is being prepared.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Today's round isn't live yet.</h2>
+        <p className="text-gray-500 mb-1">New rounds unlock at <span className="font-semibold text-gray-700">6:00 AM ET</span></p>
+        <p className="text-3xl font-bold text-indigo-600 font-mono tabular-nums">{countdown}</p>
       </div>
     </div>
   )
