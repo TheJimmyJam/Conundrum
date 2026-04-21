@@ -136,10 +136,10 @@ export default function AdminCategories() {
                       <button onClick={() => setEditingId(null)} className="text-xs text-gray-400">Cancel</button>
                     </div>
                   ) : (
-                    <div>
-                      <p className={`font-medium text-sm ${cat.is_active ? 'text-gray-900' : 'text-gray-400'}`}>{cat.name}</p>
+                    <Link to={`/admin/categories/${cat.id}/questions`} className="block group">
+                      <p className={`font-medium text-sm group-hover:text-indigo-600 transition-colors ${cat.is_active ? 'text-gray-900' : 'text-gray-400'}`}>{cat.name}</p>
                       <p className="text-xs text-gray-400">{cat.slug}</p>
-                    </div>
+                    </Link>
                   )}
                 </div>
 

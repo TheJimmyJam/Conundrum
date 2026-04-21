@@ -27,6 +27,7 @@ import AdminQuestions from './pages/admin/AdminQuestions'
 import AdminDailySet from './pages/admin/AdminDailySet'
 import AdminReports from './pages/admin/AdminReports'
 import AdminCategories from './pages/admin/AdminCategories'
+import AdminCategoryQuestions from './pages/admin/AdminCategoryQuestions'
 
 function App() {
   return (
@@ -69,6 +70,7 @@ function App() {
           <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AuthLayout><AdminReports /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/submissions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminSubmissions /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/categories" element={<ProtectedRoute requireAdmin><AuthLayout><AdminCategories /></AuthLayout></ProtectedRoute>} />
+          <Route path="/admin/categories/:categoryId/questions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminCategoryQuestions /></AuthLayout></ProtectedRoute>} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
