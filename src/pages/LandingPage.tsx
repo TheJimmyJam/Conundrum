@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { Navbar } from '../components/Navbar'
-import { getFeaturedSubmission, recordCommunityAnswer, getCommunityCorrectCount } from '../lib/api'
+import { getFeaturedSubmission, recordCommunityAnswer, getCommunityCorrectCount, getMyTodayCommunityAnswer } from '../lib/api'
 
 type FeaturedQ = {
   id: string
@@ -28,8 +28,40 @@ export default function LandingPage() {
   const [correctCount, setCorrectCount] = useState<number | null>(null)
 
   useEffect(() => {
-    getFeaturedSubmission().then(setFeatured).catch(() => {})
-  }, [])
+    async function init() {
+      const sub = await getFeaturedSubmission().catch(() => null)
+      if (!sub) return
+      setFeatured(sub)
+
+      const storageKey = `cqa_${sub.id}`
+
+      // 1. Check localStorage first — instant restore, no flash
+      const cached = localStorage.getItem(storageKey)
+      if (cached) {
+        try {
+          const { isCorrect } = JSON.parse(cached)
+          setAnswerState(isCorrect ? 'correct' : 'wrong')
+          setShowTally(true)
+          getCommunityCorrectCount().then(setCorrectCount).catch(() => {})
+          return
+        } catch {
+          localStorage.removeItem(storageKey)
+        }
+      }
+
+      // 2. No local cache — ask the DB (handles different device / cleared storage)
+      if (user?.id) {
+        const existing = await getMyTodayCommunityAnswer(sub.id).catch(() => null)
+        if (existing) {
+          setAnswerState(existing.is_correct ? 'correct' : 'wrong')
+          setShowTally(true)
+          localStorage.setItem(storageKey, JSON.stringify({ isCorrect: existing.is_correct }))
+          getCommunityCorrectCount().then(setCorrectCount).catch(() => {})
+        }
+      }
+    }
+    init()
+  }, [user?.id]) // re-run if auth state changes
 
   const options = featured
     ? [
@@ -45,6 +77,9 @@ export default function LandingPage() {
     const isCorrect = key === featured.correct_option
     setSelected(key)
     setAnswerState(isCorrect ? 'correct' : 'wrong')
+
+    // Persist immediately so remounts stay locked
+    localStorage.setItem(`cqa_${featured.id}`, JSON.stringify({ isCorrect }))
 
     if (user) {
       await recordCommunityAnswer(featured.id, isCorrect)

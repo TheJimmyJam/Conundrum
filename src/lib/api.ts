@@ -453,6 +453,20 @@ export async function recordCommunityAnswer(submissionId: string, isCorrect: boo
   // ignore duplicate errors (already answered today)
 }
 
+export async function getMyTodayCommunityAnswer(
+  submissionId: string
+): Promise<{ is_correct: boolean } | null> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data } = await supabase
+    .from('community_question_answers')
+    .select('is_correct')
+    .eq('user_id', user.id)
+    .eq('submission_id', submissionId)
+    .maybeSingle()
+  return data ?? null
+}
+
 export async function getCommunityCorrectCount(): Promise<number> {
   const { data, error } = await supabase.rpc('get_community_correct_count')
   if (error) return 0
