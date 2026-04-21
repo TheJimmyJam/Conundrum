@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { adminGetSubmissions, adminReviewSubmission, adminClearFeaturedSubmission } from '../../lib/api'
+import { adminGetSubmissions, adminReviewSubmission, adminClearFeaturedSubmission, adminQueueSubmission } from '../../lib/api'
 
 type Submission = {
   id: string
@@ -25,8 +25,8 @@ export default function AdminSubmissions() {
   const [filter, setFilter] = useState('pending')
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [featuredDate, setFeaturedDate] = useState(() => new Date().toISOString().split('T')[0])
   const [processing, setProcessing] = useState<string | null>(null)
+  const [queuedMsg, setQueuedMsg] = useState<string | null>(null)
 
   useEffect(() => {
     load()
@@ -57,6 +57,22 @@ export default function AdminSubmissions() {
     }
   }
 
+  async function handleQueue(id: string) {
+    setProcessing(id)
+    setQueuedMsg(null)
+    try {
+      const date = await adminQueueSubmission(id)
+      const friendly = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      setQueuedMsg(`✓ Queued for ${friendly}`)
+      await load()
+      setExpanded(null)
+    } catch (err: any) {
+      alert(err?.message ?? 'Error queueing submission')
+    } finally {
+      setProcessing(null)
+    }
+  }
+
   const statusBadge = (s: string) => {
     const cls =
       s === 'pending' ? 'bg-amber-100 text-amber-700' :
@@ -73,7 +89,14 @@ export default function AdminSubmissions() {
           ← Admin
         </Link>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Question Submissions</h1>
-        <p className="text-gray-500 mb-8">Review, approve, and feature community-submitted trivia questions.</p>
+        <p className="text-gray-500 mb-4">Review and approve community-submitted trivia questions. Use <strong className="font-semibold text-gray-700">Add to Queue</strong> to schedule an approved question as the next available daily community question.</p>
+
+        {queuedMsg && (
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-800 text-sm font-medium px-4 py-3 rounded-xl flex items-center justify-between">
+            {queuedMsg}
+            <button onClick={() => setQueuedMsg(null)} className="text-green-500 hover:text-green-700 text-lg leading-none ml-4">×</button>
+          </div>
+        )}
 
         {/* Filter tabs */}
         <div className="flex border-b border-gray-200 mb-6">
@@ -168,22 +191,15 @@ export default function AdminSubmissions() {
                           </button>
                         )}
 
-                        {/* Feature: pick a date */}
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="date"
-                            value={featuredDate}
-                            onChange={(e) => setFeaturedDate(e.target.value)}
-                            className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-400"
-                          />
+                        {s.status !== 'featured' && (
                           <button
-                            onClick={() => handleReview(s.id, 'featured', featuredDate)}
+                            onClick={() => handleQueue(s.id)}
                             disabled={processing === s.id}
                             className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50"
                           >
-                            🏆 Feature
+                            {processing === s.id ? 'Queuing…' : '📅 Add to Queue'}
                           </button>
-                        </div>
+                        )}
 
                         {s.status === 'featured' && (
                           <button

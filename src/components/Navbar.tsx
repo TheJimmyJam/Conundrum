@@ -35,7 +35,7 @@ export function Navbar() {
 
   useEffect(() => {
     getQuestionCount().then(setQuestionCount).catch(() => {})
-  }, [])
+  }, [location.pathname])
 
   useEffect(() => {
     if (!user) return

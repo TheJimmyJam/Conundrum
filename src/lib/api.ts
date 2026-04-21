@@ -667,6 +667,14 @@ export async function adminReviewSubmission(id: string, status: string, featured
   if (status === 'approved') invalidateQuestionCount()
 }
 
+// Schedules a submission as the next available community question date.
+// Returns the date string it was queued for (e.g. "2026-04-25").
+export async function adminQueueSubmission(id: string): Promise<string> {
+  const { data, error } = await supabase.rpc('admin_queue_submission', { p_id: id })
+  if (error) throw error
+  return data as string
+}
+
 // ─── Admin: Players ───────────────────────────────────────────────────────────
 
 export type AdminPlayer = {
