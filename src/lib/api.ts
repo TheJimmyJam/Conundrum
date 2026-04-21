@@ -428,6 +428,17 @@ export async function getFeaturedSubmission(date?: string): Promise<{
   return (data ?? [])[0] ?? null
 }
 
+// ─── Question count (public, cached module-level) ────────────────────────────
+
+let _questionCountCache: number | null = null
+export async function getQuestionCount(): Promise<number> {
+  if (_questionCountCache !== null) return _questionCountCache
+  const { data, error } = await supabase.rpc('get_question_count')
+  if (error) throw error
+  _questionCountCache = data as number
+  return _questionCountCache
+}
+
 // ─── Crowns ───────────────────────────────────────────────────────────────────
 
 export async function getPlayerCrowns(): Promise<{ global: number; friends: number }> {

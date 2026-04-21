@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { getTodaysDailySet, getMyDailyRank } from '../lib/api'
+import { getTodaysDailySet, getMyDailyRank, getQuestionCount } from '../lib/api'
 
 export function Navbar() {
   const { user, profile, signOut } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
   const [rank, setRank] = useState<number | null>(null)
+  const [questionCount, setQuestionCount] = useState<number | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    getQuestionCount().then(setQuestionCount).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!user) return
@@ -34,10 +39,18 @@ export function Navbar() {
   return (
     <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="text-xl font-bold text-indigo-700 tracking-tight">
-          Cnndrm
-        </Link>
+        {/* Logo + question count */}
+        <div className="flex items-center gap-3">
+          <Link to="/" className="text-xl font-bold text-indigo-700 tracking-tight">
+            Cnndrm
+          </Link>
+          {questionCount !== null && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              {questionCount.toLocaleString()} questions in the vault
+            </span>
+          )}
+        </div>
 
         {/* Center links */}
         <div className="hidden sm:flex items-center gap-1">
