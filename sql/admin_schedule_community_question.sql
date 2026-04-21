@@ -19,13 +19,15 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_next_date    date;
-  v_prompt       text;
-  v_explanation  text;
-  v_correct_id   uuid;
-  v_correct_sort int;
-  v_correct_ltr  text;
-  v_opts         text[];
+  v_next_date      date;
+  v_last_featured  date;
+  v_eligible_on    date;
+  v_prompt         text;
+  v_explanation    text;
+  v_correct_id     uuid;
+  v_correct_sort   int;
+  v_correct_ltr    text;
+  v_opts           text[];
 BEGIN
   -- Admin guard
   IF NOT EXISTS (
@@ -33,6 +35,19 @@ BEGIN
     WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
   ) THEN
     RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
+  -- 365-day cooldown: block if this question was featured in the last year
+  SELECT MAX(featured_date)
+  INTO v_last_featured
+  FROM question_submissions
+  WHERE question_id = p_question_id
+    AND featured_date IS NOT NULL
+    AND featured_date <= CURRENT_DATE;   -- only past/today, not future queued dates
+
+  IF v_last_featured IS NOT NULL AND v_last_featured > CURRENT_DATE - INTERVAL '365 days' THEN
+    v_eligible_on := v_last_featured + INTERVAL '365 days';
+    RAISE EXCEPTION 'This question was last featured on %. It cannot be queued again until %.', v_last_featured, v_eligible_on;
   END IF;
 
   -- Find next available slot: day after the last scheduled featured_date

@@ -146,7 +146,15 @@ function ScheduleCommunityModal({
       onScheduled(`✓ Queued as community question for ${dateStr}.`)
       onClose()
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to queue')
+      const msg: string = err?.message ?? 'Failed to queue'
+      // Reformat the cooldown error into something readable
+      if (msg.includes('cannot be queued again until')) {
+        const match = msg.match(/until ([^.]+)/)
+        const until = match ? new Date(match[1]).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'next year'
+        setError(`⏳ On cooldown — this question was recently featured. Eligible again on ${until}.`)
+      } else {
+        setError(msg)
+      }
     } finally {
       setSaving(false)
     }
