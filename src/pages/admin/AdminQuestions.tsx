@@ -304,7 +304,7 @@ function RankingsTab({ categories }: { categories: Category[] }) {
             </thead>
             <tbody>
               {rows.map(r => {
-                const info = getTierInfo(r.tier)
+                const _info = getTierInfo(r.tier)
                 const pct = Math.round(r.correct_rate * 100)
                 // Wilson bar: high score = easy (green), low score = hard (red)
                 const wilsonColor = r.wilson_score >= 60 ? 'bg-green-400' :
