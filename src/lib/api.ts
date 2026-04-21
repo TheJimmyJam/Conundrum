@@ -784,6 +784,11 @@ export async function adminDeleteDailySet(id: string) {
   if (error) throw error
 }
 
+export async function adminGoLiveNow(id: string) {
+  const { error } = await supabase.rpc('admin_go_live_now', { p_set_id: id })
+  if (error) throw error
+}
+
 export async function adminDeleteUpcomingSets(): Promise<number> {
   const { data, error } = await supabase.rpc('admin_delete_upcoming_sets')
   if (error) throw error

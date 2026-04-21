@@ -13,6 +13,7 @@ import {
   adminAutoPopulateDailySets,
   adminDeleteDailySet,
   adminDeleteUpcomingSets,
+  adminGoLiveNow,
   type AdminDailySet,
   type AdminSetQuestion,
   type DailyQuestionUsage,
@@ -95,6 +96,10 @@ export default function AdminDailySet() {
   // Delete confirmation (individual)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  // Go Live Now
+  const [confirmGoLive, setConfirmGoLive] = useState<string | null>(null)
+  const [goingLive, setGoingLive] = useState(false)
 
   // Bulk delete upcoming
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
@@ -262,6 +267,21 @@ export default function AdminDailySet() {
     }
   }
 
+  async function handleGoLiveNow(setId: string) {
+    setGoingLive(true)
+    try {
+      await adminGoLiveNow(setId)
+      await load()
+      setConfirmGoLive(null)
+      showToast('⚡ Set is now live on the homepage!')
+    } catch (err: any) {
+      showToast(`✗ ${err?.message ?? 'Failed to go live'}`)
+      setConfirmGoLive(null)
+    } finally {
+      setGoingLive(false)
+    }
+  }
+
   async function handleDeleteAllUpcoming() {
     setDeletingAll(true)
     try {
@@ -380,6 +400,8 @@ export default function AdminDailySet() {
     setToast(msg)
     setTimeout(() => setToast(null), 4000)
   }
+
+  const todayISO = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 
   const diffBadge = (d: string) =>
     d === 'easy'   ? 'bg-green-100 text-green-700' :
@@ -561,6 +583,37 @@ export default function AdminDailySet() {
                               ✏ Edit title
                             </button>
                           )}
+
+                          {/* Go Live Now — only for sets not already live today */}
+                          {!(s.is_published && s.set_date === todayISO) && (
+                            confirmGoLive === s.id ? (
+                              <>
+                                <span className="text-xs text-amber-700 font-semibold">Go live now?</span>
+                                <button
+                                  onClick={() => handleGoLiveNow(s.id)}
+                                  disabled={goingLive}
+                                  className="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600 disabled:opacity-50"
+                                >
+                                  {goingLive ? 'Going live…' : '⚡ Yes, go live'}
+                                </button>
+                                <button
+                                  onClick={() => setConfirmGoLive(null)}
+                                  className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => { setConfirmDelete(null); setConfirmGoLive(s.id) }}
+                                title="Push this set live on the homepage right now"
+                                className="text-xs border border-amber-300 text-amber-600 px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-colors"
+                              >
+                                ⚡ Go Live
+                              </button>
+                            )
+                          )}
+
                           <button
                             onClick={() => handleTogglePublish(s)}
                             disabled={togglingPublish === s.id}
@@ -572,7 +625,7 @@ export default function AdminDailySet() {
                             {s.is_published ? 'Live' : 'Draft'}
                           </span>
                           <button
-                            onClick={() => setConfirmDelete(s.id)}
+                            onClick={() => { setConfirmGoLive(null); setConfirmDelete(s.id) }}
                             className="text-xs border border-red-200 text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
                           >Delete</button>
                         </>
