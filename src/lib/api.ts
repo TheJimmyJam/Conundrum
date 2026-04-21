@@ -195,30 +195,29 @@ export async function endEndlessSession(sessionId: string) {
 // ─── Leaderboard ─────────────────────────────────────────────────────────────
 
 export async function getDailyLeaderboard(dailySetId: string, limit = 50): Promise<LeaderboardEntry[]> {
-  const { data, error } = await supabase
-    .from('game_sessions')
-    .select(`
-      id, score, correct_count, duration_ms, user_id,
-      profiles ( username, display_name, avatar_url )
-    `)
-    .eq('daily_set_id', dailySetId)
-    .eq('status', 'completed')
-    .eq('anti_cheat_flag', false)
-    .order('score', { ascending: false })
-    .order('correct_count', { ascending: false })
-    .order('duration_ms', { ascending: true })
-    .limit(limit)
+  const { data, error } = await supabase.rpc('get_daily_leaderboard', {
+    p_daily_set_id: dailySetId,
+    p_limit: limit,
+  })
   if (error) throw error
-  return (data ?? []).map((row: any, i: number) => ({
-    rank: i + 1,
+  return (data ?? []).map((row: any) => ({
+    rank: Number(row.rank),
     user_id: row.user_id,
-    username: row.profiles?.username ?? 'unknown',
-    display_name: row.profiles?.display_name ?? null,
-    avatar_url: row.profiles?.avatar_url ?? null,
+    username: row.username ?? 'unknown',
+    display_name: row.display_name ?? null,
+    avatar_url: null,
     score: row.score,
     correct_count: row.correct_count,
     duration_ms: row.duration_ms,
   }))
+}
+
+export async function getMyDailyRank(dailySetId: string): Promise<number | null> {
+  const { data, error } = await supabase.rpc('get_my_daily_rank', {
+    p_daily_set_id: dailySetId,
+  })
+  if (error) return null
+  return data ?? null
 }
 
 // ─── Challenges ──────────────────────────────────────────────────────────────

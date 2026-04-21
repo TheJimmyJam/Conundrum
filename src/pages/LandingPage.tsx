@@ -1,30 +1,13 @@
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { Navbar } from '../components/Navbar'
 
 export default function LandingPage() {
   const { user } = useAuthStore()
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-        <span className="text-2xl font-bold text-indigo-700 tracking-tight">Conundrum</span>
-        <div className="flex gap-3">
-          <Link to="/leaderboard" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2">Leaderboard</Link>
-          {user ? (
-            <Link to="/play" className="bg-indigo-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-indigo-700">
-              Play
-            </Link>
-          ) : (
-            <>
-              <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2">Log in</Link>
-              <Link to="/signup" className="bg-indigo-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-indigo-700">
-                Sign up free
-              </Link>
-            </>
-          )}
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero */}
       <main className="max-w-4xl mx-auto px-6 py-20 text-center">

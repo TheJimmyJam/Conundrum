@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './features/auth/AuthProvider'
 import { ProtectedRoute } from './features/auth/ProtectedRoute'
+import { AuthLayout } from './components/AuthLayout'
+import { Navbar } from './components/Navbar'
 
 import LandingPage from './pages/LandingPage'
 import SignupPage from './pages/SignupPage'
@@ -24,29 +26,29 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Public */}
+          {/* Public — their own nav */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/leaderboard" element={<><Navbar /><LeaderboardPage /></>} />
 
-          {/* Authenticated */}
-          <Route path="/play" element={<ProtectedRoute><PlayPage /></ProtectedRoute>} />
-          <Route path="/results/:sessionId" element={<ProtectedRoute><ResultsPage /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-          <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+          {/* Authenticated — shared navbar via AuthLayout */}
+          <Route path="/play" element={<ProtectedRoute><AuthLayout><PlayPage /></AuthLayout></ProtectedRoute>} />
+          <Route path="/results/:sessionId" element={<ProtectedRoute><AuthLayout><ResultsPage /></AuthLayout></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><AuthLayout><ProfilePage /></AuthLayout></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute><AuthLayout><HistoryPage /></AuthLayout></ProtectedRoute>} />
 
           {/* Endless Mode */}
-          <Route path="/endless" element={<ProtectedRoute><EndlessHubPage /></ProtectedRoute>} />
-          <Route path="/endless/play" element={<ProtectedRoute><EndlessPlayPage /></ProtectedRoute>} />
-          <Route path="/endless/results/:sessionId" element={<ProtectedRoute><EndlessResultsPage /></ProtectedRoute>} />
+          <Route path="/endless" element={<ProtectedRoute><AuthLayout><EndlessHubPage /></AuthLayout></ProtectedRoute>} />
+          <Route path="/endless/play" element={<ProtectedRoute><AuthLayout><EndlessPlayPage /></AuthLayout></ProtectedRoute>} />
+          <Route path="/endless/results/:sessionId" element={<ProtectedRoute><AuthLayout><EndlessResultsPage /></AuthLayout></ProtectedRoute>} />
 
           {/* Admin */}
-          <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/questions" element={<ProtectedRoute requireAdmin><AdminQuestions /></ProtectedRoute>} />
-          <Route path="/admin/daily-set" element={<ProtectedRoute requireAdmin><AdminDailySet /></ProtectedRoute>} />
-          <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AdminReports /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute requireAdmin><AuthLayout><AdminDashboard /></AuthLayout></ProtectedRoute>} />
+          <Route path="/admin/questions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminQuestions /></AuthLayout></ProtectedRoute>} />
+          <Route path="/admin/daily-set" element={<ProtectedRoute requireAdmin><AuthLayout><AdminDailySet /></AuthLayout></ProtectedRoute>} />
+          <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AuthLayout><AdminReports /></AuthLayout></ProtectedRoute>} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
