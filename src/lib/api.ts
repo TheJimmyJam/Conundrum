@@ -140,7 +140,10 @@ export async function getDailySetQuestions(dailySetId: string): Promise<Question
     .eq('daily_set_id', dailySetId)
     .order('position')
   if (error) throw error
-  return (data ?? []).map((row: any) => row.questions)
+  return (data ?? []).map((row: any) => ({
+    ...row.questions,
+    options: row.questions.question_options ?? [],
+  }))
 }
 
 // ─── Finalize Session (daily) ─────────────────────────────────────────────────
