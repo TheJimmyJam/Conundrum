@@ -290,20 +290,31 @@ function RankingsTab({ categories }: { categories: Category[] }) {
           <table className="w-full text-sm">
             <thead className="border-b border-gray-100">
               <tr>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">Einstein</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-12">#</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-20">Einstein</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Question</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden md:table-cell">Category</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden sm:table-cell">Plays</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Correct %</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden sm:table-cell">Correct %</th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  Wilson
+                  <span className="ml-1 text-gray-300 font-normal normal-case">(0–100)</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {rows.map(r => {
                 const info = getTierInfo(r.tier)
                 const pct = Math.round(r.correct_rate * 100)
+                // Wilson bar: high score = easy (green), low score = hard (red)
+                const wilsonColor = r.wilson_score >= 60 ? 'bg-green-400' :
+                                    r.wilson_score >= 35 ? 'bg-yellow-400' : 'bg-red-400'
                 return (
                   <tr key={r.question_id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="px-5 py-3">
+                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">
+                      {r.overall_rank}
+                    </td>
+                    <td className="px-4 py-3">
                       <TierBadge tier={r.tier} />
                     </td>
                     <td className="px-4 py-3 max-w-xs">
@@ -311,15 +322,15 @@ function RankingsTab({ categories }: { categories: Category[] }) {
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">{r.category}</td>
                     <td className="px-4 py-3 text-right text-xs text-gray-500 hidden sm:table-cell">{r.total_answers.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right text-xs text-gray-500 hidden sm:table-cell">{pct}%</td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-2">
-                        <div className="w-16 h-1.5 rounded-full bg-gray-100 overflow-hidden hidden sm:block">
-                          <div
-                            className={`h-full rounded-full ${info.color.replace('bg-', 'bg-')}`}
-                            style={{ width: `${pct}%`, backgroundColor: undefined }}
-                          />
+                        <div className="w-20 h-1.5 rounded-full bg-gray-100 overflow-hidden hidden sm:block">
+                          <div className={`h-full rounded-full ${wilsonColor}`} style={{ width: `${r.wilson_score}%` }} />
                         </div>
-                        <span className={`text-xs font-bold ${info.textColor}`}>{pct}%</span>
+                        <span className="text-xs font-bold tabular-nums text-gray-700 w-10 text-right">
+                          {r.wilson_score.toFixed(1)}
+                        </span>
                       </div>
                     </td>
                   </tr>

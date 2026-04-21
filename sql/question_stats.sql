@@ -90,6 +90,8 @@ RETURNS TABLE (
   total_answers    int,
   correct_answers  int,
   correct_rate     numeric,
+  wilson_score     numeric,   -- 0–100, higher = more confidently easy
+  overall_rank     bigint,    -- 1 = easiest across all ranked questions
   tier             int,
   tier_name        text,
   total_ranked     bigint
@@ -107,10 +109,6 @@ BEGIN
 
   RETURN QUERY
   WITH scored AS (
-    -- Wilson score lower bound (z = 1.96, 95% CI)
-    -- Higher score = more confidently easy (tier 1)
-    -- Lower score  = more confidently hard  (tier 10)
-    -- Questions with more plays at the same raw rate are ranked with more confidence.
     SELECT
       qs.question_id,
       q.prompt,
@@ -118,7 +116,6 @@ BEGIN
       qs.total_answers,
       qs.correct_answers,
       ROUND(qs.correct_answers::numeric / qs.total_answers, 4)           AS correct_rate,
-      -- p and n shorthand
       qs.correct_answers::numeric / qs.total_answers                     AS p,
       qs.total_answers::numeric                                          AS n
     FROM question_stats qs
@@ -127,19 +124,25 @@ BEGIN
     WHERE qs.total_answers > 0
       AND (p_category_id IS NULL OR q.category_id = p_category_id)
   ),
-  ranked AS (
+  wilson AS (
+    -- Wilson score lower bound (z=1.96), scaled 0–100
     SELECT
       s.*,
-      NTILE(10) OVER (
-        ORDER BY
-          -- Wilson score lower bound, descending (highest = easiest)
-          (
-            s.p + 3.8416 / (2 * s.n)
-            - 1.96 * SQRT(s.p * (1 - s.p) / s.n + 3.8416 / (4 * s.n * s.n))
+      ROUND(
+        100 * (
+          (s.p + 3.8416 / (2 * s.n)
+           - 1.96 * SQRT(s.p * (1 - s.p) / s.n + 3.8416 / (4 * s.n * s.n))
           ) / (1 + 3.8416 / s.n)
-        DESC
-      )                                                                   AS tier
+        )::numeric, 1
+      )                                                                   AS wilson_score
     FROM scored s
+  ),
+  ranked AS (
+    SELECT
+      w.*,
+      NTILE(10) OVER (ORDER BY w.wilson_score DESC)                      AS tier,
+      ROW_NUMBER() OVER (ORDER BY w.wilson_score DESC)                   AS overall_rank
+    FROM wilson w
   ),
   total_count AS (SELECT COUNT(*) AS cnt FROM ranked)
   SELECT
@@ -149,6 +152,8 @@ BEGIN
     ranked.total_answers,
     ranked.correct_answers,
     ranked.correct_rate,
+    ranked.wilson_score,
+    ranked.overall_rank,
     ranked.tier,
     CASE ranked.tier
       WHEN 1  THEN 'Initiate'
@@ -165,7 +170,7 @@ BEGIN
     total_count.cnt                                                       AS total_ranked
   FROM ranked, total_count
   WHERE (p_tier IS NULL OR ranked.tier = p_tier)
-  ORDER BY ranked.tier ASC, ranked.correct_rate DESC, ranked.total_answers DESC
+  ORDER BY ranked.overall_rank ASC
   LIMIT p_limit OFFSET p_offset;
 END;
 $$;

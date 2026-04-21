@@ -919,6 +919,8 @@ export type RankedQuestion = {
   total_answers: number
   correct_answers: number
   correct_rate: number
+  wilson_score: number   // 0–100, higher = more confidently easy
+  overall_rank: number   // 1 = easiest across all ranked questions
   tier: number
   tier_name: string
   total_ranked: number
@@ -942,6 +944,8 @@ export async function adminGetQuestionRankings(opts: {
     total_answers:   Number(r.total_answers),
     correct_answers: Number(r.correct_answers),
     correct_rate:    Number(r.correct_rate),
+    wilson_score:    Number(r.wilson_score),
+    overall_rank:    Number(r.overall_rank),
     tier:            Number(r.tier),
     total_ranked:    Number(r.total_ranked),
   }))
