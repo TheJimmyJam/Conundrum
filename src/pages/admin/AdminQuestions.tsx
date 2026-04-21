@@ -123,7 +123,7 @@ function SortableQuestionRow({
   )
 }
 
-// ── Schedule as Community Question modal ────────────────────────────────────
+// ── Queue as Community Question modal ───────────────────────────────────────
 
 function ScheduleCommunityModal({
   question,
@@ -134,25 +134,19 @@ function ScheduleCommunityModal({
   onClose: () => void
   onScheduled: (msg: string) => void
 }) {
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const tomorrowStr = tomorrow.toISOString().slice(0, 10)
-
-  const [date, setDate] = useState(tomorrowStr)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleSchedule() {
-    if (!date) return setError('Pick a date.')
+  async function handleQueue() {
     setSaving(true)
     setError(null)
     try {
-      await adminScheduleQuestionAsCommunity(question.id, date)
+      const date = await adminScheduleQuestionAsCommunity(question.id)
       const dateStr = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
       onScheduled(`✓ Queued as community question for ${dateStr}.`)
       onClose()
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to schedule')
+      setError(err?.message ?? 'Failed to queue')
     } finally {
       setSaving(false)
     }
@@ -164,34 +158,22 @@ function ScheduleCommunityModal({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-bold text-gray-900">Queue as Community Question</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Adds to the single daily community question slot</p>
+            <p className="text-xs text-gray-400 mt-0.5">Added to the next available daily slot</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
         </div>
 
         <p className="text-sm text-gray-700 bg-gray-50 rounded-xl px-3 py-2.5 line-clamp-3 mb-5">{question.prompt}</p>
 
-        <div className="mb-4">
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Feature date *</label>
-          <input
-            type="date"
-            value={date}
-            min={tomorrowStr}
-            onChange={e => { setDate(e.target.value); setError(null) }}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-          <p className="text-xs text-gray-400 mt-1">Only one community question can be scheduled per day.</p>
-        </div>
-
         {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
 
         <div className="flex gap-2">
           <button
-            onClick={handleSchedule}
-            disabled={saving || !date}
+            onClick={handleQueue}
+            disabled={saving}
             className="bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50"
           >
-            {saving ? 'Scheduling…' : 'Queue Question'}
+            {saving ? 'Queuing…' : '📅 Add to Queue'}
           </button>
           <button onClick={onClose} className="border border-gray-200 text-gray-600 text-sm px-4 py-2.5 rounded-xl hover:bg-gray-50">
             Cancel

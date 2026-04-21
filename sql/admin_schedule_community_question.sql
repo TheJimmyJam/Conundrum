@@ -1,21 +1,25 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- admin_schedule_question_as_community
 --
--- Copies a question from the `questions` table into `question_submissions`
--- with a specific featured_date, scheduling it as the community question of
--- the day. Errors if that date already has a community question scheduled.
+-- Copies a question from the `questions` table into `question_submissions`,
+-- auto-scheduling it as the next available community question slot
+-- (MAX(featured_date) + 1 day, or tomorrow if queue is empty).
+-- Returns the date it was scheduled for.
 -- ─────────────────────────────────────────────────────────────────────────────
 
+-- Drop old signature that required a date param
+DROP FUNCTION IF EXISTS admin_schedule_question_as_community(uuid, date);
+
 CREATE OR REPLACE FUNCTION admin_schedule_question_as_community(
-  p_question_id uuid,
-  p_date        date
+  p_question_id uuid
 )
-RETURNS void
+RETURNS date
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
+  v_next_date    date;
   v_prompt       text;
   v_explanation  text;
   v_correct_id   uuid;
@@ -31,15 +35,12 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized';
   END IF;
 
-  -- Block if date already has a scheduled community question
-  IF EXISTS (
-    SELECT 1 FROM question_submissions
-    WHERE featured_date = p_date
-      AND status IN ('featured', 'approved')
-      AND featured_date IS NOT NULL
-  ) THEN
-    RAISE EXCEPTION 'A community question is already scheduled for %', p_date;
-  END IF;
+  -- Find next available slot: day after the last scheduled featured_date
+  SELECT COALESCE(MAX(featured_date), CURRENT_DATE) + 1
+  INTO v_next_date
+  FROM question_submissions
+  WHERE status = 'featured'
+    AND featured_date >= CURRENT_DATE;
 
   -- Fetch question
   SELECT q.prompt, q.explanation
@@ -84,7 +85,8 @@ BEGIN
     prompt,
     option_a, option_b, option_c, option_d,
     correct_option, explanation,
-    status, featured_date
+    status, featured_date,
+    question_id
   ) VALUES (
     auth.uid(),
     'admin',
@@ -93,9 +95,12 @@ BEGIN
     v_correct_ltr,
     COALESCE(v_explanation, ''),
     'featured',
-    p_date
+    v_next_date,
+    p_question_id
   );
+
+  RETURN v_next_date;
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION admin_schedule_question_as_community(uuid, date) TO authenticated;
+GRANT EXECUTE ON FUNCTION admin_schedule_question_as_community(uuid) TO authenticated;

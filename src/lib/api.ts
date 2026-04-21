@@ -854,12 +854,12 @@ export async function adminCountDemoUsers(): Promise<number> {
   return Number(data ?? 0)
 }
 
-export async function adminScheduleQuestionAsCommunity(questionId: string, date: string) {
-  const { error } = await supabase.rpc('admin_schedule_question_as_community', {
+export async function adminScheduleQuestionAsCommunity(questionId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('admin_schedule_question_as_community', {
     p_question_id: questionId,
-    p_date: date,
   })
   if (error) throw error
+  return data as string // returns the date it was scheduled for
 }
 
 export async function adminAutoPopulateDailySets(daysAhead = 7): Promise<{
