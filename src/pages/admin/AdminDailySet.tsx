@@ -9,6 +9,7 @@ import {
   adminRemoveQuestionFromSet,
   adminSortSetByDifficulty,
   adminGetDailyQuestionUsage,
+  adminAutoPopulateDailySets,
   type AdminDailySet,
   type AdminSetQuestion,
   type DailyQuestionUsage,
@@ -80,6 +81,9 @@ export default function AdminDailySet() {
   const [adding, setAdding] = useState<string | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Auto-populate
+  const [autofilling, setAutofilling] = useState(false)
+
   // Toast
   const [toast, setToast] = useState<string | null>(null)
 
@@ -106,6 +110,27 @@ export default function AdminDailySet() {
       rows.forEach(r => { map[r.question_id] = r })
       setUsageMap(map)
     } catch { /* non-critical */ }
+  }
+
+  async function handleAutoFill() {
+    setAutofilling(true)
+    try {
+      const result = await adminAutoPopulateDailySets(7)
+      if (result.created_count === 0) {
+        showToast(`✓ All 7 days already have sets — nothing to create.`)
+      } else {
+        const dateList = result.dates_created.map(d =>
+          new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        ).join(', ')
+        showToast(`✓ Created ${result.created_count} set${result.created_count !== 1 ? 's' : ''}: ${dateList}`)
+      }
+      await load()
+      await loadUsage()
+    } catch (err: any) {
+      showToast(`✗ ${err?.message ?? 'Auto-fill failed'}`)
+    } finally {
+      setAutofilling(false)
+    }
   }
 
   async function expand(setId: string) {
@@ -301,16 +326,32 @@ export default function AdminDailySet() {
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-3xl font-bold text-gray-900">Daily Sets</h1>
-          <button
-            onClick={() => { setShowNew(true); setCreateError(null) }}
-            className="bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-indigo-700"
-          >
-            + New Set
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAutoFill}
+              disabled={autofilling}
+              className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-indigo-200 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 flex items-center gap-2"
+            >
+              {autofilling ? (
+                <>
+                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-indigo-500 border-t-transparent" />
+                  Generating…
+                </>
+              ) : (
+                '🤖 Auto-fill 7 days'
+              )}
+            </button>
+            <button
+              onClick={() => { setShowNew(true); setCreateError(null) }}
+              className="bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-indigo-700"
+            >
+              + New Set
+            </button>
+          </div>
         </div>
         <p className="text-gray-500 mb-8">
-          Schedule 10-question sets for specific dates. Questions are ordered easiest → hardest.
-          Previously used questions are flagged in the picker.
+          10-question sets that reset daily at 6 AM ET — questions go easiest → hardest.
+          Use <strong className="font-semibold text-gray-700">Auto-fill 7 days</strong> to generate draft sets for the next week, then review and publish each one.
         </p>
 
         {/* New set form */}

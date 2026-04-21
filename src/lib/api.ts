@@ -769,6 +769,23 @@ export async function adminCountDemoUsers(): Promise<number> {
   return Number(data ?? 0)
 }
 
+export async function adminAutoPopulateDailySets(daysAhead = 7): Promise<{
+  created_count: number
+  skipped_count: number
+  dates_created: string[]
+}> {
+  const { data, error } = await supabase.rpc('admin_auto_populate_daily_sets', {
+    p_days_ahead: daysAhead,
+  })
+  if (error) throw error
+  const row = (data ?? [])[0]
+  return {
+    created_count: Number(row?.created_count ?? 0),
+    skipped_count: Number(row?.skipped_count ?? 0),
+    dates_created: row?.dates_created ?? [],
+  }
+}
+
 export async function adminReorderSetQuestions(setId: string, orderedDsqIds: string[]) {
   const { error } = await supabase.rpc('admin_reorder_set_questions', {
     p_set_id: setId,
