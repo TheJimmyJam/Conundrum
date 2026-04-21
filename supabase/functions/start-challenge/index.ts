@@ -21,28 +21,30 @@ serve(async (req) => {
     const { challenge_id } = await req.json()
 
     // Load challenge — user must be the challenged person
-    const { data: challenge } = await sb.from('challenges').select('*').eq('id', challenge_id)
-      .eq('challenged_id', user.id).in('status', ['pending', 'awaiting_opponent']).single()
+    const { data: challenge } = await sb.from('challenges').select('*')
+      .eq('id', challenge_id)
+      .eq('challenged_id', user.id)
+      .in('status', ['pending', 'awaiting_opponent'])
+      .single()
     if (!challenge) return new Response(JSON.stringify({ error: 'Challenge not found' }), { status: 404, headers: CORS })
 
-    // If challenged session already exists, just return questions
+    // Create challenged session if it doesn't exist yet
     let sessionId = challenge.challenged_session_id
     if (!sessionId) {
       const { data: session } = await sb.from('game_sessions').insert({
         user_id: user.id,
-        daily_set_id: challenge.question_set_id,
         mode: 'challenge',
         status: 'active',
       }).select().single()
       sessionId = session.id
-
       await sb.from('challenges').update({ challenged_session_id: sessionId }).eq('id', challenge_id)
     }
 
-    // Load questions for this challenge set
-    const { data: setQs } = await sb.from('daily_set_questions')
+    // Load questions from the challenge question set
+    const { data: setQs } = await sb
+      .from('challenge_question_set_items')
       .select('position, questions(id, prompt, question_type, difficulty, explanation, category_id, question_options(id, option_text, sort_order))')
-      .eq('daily_set_id', challenge.question_set_id)
+      .eq('challenge_question_set_id', challenge.cqs_id)
       .order('position')
 
     const questions = (setQs ?? []).map((row: any) => ({

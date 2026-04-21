@@ -20,7 +20,7 @@ serve(async (req) => {
 
     const { challenged_id } = await req.json()
 
-    // Verify friendship exists and is accepted
+    // Verify friendship
     const { data: friendship } = await sb.from('friendships').select('id')
       .or(`and(requester_id.eq.${user.id},addressee_id.eq.${challenged_id}),and(requester_id.eq.${challenged_id},addressee_id.eq.${user.id})`)
       .eq('status', 'accepted').single()
@@ -34,52 +34,48 @@ serve(async (req) => {
       .maybeSingle()
     if (existing) return new Response(JSON.stringify({ error: 'Challenge already pending' }), { status: 409, headers: CORS })
 
-    // Get today's main daily set questions (to exclude)
-    const { data: mainSet } = await sb.from('daily_sets').select('id')
-      .eq('set_date', today).eq('is_published', true).maybeSingle()
-
-    let excludeIds: string[] = []
-    if (mainSet) {
-      const { data: mainQs } = await sb.from('daily_set_questions').select('question_id').eq('daily_set_id', mainSet.id)
-      excludeIds = (mainQs ?? []).map((r: any) => r.question_id)
-    }
-
-    // Pick 10 random questions not in today's main daily
-    let query = sb.from('questions').select('id, prompt, question_type, difficulty, explanation, category_id, question_options(id, option_text, sort_order)').eq('is_active', true)
-    if (excludeIds.length > 0) query = query.not('id', 'in', `(${excludeIds.join(',')})`)
-    const { data: pool } = await query.limit(100)
+    // Pick 10 random questions
+    const { data: pool } = await sb.from('questions')
+      .select('id, prompt, question_type, difficulty, explanation, category_id, question_options(id, option_text, sort_order)')
+      .eq('is_active', true)
+      .limit(200)
     if (!pool || pool.length < 10) return new Response(JSON.stringify({ error: 'Not enough questions' }), { status: 500, headers: CORS })
 
-    // Shuffle and pick 10
     const shuffled = pool.sort(() => Math.random() - 0.5).slice(0, 10)
 
-    // Create question set for this challenge
-    const { data: qSet } = await sb.from('daily_sets').insert({
-      set_date: today,
-      title: `Challenge`,
-      is_published: true,
-    }).select().single()
+    // Create a dedicated challenge question set (no daily_sets collision)
+    const { data: qSet, error: qSetErr } = await sb
+      .from('challenge_question_sets')
+      .insert({})
+      .select()
+      .single()
+    if (qSetErr || !qSet) return new Response(JSON.stringify({ error: 'Failed to create question set' }), { status: 500, headers: CORS })
 
     for (let i = 0; i < shuffled.length; i++) {
-      await sb.from('daily_set_questions').insert({ daily_set_id: qSet.id, question_id: shuffled[i].id, position: i + 1 })
+      await sb.from('challenge_question_set_items').insert({
+        challenge_question_set_id: qSet.id,
+        question_id: shuffled[i].id,
+        position: i + 1,
+      })
     }
 
     // Create challenger's game session
-    const { data: session } = await sb.from('game_sessions').insert({
+    const { data: session, error: sessionErr } = await sb.from('game_sessions').insert({
       user_id: user.id,
-      daily_set_id: qSet.id,
       mode: 'challenge',
       status: 'active',
     }).select().single()
+    if (sessionErr || !session) return new Response(JSON.stringify({ error: 'Failed to create session' }), { status: 500, headers: CORS })
 
     // Create challenge record
-    const { data: challenge } = await sb.from('challenges').insert({
+    const { data: challenge, error: challengeErr } = await sb.from('challenges').insert({
       challenger_id: user.id,
       challenged_id,
-      question_set_id: qSet.id,
+      cqs_id: qSet.id,
       challenger_session_id: session.id,
       status: 'pending',
     }).select().single()
+    if (challengeErr || !challenge) return new Response(JSON.stringify({ error: 'Failed to create challenge' }), { status: 500, headers: CORS })
 
     const questions = shuffled.map((q: any) => ({
       ...q,
