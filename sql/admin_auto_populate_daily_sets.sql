@@ -26,15 +26,16 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_admin    int;
-  v_date     date;
-  v_set_id   uuid;
-  v_created  int := 0;
-  v_skipped  int := 0;
-  v_dates    text[] := '{}';
-  v_q_ids    uuid[];
-  i          int;
-  v_slot     int;
+  v_admin      int;
+  v_date       date;
+  v_set_id     uuid;
+  v_created    int := 0;
+  v_skipped    int := 0;
+  v_dates      text[] := '{}';
+  v_q_ids      uuid[];
+  i            int;
+  v_slot       int;
+  v_start_date date;
 BEGIN
   -- Admin guard
   SELECT COUNT(*) INTO v_admin
@@ -45,8 +46,15 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized';
   END IF;
 
-  FOR i IN 0..(p_days_ahead - 1) LOOP
-    v_date := CURRENT_DATE + 1 + i;
+  -- Start from the day after the latest existing set, or tomorrow if none
+  SELECT COALESCE(MAX(set_date), CURRENT_DATE) INTO v_start_date FROM daily_sets;
+  -- If the latest set is in the past, start from today
+  IF v_start_date < CURRENT_DATE THEN
+    v_start_date := CURRENT_DATE;
+  END IF;
+
+  FOR i IN 1..p_days_ahead LOOP
+    v_date := v_start_date + i;
 
     -- Skip if a set already exists for this date
     IF EXISTS (SELECT 1 FROM daily_sets WHERE set_date = v_date) THEN

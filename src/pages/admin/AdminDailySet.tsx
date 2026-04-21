@@ -12,6 +12,7 @@ import {
   adminGetDailyQuestionUsage,
   adminAutoPopulateDailySets,
   adminDeleteDailySet,
+  adminDeleteUpcomingSets,
   type AdminDailySet,
   type AdminSetQuestion,
   type DailyQuestionUsage,
@@ -91,9 +92,13 @@ export default function AdminDailySet() {
   // Auto-populate
   const [autofilling, setAutofilling] = useState(false)
 
-  // Delete confirmation
+  // Delete confirmation (individual)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  // Bulk delete upcoming
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
+  const [deletingAll, setDeletingAll] = useState(false)
 
   // Toast
   const [toast, setToast] = useState<string | null>(null)
@@ -257,6 +262,21 @@ export default function AdminDailySet() {
     }
   }
 
+  async function handleDeleteAllUpcoming() {
+    setDeletingAll(true)
+    try {
+      const count = await adminDeleteUpcomingSets()
+      setSets(prev => prev.filter(s => s.set_date <= new Date().toISOString().slice(0, 10) || s.is_published))
+      await load()
+      setConfirmDeleteAll(false)
+      showToast(`✓ Deleted ${count} upcoming draft set${count !== 1 ? 's' : ''}.`)
+    } catch (err: any) {
+      showToast(`✗ ${err?.message ?? 'Delete failed'}`)
+    } finally {
+      setDeletingAll(false)
+    }
+  }
+
   // ── Question detail expand ───────────────────────────────────────────────────
 
   async function toggleQDetail(questionId: string) {
@@ -393,7 +413,7 @@ export default function AdminDailySet() {
                   Generating…
                 </>
               ) : (
-                '🤖 Auto-fill 7 days'
+                '🤖 Add 7 days'
               )}
             </button>
             <button
@@ -406,7 +426,7 @@ export default function AdminDailySet() {
         </div>
         <p className="text-gray-500 mb-8">
           10-question sets that reset daily at 6 AM ET — questions go easiest → hardest.
-          Use <strong className="font-semibold text-gray-700">Auto-fill 7 days</strong> to generate draft sets for the next week, then review and publish each one.
+          Use <strong className="font-semibold text-gray-700">Add 7 days</strong> to queue 7 more draft sets after the latest scheduled date — click it multiple times to build further out. Review and publish each one before it goes live.
         </p>
 
         {/* New set form */}
@@ -553,9 +573,8 @@ export default function AdminDailySet() {
                           </span>
                           <button
                             onClick={() => setConfirmDelete(s.id)}
-                            className="text-gray-300 hover:text-red-400 transition-colors text-lg leading-none"
-                            title="Delete set"
-                          >🗑</button>
+                            className="text-xs border border-red-200 text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
+                          >Delete</button>
                         </>
                       )}
                     </div>
@@ -707,6 +726,44 @@ export default function AdminDailySet() {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* Bulk delete upcoming drafts */}
+        {sets.some(s => s.set_date > new Date().toISOString().slice(0, 10) && !s.is_published) && (
+          <div className="mt-6 border border-red-100 rounded-2xl px-5 py-4 bg-red-50">
+            {confirmDeleteAll ? (
+              <div className="flex items-center gap-3 flex-wrap">
+                <p className="text-sm text-red-700 font-semibold flex-1">
+                  Delete all upcoming draft sets? This cannot be undone.
+                </p>
+                <button
+                  onClick={handleDeleteAllUpcoming}
+                  disabled={deletingAll}
+                  className="text-sm bg-red-600 text-white font-semibold px-4 py-2 rounded-xl hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deletingAll ? 'Deleting…' : 'Yes, delete all'}
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteAll(false)}
+                  className="text-sm border border-red-200 text-red-500 px-4 py-2 rounded-xl hover:bg-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm text-red-600">
+                  Remove all upcoming draft sets so you can regenerate them fresh.
+                </p>
+                <button
+                  onClick={() => setConfirmDeleteAll(true)}
+                  className="text-sm border border-red-300 text-red-600 font-semibold px-4 py-2 rounded-xl hover:bg-white whitespace-nowrap"
+                >
+                  🗑 Delete all upcoming drafts
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
