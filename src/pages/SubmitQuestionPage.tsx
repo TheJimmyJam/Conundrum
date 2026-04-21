@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { submitQuestion } from '../lib/api'
+import { submitQuestion, getCategories } from '../lib/api'
+import type { Category } from '../types'
 
 type CorrectOption = 'a' | 'b' | 'c' | 'd'
 
@@ -16,6 +17,8 @@ export default function SubmitQuestionPage() {
   const { profile } = useAuthStore()
   const navigate = useNavigate()
 
+  const [categories, setCategories] = useState<Category[]>([])
+  const [categoryId, setCategoryId] = useState<string>('')
   const [prompt, setPrompt] = useState('')
   const [options, setOptions] = useState({ a: '', b: '', c: '', d: '' })
   const [correct, setCorrect] = useState<CorrectOption | null>(null)
@@ -24,15 +27,20 @@ export default function SubmitQuestionPage() {
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    getCategories().then(setCategories).catch(() => {})
+  }, [])
+
   function setOption(key: CorrectOption, val: string) {
     setOptions((prev) => ({ ...prev, [key]: val }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!correct) { setError('Select the correct answer.'); return }
+    if (!categoryId) { setError('Select a category.'); return }
     if (!prompt.trim()) { setError('Write your question.'); return }
     if (Object.values(options).some((o) => !o.trim())) { setError('Fill in all four answer options.'); return }
+    if (!correct) { setError('Select the correct answer.'); return }
     setError(null)
     setSubmitting(true)
     try {
@@ -44,6 +52,7 @@ export default function SubmitQuestionPage() {
         option_d: options.d.trim(),
         correct_option: correct,
         explanation: explanation.trim() || null,
+        category_id: categoryId || null,
       })
       setDone(true)
     } catch (err: any) {
@@ -67,7 +76,7 @@ export default function SubmitQuestionPage() {
         </p>
         <div className="flex gap-3 justify-center">
           <button
-            onClick={() => { setDone(false); setPrompt(''); setOptions({ a:'',b:'',c:'',d:'' }); setCorrect(null); setExplanation('') }}
+            onClick={() => { setDone(false); setCategoryId(''); setPrompt(''); setOptions({ a:'',b:'',c:'',d:'' }); setCorrect(null); setExplanation('') }}
             className="border border-indigo-600 text-indigo-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-50"
           >
             Submit another
@@ -97,6 +106,31 @@ export default function SubmitQuestionPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* Category */}
+          <div className="bg-white border border-gray-100 rounded-2xl p-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Category <span className="text-red-500">*</span>
+            </label>
+            <p className="text-xs text-gray-400 mb-3">Pick the category your question best fits into.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setCategoryId(cat.id)}
+                  className={`px-3 py-2.5 rounded-xl border text-sm font-medium text-left transition-colors ${
+                    categoryId === cat.id
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-200 text-gray-600 hover:border-indigo-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {categoryId === cat.id && <span className="mr-1">✓</span>}
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Question */}
           <div className="bg-white border border-gray-100 rounded-2xl p-6">

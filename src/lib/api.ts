@@ -382,6 +382,7 @@ export async function submitQuestion(payload: {
   option_d: string
   correct_option: string
   explanation: string | null
+  category_id: string | null
 }) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not logged in')
