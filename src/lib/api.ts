@@ -220,6 +220,30 @@ export async function getMyDailyRank(dailySetId: string): Promise<number | null>
   return data ?? null
 }
 
+export async function getEndlessLifetimeStreaks(limit = 50): Promise<{ rank: number; user_id: string; username: string; display_name: string | null; best_streak: number }[]> {
+  const { data, error } = await supabase.rpc('get_endless_lifetime_streaks', { p_limit: limit })
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({
+    rank: Number(r.rank),
+    user_id: r.user_id,
+    username: r.username ?? 'unknown',
+    display_name: r.display_name ?? null,
+    best_streak: Number(r.best_streak),
+  }))
+}
+
+export async function getEndlessDailyStreaks(limit = 50): Promise<{ rank: number; user_id: string; username: string; display_name: string | null; best_streak: number }[]> {
+  const { data, error } = await supabase.rpc('get_endless_daily_streaks', { p_limit: limit })
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({
+    rank: Number(r.rank),
+    user_id: r.user_id,
+    username: r.username ?? 'unknown',
+    display_name: r.display_name ?? null,
+    best_streak: Number(r.best_streak),
+  }))
+}
+
 // ─── Challenges ──────────────────────────────────────────────────────────────
 
 export async function createChallenge(
