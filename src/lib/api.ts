@@ -283,6 +283,22 @@ export async function endEndlessSession(sessionId: string) {
   return data
 }
 
+export type EndlessPersonalBest = {
+  category_id: string | null
+  best_streak: number
+  best_score: number
+}
+
+export async function getEndlessPersonalBests(): Promise<EndlessPersonalBest[]> {
+  const { data, error } = await supabase.rpc('get_endless_personal_bests')
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({
+    category_id: r.category_id ?? null,
+    best_streak: Number(r.best_streak),
+    best_score:  Number(r.best_score),
+  }))
+}
+
 // ─── Leaderboard ─────────────────────────────────────────────────────────────
 
 export async function getDailyLeaderboard(dailySetId: string, limit = 50): Promise<LeaderboardEntry[]> {
