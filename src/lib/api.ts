@@ -127,7 +127,8 @@ export async function createGameSession(
   userId: string,
   dailySetId: string | null,
   mode: 'daily' | 'endless',
-  categoryId?: string | null
+  categoryId?: string | null,
+  difficultyFilter?: string[] | null
 ): Promise<GameSession> {
   const { data, error } = await supabase
     .from('game_sessions')
@@ -137,6 +138,7 @@ export async function createGameSession(
       mode,
       category_id: categoryId ?? null,
       status: 'active',
+      difficulty_filter: difficultyFilter?.length ? difficultyFilter : null,
     })
     .select()
     .single()
