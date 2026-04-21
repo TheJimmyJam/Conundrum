@@ -106,22 +106,40 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  WITH ranked AS (
+  WITH scored AS (
+    -- Wilson score lower bound (z = 1.96, 95% CI)
+    -- Higher score = more confidently easy (tier 1)
+    -- Lower score  = more confidently hard  (tier 10)
+    -- Questions with more plays at the same raw rate are ranked with more confidence.
     SELECT
       qs.question_id,
       q.prompt,
-      c.name                                                           AS category,
+      c.name                                                              AS category,
       qs.total_answers,
       qs.correct_answers,
-      ROUND(qs.correct_answers::numeric / qs.total_answers, 4)        AS correct_rate,
-      NTILE(10) OVER (
-        ORDER BY qs.correct_answers::numeric / qs.total_answers DESC
-      )                                                                AS tier
+      ROUND(qs.correct_answers::numeric / qs.total_answers, 4)           AS correct_rate,
+      -- p and n shorthand
+      qs.correct_answers::numeric / qs.total_answers                     AS p,
+      qs.total_answers::numeric                                          AS n
     FROM question_stats qs
     JOIN questions  q ON q.id  = qs.question_id
     JOIN categories c ON c.id  = q.category_id
     WHERE qs.total_answers > 0
       AND (p_category_id IS NULL OR q.category_id = p_category_id)
+  ),
+  ranked AS (
+    SELECT
+      s.*,
+      NTILE(10) OVER (
+        ORDER BY
+          -- Wilson score lower bound, descending (highest = easiest)
+          (
+            s.p + 3.8416 / (2 * s.n)
+            - 1.96 * SQRT(s.p * (1 - s.p) / s.n + 3.8416 / (4 * s.n * s.n))
+          ) / (1 + 3.8416 / s.n)
+        DESC
+      )                                                                   AS tier
+    FROM scored s
   ),
   total_count AS (SELECT COUNT(*) AS cnt FROM ranked)
   SELECT
@@ -143,11 +161,11 @@ BEGIN
       WHEN 8  THEN 'Paradox Solver'
       WHEN 9  THEN 'Conundrum Elite'
       WHEN 10 THEN 'The Oracle'
-    END                                                                AS tier_name,
-    total_count.cnt                                                    AS total_ranked
+    END                                                                   AS tier_name,
+    total_count.cnt                                                       AS total_ranked
   FROM ranked, total_count
   WHERE (p_tier IS NULL OR ranked.tier = p_tier)
-  ORDER BY ranked.tier ASC, ranked.correct_rate DESC
+  ORDER BY ranked.tier ASC, ranked.correct_rate DESC, ranked.total_answers DESC
   LIMIT p_limit OFFSET p_offset;
 END;
 $$;
