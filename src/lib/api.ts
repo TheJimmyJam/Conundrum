@@ -733,6 +733,11 @@ export async function adminUpdateDailySet(id: string, title: string | null, isPu
   if (error) throw error
 }
 
+export async function adminDeleteDailySet(id: string) {
+  const { error } = await supabase.rpc('admin_delete_daily_set', { p_set_id: id })
+  if (error) throw error
+}
+
 export async function adminGetSetQuestions(setId: string): Promise<AdminSetQuestion[]> {
   const { data, error } = await supabase.rpc('admin_get_set_questions', { p_set_id: setId })
   if (error) throw error

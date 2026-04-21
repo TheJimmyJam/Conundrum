@@ -11,6 +11,7 @@ import {
   adminSortSetByDifficulty,
   adminGetDailyQuestionUsage,
   adminAutoPopulateDailySets,
+  adminDeleteDailySet,
   type AdminDailySet,
   type AdminSetQuestion,
   type DailyQuestionUsage,
@@ -89,6 +90,10 @@ export default function AdminDailySet() {
 
   // Auto-populate
   const [autofilling, setAutofilling] = useState(false)
+
+  // Delete confirmation
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   // Toast
   const [toast, setToast] = useState<string | null>(null)
@@ -233,6 +238,22 @@ export default function AdminDailySet() {
       showToast(`✗ ${err?.message ?? 'Sort failed'}`)
     } finally {
       setSorting(null)
+    }
+  }
+
+  async function handleDeleteSet(setId: string) {
+    setDeleting(true)
+    try {
+      await adminDeleteDailySet(setId)
+      setSets(prev => prev.filter(x => x.id !== setId))
+      setSetQuestions(prev => { const n = { ...prev }; delete n[setId]; return n })
+      if (expanded === setId) setExpanded(null)
+      setConfirmDelete(null)
+      showToast('✓ Set deleted.')
+    } catch (err: any) {
+      showToast(`✗ ${err?.message ?? 'Delete failed'}`)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -484,33 +505,59 @@ export default function AdminDailySet() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                      {isEditingTitle ? (
+                      {confirmDelete === s.id ? (
                         <>
-                          <button onClick={() => handleSaveTitle(s)} disabled={savingSet === s.id}
-                            className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50">
-                            {savingSet === s.id ? 'Saving…' : 'Save'}
+                          <span className="text-xs text-red-600 font-semibold">Delete this set?</span>
+                          <button
+                            onClick={() => handleDeleteSet(s.id)}
+                            disabled={deleting}
+                            className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {deleting ? 'Deleting…' : 'Yes, delete'}
                           </button>
-                          <button onClick={() => setEditingTitle(prev => { const n = { ...prev }; delete n[s.id]; return n })}
-                            className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                          <button
+                            onClick={() => setConfirmDelete(null)}
+                            className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                          >
                             Cancel
                           </button>
                         </>
                       ) : (
-                        <button onClick={() => setEditingTitle(prev => ({ ...prev, [s.id]: s.title ?? '' }))}
-                          className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50">
-                          ✏ Edit title
-                        </button>
+                        <>
+                          {isEditingTitle ? (
+                            <>
+                              <button onClick={() => handleSaveTitle(s)} disabled={savingSet === s.id}
+                                className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                                {savingSet === s.id ? 'Saving…' : 'Save'}
+                              </button>
+                              <button onClick={() => setEditingTitle(prev => { const n = { ...prev }; delete n[s.id]; return n })}
+                                className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <button onClick={() => setEditingTitle(prev => ({ ...prev, [s.id]: s.title ?? '' }))}
+                              className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                              ✏ Edit title
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleTogglePublish(s)}
+                            disabled={togglingPublish === s.id}
+                            title={s.is_published ? 'Unpublish' : 'Publish'}
+                            className={`relative inline-flex h-5 w-9 rounded-full transition-colors focus:outline-none disabled:opacity-40 ${s.is_published ? 'bg-indigo-600' : 'bg-gray-200'}`}>
+                            <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${s.is_published ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                          </button>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.is_published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {s.is_published ? 'Live' : 'Draft'}
+                          </span>
+                          <button
+                            onClick={() => setConfirmDelete(s.id)}
+                            className="text-gray-300 hover:text-red-400 transition-colors text-lg leading-none"
+                            title="Delete set"
+                          >🗑</button>
+                        </>
                       )}
-                      <button
-                        onClick={() => handleTogglePublish(s)}
-                        disabled={togglingPublish === s.id}
-                        title={s.is_published ? 'Unpublish' : 'Publish'}
-                        className={`relative inline-flex h-5 w-9 rounded-full transition-colors focus:outline-none disabled:opacity-40 ${s.is_published ? 'bg-indigo-600' : 'bg-gray-200'}`}>
-                        <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${s.is_published ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                      </button>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.is_published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {s.is_published ? 'Live' : 'Draft'}
-                      </span>
                     </div>
                   </div>
 
