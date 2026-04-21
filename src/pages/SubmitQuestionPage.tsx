@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { submitQuestion, getCategories } from '../lib/api'
+import { supabase } from '../lib/supabase'
 import type { Category } from '../types'
 
 type CorrectOption = 'a' | 'b' | 'c' | 'd'
@@ -26,6 +27,9 @@ export default function SubmitQuestionPage() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [duplicateWarning, setDuplicateWarning] = useState<{ score: number; matched: string } | null>(null)
+
+  const SIMILARITY_THRESHOLD = 0.85
 
   useEffect(() => {
     getCategories().then(setCategories).catch(() => {})
@@ -42,7 +46,26 @@ export default function SubmitQuestionPage() {
     if (Object.values(options).some((o) => !o.trim())) { setError('Fill in all four answer options.'); return }
     if (!correct) { setError('Select the correct answer.'); return }
     setError(null)
+    setDuplicateWarning(null)
     setSubmitting(true)
+
+    try {
+      // Check similarity against vault before submitting
+      const { data: simResult, error: simError } = await supabase
+        .rpc('check_question_similarity', { p_prompt: prompt.trim() })
+
+      if (!simError && simResult && simResult.length > 0) {
+        const { similarity_score, matched_prompt } = simResult[0]
+        if (similarity_score >= SIMILARITY_THRESHOLD) {
+          setDuplicateWarning({ score: Math.round(similarity_score * 100), matched: matched_prompt })
+          setSubmitting(false)
+          return
+        }
+      }
+    } catch {
+      // Similarity check failed — don't block submission, just proceed
+    }
+
     try {
       await submitQuestion({
         prompt: prompt.trim(),
@@ -139,7 +162,7 @@ export default function SubmitQuestionPage() {
             </label>
             <textarea
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e) => { setPrompt(e.target.value); setDuplicateWarning(null) }}
               placeholder="What is the capital of Australia?"
               rows={3}
               maxLength={300}
@@ -214,6 +237,25 @@ export default function SubmitQuestionPage() {
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
             />
           </div>
+
+          {duplicateWarning && (
+            <div className="bg-amber-50 border border-amber-300 rounded-xl px-5 py-4">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl flex-shrink-0">🚫</span>
+                <div>
+                  <p className="font-semibold text-amber-800 text-sm mb-1">
+                    That question already exists in the vault ({duplicateWarning.score}% match)
+                  </p>
+                  <p className="text-amber-700 text-xs leading-relaxed">
+                    We found something very similar already in our collection. Try a different angle — unique questions have the best shot at being featured!
+                  </p>
+                  <p className="text-amber-500 text-xs mt-2 italic line-clamp-2">
+                    Similar: "{duplicateWarning.matched}"
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
