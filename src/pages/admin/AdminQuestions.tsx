@@ -207,6 +207,7 @@ function ScheduleCommunityModal({
 function RankingsTab({ categories }: { categories: Category[] }) {
   const [rows, setRows] = useState<RankedQuestion[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [tierFilter, setTierFilter] = useState<number | null>(null)
   const [catFilter, setCatFilter] = useState<string | null>(null)
   const [page, setPage] = useState(0)
@@ -218,6 +219,7 @@ function RankingsTab({ categories }: { categories: Category[] }) {
 
   async function load() {
     setLoading(true)
+    setLoadError(null)
     try {
       const data = await adminGetQuestionRankings({
         limit: PAGE,
@@ -228,7 +230,8 @@ function RankingsTab({ categories }: { categories: Category[] }) {
       setRows(data)
       if (data.length > 0) setTotalRanked(data[0].total_ranked)
     } catch (err: any) {
-      console.error(err)
+      console.error('Rankings load error:', err)
+      setLoadError(err?.message ?? String(err))
     } finally {
       setLoading(false)
     }
@@ -279,6 +282,13 @@ function RankingsTab({ categories }: { categories: Category[] }) {
       {loading ? (
         <div className="flex justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent" />
+        </div>
+      ) : loadError ? (
+        <div className="bg-white border border-red-100 rounded-2xl px-6 py-10 text-center">
+          <div className="text-2xl mb-2">⚠️</div>
+          <p className="text-red-500 text-sm mb-1 font-semibold">Failed to load rankings</p>
+          <p className="text-gray-400 text-xs mb-4 font-mono">{loadError}</p>
+          <button onClick={load} className="text-sm text-indigo-600 hover:underline">Retry</button>
         </div>
       ) : rows.length === 0 ? (
         <div className="bg-white border border-gray-100 rounded-2xl px-6 py-16 text-center">
