@@ -3,7 +3,7 @@
 
 export const BASE_POINTS = 100
 export const MAX_SPEED_BONUS = 50
-export const SPEED_WINDOW_MS = 15000
+export const SPEED_WINDOW_MS = 20000
 export const STREAK_BONUS = 10
 export const STREAK_THRESHOLD = 3
 

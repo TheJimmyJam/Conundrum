@@ -8,7 +8,7 @@ const CORS = {
 
 const BASE = 100
 const MAX_SPEED = 50
-const SPEED_WINDOW = 15000
+const SPEED_WINDOW = 20000
 const STREAK_BONUS = 10
 const STREAK_THRESHOLD = 3
 
