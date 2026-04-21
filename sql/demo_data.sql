@@ -86,7 +86,7 @@ BEGIN
       '', '', '',
       false, false
     )
-    ON CONFLICT (email) DO NOTHING;
+    ON CONFLICT DO NOTHING;
 
     -- Update display name (trigger already created profile with username)
     UPDATE profiles SET display_name = v_display_name WHERE profiles.id = v_user_id;
