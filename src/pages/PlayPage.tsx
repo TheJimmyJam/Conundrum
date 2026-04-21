@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useGameStore } from '../store/gameStore'
@@ -10,7 +10,7 @@ import {
   finalizeSession,
 } from '../lib/api'
 
-type Phase = 'loading' | 'already_played' | 'no_set' | 'playing' | 'submitting'
+type Phase = 'loading' | 'already_played' | 'no_set' | 'playing' | 'submitting' | 'error'
 
 export default function PlayPage() {
   const navigate = useNavigate()
@@ -20,26 +20,35 @@ export default function PlayPage() {
   const [phase, setPhase] = useState<Phase>('loading')
   const [timer, setTimer] = useState(15)
   const [existingSessionId, setExistingSessionId] = useState<string | null>(null)
+  const initialized = useRef(false)
 
   useEffect(() => {
-    if (!user) return
+    const userId = user?.id
+    if (!userId || initialized.current) return
+    initialized.current = true
+
     async function init() {
-      const dailySet = await getTodaysDailySet()
-      if (!dailySet) { setPhase('no_set'); return }
+      try {
+        const dailySet = await getTodaysDailySet()
+        if (!dailySet) { setPhase('no_set'); return }
 
-      const existing = await getExistingDailySession(user!.id, dailySet.id)
-      if (existing) { setExistingSessionId(existing.id); setPhase('already_played'); return }
+        const existing = await getExistingDailySession(userId!, dailySet.id)
+        if (existing) { setExistingSessionId(existing.id); setPhase('already_played'); return }
 
-      const session = await createGameSession(user!.id, dailySet.id, 'daily')
-      const qs = await getDailySetQuestions(dailySet.id)
-      setSession(session.id, 'daily')
-      setQuestions(qs)
-      setPhase('playing')
-      startQuestion()
+        const session = await createGameSession(userId!, dailySet.id, 'daily')
+        const qs = await getDailySetQuestions(dailySet.id)
+        setSession(session.id, 'daily')
+        setQuestions(qs)
+        setPhase('playing')
+        startQuestion()
+      } catch (err) {
+        console.error('PlayPage init error:', err)
+        setPhase('error')
+      }
     }
     init()
-    return () => reset()
-  }, [user])
+    return () => { reset(); initialized.current = false }
+  }, [user?.id])
 
   // Timer
   useEffect(() => {
@@ -69,15 +78,20 @@ export default function PlayPage() {
 
     if (isLast) {
       setPhase('submitting')
-      const result = await finalizeSession({
-        session_id: sessionId!,
-        answers: [...answers, {
-          question_id: question.id,
-          selected_option_id: optionId ?? '',
-          response_time_ms: Math.max(0, (15 - timer) * 1000),
-        }],
-      })
-      navigate(`/results/${sessionId}`, { state: { result } })
+      try {
+        const result = await finalizeSession({
+          session_id: sessionId!,
+          answers: [...answers, {
+            question_id: question.id,
+            selected_option_id: optionId ?? '',
+            response_time_ms: Math.max(0, (15 - timer) * 1000),
+          }],
+        })
+        navigate(`/results/${sessionId}`, { state: { result } })
+      } catch (err) {
+        console.error('finalize-session error:', err)
+        setPhase('error')
+      }
     } else {
       nextQuestion()
       startQuestion()
@@ -86,6 +100,18 @@ export default function PlayPage() {
 
   if (phase === 'loading') return <LoadingScreen />
   if (phase === 'no_set') return <NoSetScreen />
+  if (phase === 'error') return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="text-center">
+        <div className="text-5xl mb-4">⚠️</div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">Something went wrong</h2>
+        <p className="text-gray-500 mb-6">There was a problem submitting your answers. Your score may not have been saved.</p>
+        <button onClick={() => navigate('/')} className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-700">
+          Go home
+        </button>
+      </div>
+    </div>
+  )
   if (phase === 'already_played') return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="text-center">
