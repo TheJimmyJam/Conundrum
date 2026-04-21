@@ -36,19 +36,31 @@ serve(async (req) => {
 
     if (!session) return new Response(JSON.stringify({ error: 'Session not found' }), { status: 404, headers: CORS })
 
-    const { data: served } = await supabase
-      .from('responses')
-      .select('question_id')
-      .eq('game_session_id', session_id)
+    // Get ALL session IDs ever played by this user
+    const { data: userSessions } = await supabase
+      .from('game_sessions')
+      .select('id')
+      .eq('user_id', user.id)
 
-    const servedIds = (served ?? []).map((r: any) => r.question_id)
+    const userSessionIds = (userSessions ?? []).map((s: any) => s.id)
+
+    // Get every question this user has ever answered across all sessions
+    let seenIds: string[] = []
+    if (userSessionIds.length > 0) {
+      const { data: answered } = await supabase
+        .from('responses')
+        .select('question_id')
+        .in('game_session_id', userSessionIds)
+
+      seenIds = [...new Set((answered ?? []).map((r: any) => r.question_id))]
+    }
 
     let query = supabase
       .from('questions')
       .select('id, prompt, question_type, difficulty, explanation, category_id, question_options(id, option_text, sort_order)')
       .eq('is_active', true)
 
-    if (servedIds.length > 0) query = query.not('id', 'in', `(${servedIds.join(',')})`)
+    if (seenIds.length > 0) query = query.not('id', 'in', `(${seenIds.join(',')})`)
     if (session.category_id) query = query.eq('category_id', session.category_id)
 
     const { data: candidates } = await query.limit(50)
