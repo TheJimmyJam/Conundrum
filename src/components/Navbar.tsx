@@ -147,6 +147,18 @@ export function Navbar() {
                   >
                     History
                   </Link>
+                  {profile?.role === 'admin' && (
+                    <>
+                      <div className="border-t border-gray-100" />
+                      <Link
+                        to="/admin"
+                        onClick={() => setMenuOpen(false)}
+                        className="block px-4 py-2.5 text-sm text-indigo-700 font-medium hover:bg-indigo-50"
+                      >
+                        ⚙️ Admin
+                      </Link>
+                    </>
+                  )}
                   <div className="border-t border-gray-100" />
                   <button
                     onClick={() => { setMenuOpen(false); handleSignOut() }}

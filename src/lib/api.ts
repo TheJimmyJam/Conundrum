@@ -305,7 +305,12 @@ export async function searchUsers(query: string) {
 }
 
 export async function sendFriendRequest(addresseeId: string) {
-  const { data, error } = await supabase.from('friendships').insert({ addressee_id: addresseeId }).select().single()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not logged in')
+  const { data, error } = await supabase.from('friendships').insert({
+    requester_id: user.id,
+    addressee_id: addresseeId,
+  }).select().single()
   if (error) throw error
   return data
 }
@@ -470,11 +475,10 @@ export async function adminGetSubmissions(status?: string) {
 }
 
 export async function adminReviewSubmission(id: string, status: string, featuredDate?: string) {
-  const updates: Record<string, unknown> = { status }
-  if (featuredDate) updates.featured_date = featuredDate
-  const { error } = await supabase
-    .from('question_submissions')
-    .update(updates)
-    .eq('id', id)
+  const { error } = await supabase.rpc('admin_review_submission', {
+    p_id: id,
+    p_status: status,
+    p_featured_date: featuredDate ?? null,
+  })
   if (error) throw error
 }
