@@ -499,6 +499,62 @@ export async function adminClearFeaturedSubmission(id: string) {
   if (error) throw error
 }
 
+export type QueuedSubmission = {
+  id: string
+  username: string
+  prompt: string
+  option_a: string
+  option_b: string
+  option_c: string
+  option_d: string
+  correct_option: string
+  explanation: string | null
+  status: string
+  featured_date: string | null
+  created_at: string
+}
+
+export async function adminGetSubmissionQueue(): Promise<QueuedSubmission[]> {
+  const { data, error } = await supabase.rpc('admin_get_submission_queue')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function adminUpdateSubmission(
+  id: string,
+  updates: {
+    prompt: string
+    option_a: string
+    option_b: string
+    option_c: string
+    option_d: string
+    correct_option: string
+    explanation: string | null
+  }
+) {
+  const { error } = await supabase.rpc('admin_update_submission', {
+    p_id:            id,
+    p_prompt:        updates.prompt,
+    p_option_a:      updates.option_a,
+    p_option_b:      updates.option_b,
+    p_option_c:      updates.option_c,
+    p_option_d:      updates.option_d,
+    p_correct_option: updates.correct_option,
+    p_explanation:   updates.explanation ?? '',
+  })
+  if (error) throw error
+}
+
+export async function adminDeleteSubmission(id: string) {
+  const { error } = await supabase.rpc('admin_delete_submission', { p_id: id })
+  if (error) throw error
+}
+
+export async function adminFeatureSubmissionNow(id: string) {
+  const { error } = await supabase.rpc('admin_feature_submission_now', { p_id: id })
+  if (error) throw error
+}
+
 export async function adminGetDailyPlayers(date?: string): Promise<{
   session_id: string
   user_id: string

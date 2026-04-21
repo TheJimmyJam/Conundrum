@@ -10,6 +10,7 @@ export default function AdminDashboard() {
           {[
             { to: '/admin/questions', label: 'Questions', icon: '❓' },
             { to: '/admin/daily-set', label: 'Daily Sets', icon: '📅' },
+            { to: '/admin/daily-submission', label: 'Daily Submission', icon: '📰' },
             { to: '/admin/submissions', label: 'Submissions', icon: '💡' },
             { to: '/admin/categories', label: 'Categories', icon: '🏷' },
             { to: '/admin/reports', label: 'Reports', icon: '🚩' },
