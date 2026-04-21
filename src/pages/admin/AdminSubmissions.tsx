@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { adminGetSubmissions, adminReviewSubmission } from '../../lib/api'
+import { adminGetSubmissions, adminReviewSubmission, adminClearFeaturedSubmission } from '../../lib/api'
 
 type Submission = {
   id: string
@@ -181,7 +181,29 @@ export default function AdminSubmissions() {
                           </button>
                         </div>
 
-                        {s.status !== 'rejected' && (
+                        {s.status === 'featured' && (
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Remove this question from the daily for ${s.featured_date}? It will go back to "approved" status and the daily slot will be empty.`)) return
+                              setProcessing(s.id)
+                              try {
+                                await adminClearFeaturedSubmission(s.id)
+                                await load()
+                                setExpanded(null)
+                              } catch (err: any) {
+                                alert(err?.message ?? 'Error removing from daily')
+                              } finally {
+                                setProcessing(null)
+                              }
+                            }}
+                            disabled={processing === s.id}
+                            className="text-sm bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                          >
+                            🗑 Remove from Daily
+                          </button>
+                        )}
+
+                        {s.status !== 'rejected' && s.status !== 'featured' && (
                           <button
                             onClick={() => { if (confirm('Reject this submission?')) handleReview(s.id, 'rejected') }}
                             disabled={processing === s.id}

@@ -489,6 +489,40 @@ export async function syncPlayerAwards(): Promise<{
   return data as any
 }
 
+// ─── Admin: Daily Management ──────────────────────────────────────────────────
+
+export async function adminClearFeaturedSubmission(id: string) {
+  const { error } = await supabase
+    .from('question_submissions')
+    .update({ status: 'approved', featured_date: null })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function adminGetDailyPlayers(date?: string): Promise<{
+  session_id: string
+  user_id: string
+  username: string
+  display_name: string | null
+  score: number
+  correct_count: number
+  completed_at: string
+  anti_cheat_flag: boolean
+}[]> {
+  const { data, error } = await supabase.rpc('admin_get_daily_players', {
+    p_date: date ?? new Date().toISOString().split('T')[0],
+  })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function adminResetDailySession(sessionId: string) {
+  const { error } = await supabase.rpc('admin_reset_daily_session', {
+    p_session_id: sessionId,
+  })
+  if (error) throw error
+}
+
 // ─── Admin: Submissions ────────────────────────────────────────────────────────
 
 export async function adminGetSubmissions(status?: string) {
