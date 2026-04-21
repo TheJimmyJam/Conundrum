@@ -711,3 +711,11 @@ export async function adminRemoveQuestionFromSet(dsqId: string) {
   const { error } = await supabase.rpc('admin_remove_question_from_set', { p_dsq_id: dsqId })
   if (error) throw error
 }
+
+export async function adminReorderSetQuestions(setId: string, orderedDsqIds: string[]) {
+  const { error } = await supabase.rpc('admin_reorder_set_questions', {
+    p_set_id: setId,
+    p_ordered_ids: orderedDsqIds,
+  })
+  if (error) throw error
+}
