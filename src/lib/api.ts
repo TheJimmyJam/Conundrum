@@ -611,3 +611,103 @@ export async function adminReviewSubmission(id: string, status: string, featured
   })
   if (error) throw error
 }
+
+// ─── Admin: Players ───────────────────────────────────────────────────────────
+
+export type AdminPlayer = {
+  id: string
+  username: string
+  display_name: string | null
+  email: string
+  role: string
+  created_at: string
+  games_played: number
+  best_score: number | null
+}
+
+export async function adminSearchPlayers(query = ''): Promise<AdminPlayer[]> {
+  const { data, error } = await supabase.rpc('admin_search_players', { p_query: query })
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({
+    ...r,
+    games_played: Number(r.games_played ?? 0),
+    best_score: r.best_score != null ? Number(r.best_score) : null,
+  }))
+}
+
+export async function adminResetPlayerDaily(userId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('admin_reset_player_daily', { p_user_id: userId })
+  if (error) throw error
+  return Number(data ?? 0)
+}
+
+export async function adminResetPlayerLifetime(userId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('admin_reset_player_lifetime', { p_user_id: userId })
+  if (error) throw error
+  return Number(data ?? 0)
+}
+
+// ─── Admin: Daily Sets ────────────────────────────────────────────────────────
+
+export type AdminDailySet = {
+  id: string
+  set_date: string
+  title: string | null
+  is_published: boolean
+  created_at: string
+  question_count: number
+}
+
+export type AdminSetQuestion = {
+  dsq_id: string
+  slot: number
+  question_id: string
+  prompt: string
+  difficulty: string
+  category: string
+  is_active: boolean
+}
+
+export async function adminGetDailySets(): Promise<AdminDailySet[]> {
+  const { data, error } = await supabase.rpc('admin_get_daily_sets')
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({ ...r, question_count: Number(r.question_count ?? 0) }))
+}
+
+export async function adminCreateDailySet(date: string, title?: string): Promise<string> {
+  const { data, error } = await supabase.rpc('admin_create_daily_set', {
+    p_date: date,
+    p_title: title ?? null,
+  })
+  if (error) throw error
+  return data as string
+}
+
+export async function adminUpdateDailySet(id: string, title: string | null, isPublished: boolean) {
+  const { error } = await supabase.rpc('admin_update_daily_set', {
+    p_id: id,
+    p_title: title ?? '',
+    p_is_published: isPublished,
+  })
+  if (error) throw error
+}
+
+export async function adminGetSetQuestions(setId: string): Promise<AdminSetQuestion[]> {
+  const { data, error } = await supabase.rpc('admin_get_set_questions', { p_set_id: setId })
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({ ...r, slot: Number(r.slot) }))
+}
+
+export async function adminAddQuestionToSet(setId: string, questionId: string, slot: number) {
+  const { error } = await supabase.rpc('admin_add_question_to_set', {
+    p_set_id: setId,
+    p_question_id: questionId,
+    p_position: slot,
+  })
+  if (error) throw error
+}
+
+export async function adminRemoveQuestionFromSet(dsqId: string) {
+  const { error } = await supabase.rpc('admin_remove_question_from_set', { p_dsq_id: dsqId })
+  if (error) throw error
+}

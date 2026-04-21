@@ -14,6 +14,7 @@ export default function AdminDashboard() {
             { to: '/admin/submissions', label: 'Submissions', icon: '💡' },
             { to: '/admin/categories', label: 'Categories', icon: '🏷' },
             { to: '/admin/reports', label: 'Reports', icon: '🚩' },
+            { to: '/admin/players', label: 'Players', icon: '👥' },
           ].map((item) => (
             <Link
               key={item.to}
