@@ -52,7 +52,6 @@ export default function AdminDailySet() {
 
   // Question usage tracking (loaded once on mount)
   const [usageMap, setUsageMap] = useState<Record<string, DailyQuestionUsage>>({})
-  const [usageLoaded, setUsageLoaded] = useState(false)
 
   // New set form
   const [showNew, setShowNew] = useState(false)
@@ -106,7 +105,6 @@ export default function AdminDailySet() {
       const map: Record<string, DailyQuestionUsage> = {}
       rows.forEach(r => { map[r.question_id] = r })
       setUsageMap(map)
-      setUsageLoaded(true)
     } catch { /* non-critical */ }
   }
 
@@ -230,7 +228,7 @@ export default function AdminDailySet() {
     searchTimer.current = setTimeout(() => searchPicker(val, pickerFor.setId), 300)
   }
 
-  async function searchPicker(q: string, setId: string) {
+  async function searchPicker(q: string, _setId: string) {
     setPickerLoading(true)
     try {
       let query = supabase
@@ -647,13 +645,3 @@ export default function AdminDailySet() {
   )
 }
 
-// Mini helper: shows the computed tier badge for a question in a slot
-// (We don't store tier on AdminSetQuestion, so we derive it from usage/stats at render time)
-function TierBadgeFromQuestion({ questionId, usageMap }: {
-  questionId: string
-  usageMap: Record<string, DailyQuestionUsage>
-}) {
-  // We don't have the correct_rate here unless we load it separately.
-  // This is a placeholder that could be extended if we join question_stats in adminGetSetQuestions.
-  return null
-}
