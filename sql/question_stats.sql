@@ -74,18 +74,21 @@ ON CONFLICT (question_id) DO UPDATE SET
 -- Admin RPC: ranked question list using NTILE(10) percentile buckets
 -- Tier 1 = easiest (highest correct rate), Tier 10 = hardest (lowest)
 -- ─────────────────────────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION admin_get_question_rankings(
+-- Drop first so we can change the return type definition cleanly
+DROP FUNCTION IF EXISTS admin_get_question_rankings(int, int, int, uuid);
+
+CREATE FUNCTION admin_get_question_rankings(
   p_limit       int  DEFAULT 100,
   p_offset      int  DEFAULT 0,
-  p_tier        int  DEFAULT NULL,   -- 1-10 filter, NULL = all
+  p_tier        int  DEFAULT NULL,
   p_category_id uuid DEFAULT NULL
 )
 RETURNS TABLE (
   question_id      uuid,
   prompt           text,
   category         text,
-  total_answers    bigint,
-  correct_answers  bigint,
+  total_answers    int,
+  correct_answers  int,
   correct_rate     numeric,
   tier             int,
   tier_name        text,
@@ -110,14 +113,9 @@ BEGIN
       c.name                                                           AS category,
       qs.total_answers,
       qs.correct_answers,
-      CASE WHEN qs.total_answers = 0 THEN NULL
-           ELSE ROUND(qs.correct_answers::numeric / qs.total_answers, 4)
-      END                                                              AS correct_rate,
+      ROUND(qs.correct_answers::numeric / qs.total_answers, 4)        AS correct_rate,
       NTILE(10) OVER (
-        ORDER BY
-          CASE WHEN qs.total_answers = 0 THEN NULL
-               ELSE qs.correct_answers::numeric / qs.total_answers
-          END DESC NULLS LAST
+        ORDER BY qs.correct_answers::numeric / qs.total_answers DESC
       )                                                                AS tier
     FROM question_stats qs
     JOIN questions  q ON q.id  = qs.question_id
@@ -153,3 +151,5 @@ BEGIN
   LIMIT p_limit OFFSET p_offset;
 END;
 $$;
+
+GRANT EXECUTE ON FUNCTION admin_get_question_rankings(int, int, int, uuid) TO authenticated;
