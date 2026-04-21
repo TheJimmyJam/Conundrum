@@ -24,10 +24,12 @@ export default function EndlessPlayPage() {
     pointsAwarded: number
     explanation: string | null
   } | null>(null)
+  const [pendingOptionId, setPendingOptionId] = useState<string | null>(null)
   const [showQuitConfirm, setShowQuitConfirm] = useState(false)
 
   const loadNextQuestion = useCallback(async () => {
     setPhase('loading')
+    setPendingOptionId(null)
     const result = await getNextEndlessQuestion(sessionId)
     if (result.done) {
       await finishSession()
@@ -59,7 +61,10 @@ export default function EndlessPlayPage() {
 
   async function handleAnswer(optionId: string | null) {
     if (!question || phase !== 'question') return
+
+    // Immediately lock input and show which option was tapped
     setPhase('feedback')
+    setPendingOptionId(optionId)
 
     const responseTimeMs = Math.max(0, (15 - timer) * 1000)
     const result = await submitEndlessAnswer({
@@ -69,6 +74,8 @@ export default function EndlessPlayPage() {
       response_time_ms: responseTimeMs,
     })
 
+    // Server responded — swap from pending highlight to correct/wrong colors
+    setPendingOptionId(null)
     setFeedback({
       isCorrect: result.is_correct,
       correctOptionId: result.correct_option_id,
@@ -146,11 +153,18 @@ export default function EndlessPlayPage() {
                 .sort((a, b) => a.sort_order - b.sort_order)
                 .map((opt) => {
                   let style = 'border border-gray-200 bg-white hover:border-indigo-400 hover:bg-indigo-50'
+
                   if (feedback) {
+                    // Server responded — show definitive correct/wrong
                     if (opt.id === feedback.correctOptionId) style = 'border-2 border-green-500 bg-green-50'
                     else if (opt.id === feedback.selectedOptionId && !feedback.isCorrect) style = 'border-2 border-red-400 bg-red-50'
-                    else style = 'border border-gray-100 bg-white opacity-50'
+                    else style = 'border border-gray-100 bg-white opacity-40'
+                  } else if (pendingOptionId !== null) {
+                    // Waiting on server — show immediate selection highlight
+                    if (opt.id === pendingOptionId) style = 'border-2 border-indigo-500 bg-indigo-50'
+                    else style = 'border border-gray-100 bg-white opacity-40'
                   }
+
                   return (
                     <button
                       key={opt.id}
