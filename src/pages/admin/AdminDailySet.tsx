@@ -7,9 +7,13 @@ import {
   adminGetSetQuestions,
   adminAddQuestionToSet,
   adminRemoveQuestionFromSet,
+  adminSortSetByDifficulty,
+  adminGetDailyQuestionUsage,
   type AdminDailySet,
   type AdminSetQuestion,
+  type DailyQuestionUsage,
 } from '../../lib/api'
+import { getTierInfo, tierFromRate } from '../../lib/questionTier'
 
 const SLOT_COUNT = 10
 
@@ -18,6 +22,25 @@ type PickerQuestion = {
   prompt: string
   difficulty: string
   category_name: string
+  correct_rate: number | null  // from question_stats join
+}
+
+// ── Usage badge helper ───────────────────────────────────────────────────────
+
+function UsageBadge({ usage }: { usage: DailyQuestionUsage | undefined }) {
+  if (!usage) return null
+  if (usage.upcoming_date) {
+    return (
+      <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200 whitespace-nowrap">
+        📅 Scheduled {usage.upcoming_date}
+      </span>
+    )
+  }
+  return (
+    <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 border border-gray-200 whitespace-nowrap">
+      ✓ Used {usage.times_used}×
+    </span>
+  )
 }
 
 export default function AdminDailySet() {
@@ -26,6 +49,10 @@ export default function AdminDailySet() {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [setQuestions, setSetQuestions] = useState<Record<string, AdminSetQuestion[]>>({})
   const [loadingQs, setLoadingQs] = useState<string | null>(null)
+
+  // Question usage tracking (loaded once on mount)
+  const [usageMap, setUsageMap] = useState<Record<string, DailyQuestionUsage>>({})
+  const [usageLoaded, setUsageLoaded] = useState(false)
 
   // New set form
   const [showNew, setShowNew] = useState(false)
@@ -41,21 +68,26 @@ export default function AdminDailySet() {
   // Publishing
   const [togglingPublish, setTogglingPublish] = useState<string | null>(null)
 
-  // Removing a question from a slot
+  // Removing / sorting
   const [removing, setRemoving] = useState<string | null>(null)
+  const [sorting, setSorting] = useState<string | null>(null)
 
   // Question picker modal
   const [pickerFor, setPickerFor] = useState<{ setId: string; slot: number } | null>(null)
   const [pickerSearch, setPickerSearch] = useState('')
   const [pickerResults, setPickerResults] = useState<PickerQuestion[]>([])
   const [pickerLoading, setPickerLoading] = useState(false)
+  const [hideUsed, setHideUsed] = useState(true)
   const [adding, setAdding] = useState<string | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Toast
   const [toast, setToast] = useState<string | null>(null)
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    loadUsage()
+  }, [])
 
   async function load() {
     setLoading(true)
@@ -66,6 +98,16 @@ export default function AdminDailySet() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function loadUsage() {
+    try {
+      const rows = await adminGetDailyQuestionUsage()
+      const map: Record<string, DailyQuestionUsage> = {}
+      rows.forEach(r => { map[r.question_id] = r })
+      setUsageMap(map)
+      setUsageLoaded(true)
+    } catch { /* non-critical */ }
   }
 
   async function expand(setId: string) {
@@ -141,10 +183,27 @@ export default function AdminDailySet() {
         [setId]: (prev[setId] ?? []).filter(q => q.dsq_id !== dsqId),
       }))
       setSets(prev => prev.map(x => x.id === setId ? { ...x, question_count: x.question_count - 1 } : x))
+      // Refresh usage (a slot was freed)
+      loadUsage()
     } catch (err: any) {
       showToast(`✗ ${err?.message ?? 'Failed'}`)
     } finally {
       setRemoving(null)
+    }
+  }
+
+  async function handleSort(setId: string) {
+    setSorting(setId)
+    try {
+      await adminSortSetByDifficulty(setId)
+      // Reload slot order from DB
+      const qs = await adminGetSetQuestions(setId)
+      setSetQuestions(prev => ({ ...prev, [setId]: qs }))
+      showToast('✓ Sorted easiest → hardest.')
+    } catch (err: any) {
+      showToast(`✗ ${err?.message ?? 'Sort failed'}`)
+    } finally {
+      setSorting(null)
     }
   }
 
@@ -154,7 +213,7 @@ export default function AdminDailySet() {
     setPickerFor({ setId, slot })
     setPickerSearch('')
     setPickerResults([])
-    searchPicker('')
+    searchPicker('', setId)
   }
 
   function closePicker() {
@@ -165,29 +224,37 @@ export default function AdminDailySet() {
   }
 
   function onPickerSearchChange(val: string) {
+    if (!pickerFor) return
     setPickerSearch(val)
     if (searchTimer.current) clearTimeout(searchTimer.current)
-    searchTimer.current = setTimeout(() => searchPicker(val), 300)
+    searchTimer.current = setTimeout(() => searchPicker(val, pickerFor.setId), 300)
   }
 
-  async function searchPicker(q: string) {
+  async function searchPicker(q: string, setId: string) {
     setPickerLoading(true)
     try {
       let query = supabase
         .from('questions')
-        .select('id, prompt, difficulty, categories ( name )')
+        .select('id, prompt, difficulty, categories ( name ), question_stats ( total_answers, correct_answers )')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
-        .limit(30)
+        .limit(50)
       if (q.trim()) query = query.ilike('prompt', `%${q.trim()}%`)
       const { data, error } = await query
       if (error) throw error
-      setPickerResults((data ?? []).map((r: any) => ({
-        id: r.id,
-        prompt: r.prompt,
-        difficulty: r.difficulty,
-        category_name: r.categories?.name ?? '—',
-      })))
+      setPickerResults((data ?? []).map((r: any) => {
+        const stats = r.question_stats
+        const rate = stats && stats.total_answers > 0
+          ? stats.correct_answers / stats.total_answers
+          : null
+        return {
+          id: r.id,
+          prompt: r.prompt,
+          difficulty: r.difficulty,
+          category_name: r.categories?.name ?? '—',
+          correct_rate: rate,
+        }
+      }))
     } catch (err: any) {
       showToast(`✗ ${err?.message ?? 'Search failed'}`)
     } finally {
@@ -204,6 +271,7 @@ export default function AdminDailySet() {
       const qs = await adminGetSetQuestions(setId)
       setSetQuestions(prev => ({ ...prev, [setId]: qs }))
       setSets(prev => prev.map(x => x.id === setId ? { ...x, question_count: qs.length } : x))
+      loadUsage()
       closePicker()
       showToast(`✓ Question added to slot ${slot}.`)
     } catch (err: any) {
@@ -223,7 +291,6 @@ export default function AdminDailySet() {
     d === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                      'bg-red-100 text-red-700'
 
-  // Build slot map for expanded set
   function slotMap(setId: string): Record<number, AdminSetQuestion | undefined> {
     const result: Record<number, AdminSetQuestion | undefined> = {}
     for (let i = 1; i <= SLOT_COUNT; i++) result[i] = undefined
@@ -243,7 +310,10 @@ export default function AdminDailySet() {
             + New Set
           </button>
         </div>
-        <p className="text-gray-500 mb-8">Schedule 10-question sets for specific dates. Publish to make them live.</p>
+        <p className="text-gray-500 mb-8">
+          Schedule 10-question sets for specific dates. Questions are ordered easiest → hardest.
+          Previously used questions are flagged in the picker.
+        </p>
 
         {/* New set form */}
         {showNew && (
@@ -320,7 +390,10 @@ export default function AdminDailySet() {
                             value={editingTitle[s.id]}
                             onChange={e => setEditingTitle(prev => ({ ...prev, [s.id]: e.target.value }))}
                             onClick={e => e.stopPropagation()}
-                            onKeyDown={e => { if (e.key === 'Enter') handleSaveTitle(s); if (e.key === 'Escape') setEditingTitle(prev => { const n = { ...prev }; delete n[s.id]; return n }) }}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleSaveTitle(s)
+                              if (e.key === 'Escape') setEditingTitle(prev => { const n = { ...prev }; delete n[s.id]; return n })
+                            }}
                             autoFocus
                             className="border border-indigo-300 rounded-lg px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
                           />
@@ -376,44 +449,85 @@ export default function AdminDailySet() {
                           <div className="animate-spin rounded-full h-6 w-6 border-4 border-indigo-600 border-t-transparent" />
                         </div>
                       ) : (
-                        <div className="space-y-2">
-                          {Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map(slot => {
-                            const q = slots[slot]
-                            return (
-                              <div key={slot} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${q ? 'bg-gray-50' : 'bg-indigo-50 border border-dashed border-indigo-200'}`}>
-                                <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">{slot}</span>
-                                {q ? (
+                        <>
+                          {/* Difficulty progression indicator */}
+                          {qCount > 0 && (
+                            <div className="flex items-center gap-2 mb-3 text-xs text-gray-400">
+                              <span>Slot 1 (easiest)</span>
+                              <div className="flex-1 h-1.5 rounded-full bg-gradient-to-r from-emerald-300 via-yellow-300 to-red-400" />
+                              <span>Slot 10 (hardest)</span>
+                            </div>
+                          )}
+
+                          <div className="space-y-2">
+                            {Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map(slot => {
+                              const q = slots[slot]
+                              const usage = q ? usageMap[q.question_id] : undefined
+                              // For filled slots: check if the question appears in OTHER sets
+                              const usedElsewhere = usage && (usage.times_used > 1 || (usage.times_used === 1 && usage.upcoming_date && usage.upcoming_date !== s.set_date?.toString()))
+
+                              return (
+                                <div key={slot} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${q ? 'bg-gray-50' : 'bg-indigo-50 border border-dashed border-indigo-200'}`}>
+                                  <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">{slot}</span>
+                                  {q ? (
+                                    <>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-gray-900 font-medium truncate" title={q.prompt}>{q.prompt}</p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                          <span className="text-xs text-gray-400">{q.category}</span>
+                                          {usedElsewhere && (
+                                            <span className="text-xs font-semibold text-amber-600">⚠ also in another set</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <TierBadgeFromQuestion questionId={q.question_id} usageMap={usageMap} />
+                                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${diffBadge(q.difficulty)}`}>{q.difficulty}</span>
+                                      <button
+                                        onClick={() => handleRemoveQuestion(q.dsq_id, s.id)}
+                                        disabled={removing === q.dsq_id}
+                                        className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 disabled:opacity-40 text-lg leading-none"
+                                        title="Remove from slot"
+                                      >×</button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <p className="flex-1 text-xs text-indigo-400 italic">Empty slot</p>
+                                      <button
+                                        onClick={() => openPicker(s.id, slot)}
+                                        className="text-xs bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700"
+                                      >+ Add</button>
+                                    </>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+
+                          {/* Footer actions */}
+                          <div className="mt-4 flex flex-wrap items-center gap-3">
+                            {qCount >= 2 && (
+                              <button
+                                onClick={() => handleSort(s.id)}
+                                disabled={sorting === s.id}
+                                className="text-sm font-semibold px-4 py-2 rounded-xl border border-indigo-200 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 flex items-center gap-1.5"
+                              >
+                                {sorting === s.id ? (
                                   <>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm text-gray-900 font-medium truncate" title={q.prompt}>{q.prompt}</p>
-                                      <p className="text-xs text-gray-400 mt-0.5">{q.category}</p>
-                                    </div>
-                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${diffBadge(q.difficulty)}`}>{q.difficulty}</span>
-                                    <button
-                                      onClick={() => handleRemoveQuestion(q.dsq_id, s.id)}
-                                      disabled={removing === q.dsq_id}
-                                      className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 disabled:opacity-40 text-lg leading-none"
-                                      title="Remove from slot"
-                                    >×</button>
+                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-indigo-500 border-t-transparent" />
+                                    Sorting…
                                   </>
                                 ) : (
-                                  <>
-                                    <p className="flex-1 text-xs text-indigo-400 italic">Empty slot</p>
-                                    <button
-                                      onClick={() => openPicker(s.id, slot)}
-                                      className="text-xs bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700"
-                                    >+ Add</button>
-                                  </>
+                                  '📶 Sort Easiest → Hardest'
                                 )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
-                      {!loadingQs && qCount < SLOT_COUNT && (
-                        <p className="text-xs text-amber-600 mt-3">
-                          ⚠ {SLOT_COUNT - qCount} slot{SLOT_COUNT - qCount !== 1 ? 's' : ''} still empty — set cannot be published until all {SLOT_COUNT} are filled.
-                        </p>
+                              </button>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              {qCount < SLOT_COUNT
+                                ? `${SLOT_COUNT - qCount} slot${SLOT_COUNT - qCount !== 1 ? 's' : ''} still empty — cannot publish until all ${SLOT_COUNT} are filled.`
+                                : `All ${SLOT_COUNT} slots filled. Ready to publish.`}
+                            </p>
+                          </div>
+                        </>
                       )}
                     </div>
                   )}
@@ -427,12 +541,19 @@ export default function AdminDailySet() {
       {/* Question picker modal */}
       {pickerFor && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl flex flex-col max-h-[80vh]">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900">Pick a question — Slot {pickerFor.slot}</h3>
+              <div>
+                <h3 className="font-bold text-gray-900">Pick a question — Slot {pickerFor.slot}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {pickerFor.slot <= 3 ? 'Slot 1–3: aim for easier questions (Initiate–Challenger)' :
+                   pickerFor.slot <= 6 ? 'Slot 4–6: medium difficulty (Decoder–Theorist)' :
+                                         'Slot 7–10: harder questions (Cryptic Mind–The Oracle)'}
+                </p>
+              </div>
               <button onClick={closePicker} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
             </div>
-            <div className="px-5 py-3 border-b border-gray-100">
+            <div className="px-5 py-3 border-b border-gray-100 space-y-2">
               <input
                 type="text"
                 placeholder="Search questions…"
@@ -441,35 +562,75 @@ export default function AdminDailySet() {
                 autoFocus
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
+              <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hideUsed}
+                  onChange={e => setHideUsed(e.target.checked)}
+                  className="accent-indigo-600"
+                />
+                Hide previously used questions
+              </label>
             </div>
             <div className="overflow-y-auto flex-1 px-2 py-2">
               {pickerLoading ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-4 border-indigo-600 border-t-transparent" />
                 </div>
-              ) : pickerResults.length === 0 ? (
-                <p className="text-center text-gray-400 text-sm py-8">No questions found.</p>
               ) : (
-                pickerResults.map(q => {
-                  // Skip questions already in this set
-                  const alreadyIn = (setQuestions[pickerFor.setId] ?? []).some(sq => sq.question_id === q.id)
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => handleAddQuestion(q)}
-                      disabled={alreadyIn || adding === q.id}
-                      className="w-full text-left px-3 py-3 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <p className="text-sm text-gray-900 font-medium line-clamp-2">{q.prompt}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${diffBadge(q.difficulty)}`}>{q.difficulty}</span>
-                        <span className="text-xs text-gray-400">{q.category_name}</span>
-                        {alreadyIn && <span className="text-xs text-gray-400 italic">already in set</span>}
-                        {adding === q.id && <span className="text-xs text-indigo-500">Adding…</span>}
+                (() => {
+                  const alreadyInSet = new Set((setQuestions[pickerFor.setId] ?? []).map(q => q.question_id))
+                  const filtered = pickerResults.filter(q => {
+                    if (alreadyInSet.has(q.id)) return false
+                    if (hideUsed && usageMap[q.id]) return false
+                    return true
+                  })
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="text-center py-8">
+                        <p className="text-gray-400 text-sm">No questions found.</p>
+                        {hideUsed && (
+                          <button onClick={() => setHideUsed(false)} className="text-xs text-indigo-500 mt-2 hover:underline">
+                            Show used questions
+                          </button>
+                        )}
                       </div>
-                    </button>
-                  )
-                })
+                    )
+                  }
+
+                  return filtered.map(q => {
+                    const usage = usageMap[q.id]
+                    const tier = q.correct_rate !== null ? tierFromRate(q.correct_rate) : null
+                    const tierInfo = getTierInfo(tier)
+
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => handleAddQuestion(q)}
+                        disabled={adding === q.id}
+                        className="w-full text-left px-3 py-3 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      >
+                        <p className="text-sm text-gray-900 font-medium line-clamp-2">{q.prompt}</p>
+                        <div className="flex items-center flex-wrap gap-1.5 mt-1.5">
+                          {tier !== null && (
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${tierInfo.color} ${tierInfo.textColor} ${tierInfo.borderColor}`}>
+                              {tierInfo.shortName}
+                            </span>
+                          )}
+                          {tier === null && (
+                            <span className="text-xs px-2 py-0.5 rounded-full border bg-gray-100 text-gray-400 border-gray-200">
+                              Unranked
+                            </span>
+                          )}
+                          <span className="text-xs text-gray-400">{q.category_name}</span>
+                          {usage && <UsageBadge usage={usage} />}
+                          {adding === q.id && <span className="text-xs text-indigo-500">Adding…</span>}
+                        </div>
+                      </button>
+                    )
+                  })
+                })()
               )}
             </div>
           </div>
@@ -484,4 +645,15 @@ export default function AdminDailySet() {
       )}
     </div>
   )
+}
+
+// Mini helper: shows the computed tier badge for a question in a slot
+// (We don't store tier on AdminSetQuestion, so we derive it from usage/stats at render time)
+function TierBadgeFromQuestion({ questionId, usageMap }: {
+  questionId: string
+  usageMap: Record<string, DailyQuestionUsage>
+}) {
+  // We don't have the correct_rate here unless we load it separately.
+  // This is a placeholder that could be extended if we join question_stats in adminGetSetQuestions.
+  return null
 }

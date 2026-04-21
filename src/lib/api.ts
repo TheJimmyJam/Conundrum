@@ -725,6 +725,29 @@ export async function adminRemoveQuestionFromSet(dsqId: string) {
   if (error) throw error
 }
 
+export async function adminSortSetByDifficulty(setId: string) {
+  const { error } = await supabase.rpc('admin_sort_set_by_difficulty', { p_set_id: setId })
+  if (error) throw error
+}
+
+export type DailyQuestionUsage = {
+  question_id: string
+  times_used: number
+  most_recent_date: string | null
+  upcoming_date: string | null  // non-null means it's scheduled in a future set
+}
+
+export async function adminGetDailyQuestionUsage(): Promise<DailyQuestionUsage[]> {
+  const { data, error } = await supabase.rpc('admin_get_daily_question_usage')
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({
+    question_id:      r.question_id,
+    times_used:       Number(r.times_used),
+    most_recent_date: r.most_recent_date ?? null,
+    upcoming_date:    r.upcoming_date ?? null,
+  }))
+}
+
 // ─── Admin: Demo Data ─────────────────────────────────────────────────────────
 
 export async function adminGenerateDemoUsers(count: number): Promise<{ generated: number; daily_set_date: string; message: string }> {
