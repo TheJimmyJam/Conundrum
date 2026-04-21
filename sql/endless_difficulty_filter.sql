@@ -63,7 +63,7 @@ BEGIN
     RETURN jsonb_build_object('done', true);
   END IF;
 
-  -- Build full response with nested options
+  -- Build full response with nested options + category name
   SELECT jsonb_build_object(
     'done', false,
     'question', jsonb_build_object(
@@ -73,6 +73,7 @@ BEGIN
       'difficulty',    q.difficulty,
       'explanation',   q.explanation,
       'category_id',   q.category_id,
+      'category_name', c.name,
       'options', (
         SELECT jsonb_agg(
           jsonb_build_object(
@@ -87,6 +88,7 @@ BEGIN
     )
   ) INTO v_result
   FROM questions q
+  JOIN categories c ON c.id = q.category_id
   WHERE q.id = v_question_id;
 
   RETURN v_result;

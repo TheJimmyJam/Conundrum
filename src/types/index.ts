@@ -110,6 +110,7 @@ export interface LeaderboardEntry {
 
 export interface QuestionWithOptions extends Question {
   options: QuestionOption[]
+  category_name?: string            // Joined from categories; present in endless mode
   // Populated when question_stats is joined; undefined if not yet answered by anyone
   total_answers?: number
   correct_answers?: number

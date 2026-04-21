@@ -168,6 +168,24 @@ export default function EndlessPlayPage() {
       <div className="flex-1 max-w-2xl mx-auto w-full px-6 py-8">
         {question && (
           <>
+            {/* Category + difficulty badge */}
+            <div className="flex items-center gap-2 mb-4">
+              {question.category_name && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700">
+                  {question.category_name}
+                </span>
+              )}
+              {question.difficulty && (
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                  question.difficulty === 'easy'   ? 'bg-green-100 text-green-700' :
+                  question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                                     'bg-red-100 text-red-700'
+                }`}>
+                  {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
+                </span>
+              )}
+            </div>
+
             <h2 className="text-2xl font-bold text-gray-900 mb-8 leading-snug">{question.prompt}</h2>
             <div className="grid grid-cols-1 gap-3">
               {question.options
