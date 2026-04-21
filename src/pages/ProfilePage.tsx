@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { getPlayerCrowns, getMySessionHistory } from '../lib/api'
 import { GlobalCrown, FriendsCrown } from '../components/CrownIcons'
+import { supabase } from '../lib/supabase'
 
 type CrownCounts = { global: number; friends: number }
 
@@ -11,6 +12,29 @@ export default function ProfilePage() {
   const [crowns, setCrowns] = useState<CrownCounts | null>(null)
   const [stats, setStats] = useState<{ gamesPlayed: number; perfectRounds: number; avgScore: number } | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Change password
+  const [pwOpen, setPwOpen] = useState(false)
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError, setPwError] = useState('')
+  const [pwSuccess, setPwSuccess] = useState(false)
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    setPwError('')
+    if (newPw !== confirmPw) { setPwError('Passwords don\'t match.'); return }
+    if (newPw.length < 8) { setPwError('Password must be at least 8 characters.'); return }
+    setPwLoading(true)
+    const { error } = await supabase.auth.updateUser({ password: newPw })
+    setPwLoading(false)
+    if (error) { setPwError(error.message); return }
+    setPwSuccess(true)
+    setNewPw('')
+    setConfirmPw('')
+    setTimeout(() => { setPwSuccess(false); setPwOpen(false) }, 2500)
+  }
 
   useEffect(() => {
     if (!user) return
@@ -126,6 +150,61 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
+
+        {/* Change password */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Password</h3>
+            <button
+              onClick={() => { setPwOpen(!pwOpen); setPwError(''); setPwSuccess(false) }}
+              className="text-sm text-indigo-600 hover:underline font-medium"
+            >
+              {pwOpen ? 'Cancel' : 'Change password'}
+            </button>
+          </div>
+
+          {pwOpen && (
+            <form onSubmit={handleChangePassword} className="mt-5 space-y-3">
+              {pwSuccess ? (
+                <p className="text-green-600 text-sm font-medium text-center py-2">✓ Password updated successfully.</p>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">New password</label>
+                    <input
+                      type="password"
+                      value={newPw}
+                      onChange={(e) => setNewPw(e.target.value)}
+                      required
+                      autoFocus
+                      minLength={8}
+                      placeholder="At least 8 characters"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Confirm new password</label>
+                    <input
+                      type="password"
+                      value={confirmPw}
+                      onChange={(e) => setConfirmPw(e.target.value)}
+                      required
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
+                  {pwError && <p className="text-red-500 text-sm">{pwError}</p>}
+                  <button
+                    type="submit"
+                    disabled={pwLoading}
+                    className="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm"
+                  >
+                    {pwLoading ? 'Updating…' : 'Update password'}
+                  </button>
+                </>
+              )}
+            </form>
+          )}
+        </div>
 
         {/* Actions */}
         <div className="flex gap-3 flex-wrap">

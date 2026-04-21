@@ -21,6 +21,8 @@ import ChallengePlayPage from './pages/ChallengePlayPage'
 import ChallengeResultsPage from './pages/ChallengeResultsPage'
 import SubmitQuestionPage from './pages/SubmitQuestionPage'
 import AwardsPage from './pages/AwardsPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import AdminSubmissions from './pages/admin/AdminSubmissions'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminQuestions from './pages/admin/AdminQuestions'
@@ -41,6 +43,8 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/leaderboard" element={<><Navbar /><LeaderboardPage /></>} />
 
           {/* Authenticated — shared navbar via AuthLayout */}
