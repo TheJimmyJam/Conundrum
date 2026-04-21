@@ -16,6 +16,11 @@ import HistoryPage from './pages/HistoryPage'
 import EndlessHubPage from './pages/EndlessHubPage'
 import EndlessPlayPage from './pages/EndlessPlayPage'
 import EndlessResultsPage from './pages/EndlessResultsPage'
+import FriendsPage from './pages/FriendsPage'
+import ChallengePlayPage from './pages/ChallengePlayPage'
+import ChallengeResultsPage from './pages/ChallengeResultsPage'
+import SubmitQuestionPage from './pages/SubmitQuestionPage'
+import AdminSubmissions from './pages/admin/AdminSubmissions'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminQuestions from './pages/admin/AdminQuestions'
 import AdminDailySet from './pages/admin/AdminDailySet'
@@ -44,11 +49,20 @@ function App() {
           <Route path="/endless/play" element={<ProtectedRoute><AuthLayout><EndlessPlayPage /></AuthLayout></ProtectedRoute>} />
           <Route path="/endless/results/:sessionId" element={<ProtectedRoute><AuthLayout><EndlessResultsPage /></AuthLayout></ProtectedRoute>} />
 
+          {/* Friends & Challenges */}
+          <Route path="/friends" element={<ProtectedRoute><AuthLayout><FriendsPage /></AuthLayout></ProtectedRoute>} />
+          <Route path="/challenge/:challengeId/play" element={<ProtectedRoute><ChallengePlayPage /></ProtectedRoute>} />
+          <Route path="/challenge/:challengeId/results" element={<ProtectedRoute><AuthLayout><ChallengeResultsPage /></AuthLayout></ProtectedRoute>} />
+
+          {/* Submit Question */}
+          <Route path="/submit" element={<ProtectedRoute><AuthLayout><SubmitQuestionPage /></AuthLayout></ProtectedRoute>} />
+
           {/* Admin */}
           <Route path="/admin" element={<ProtectedRoute requireAdmin><AuthLayout><AdminDashboard /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/questions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminQuestions /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/daily-set" element={<ProtectedRoute requireAdmin><AuthLayout><AdminDailySet /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AuthLayout><AdminReports /></AuthLayout></ProtectedRoute>} />
+          <Route path="/admin/submissions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminSubmissions /></AuthLayout></ProtectedRoute>} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

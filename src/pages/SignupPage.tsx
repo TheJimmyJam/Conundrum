@@ -44,7 +44,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-sm border border-gray-100">
-        <Link to="/" className="text-2xl font-bold text-indigo-700 block mb-8">Conundrum</Link>
+        <Link to="/" className="text-2xl font-bold text-indigo-700 block mb-8">Cnndrm</Link>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Create your account</h1>
         <p className="text-gray-500 text-sm mb-8">Free forever. No credit card needed.</p>
 

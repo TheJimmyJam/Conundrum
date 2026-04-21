@@ -5,11 +5,12 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin</h1>
-        <p className="text-gray-500 mb-10">Conundrum control panel</p>
+        <p className="text-gray-500 mb-10">Cnndrm control panel</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { to: '/admin/questions', label: 'Questions', icon: '❓' },
             { to: '/admin/daily-set', label: 'Daily Sets', icon: '📅' },
+            { to: '/admin/submissions', label: 'Submissions', icon: '💡' },
             { to: '/admin/categories', label: 'Categories', icon: '🏷' },
             { to: '/admin/reports', label: 'Reports', icon: '🚩' },
           ].map((item) => (

@@ -36,7 +36,7 @@ export function Navbar() {
       <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="text-xl font-bold text-indigo-700 tracking-tight">
-          Conundrum
+          Cnndrm
         </Link>
 
         {/* Center links */}
@@ -64,6 +64,22 @@ export function Navbar() {
             }`}
           >
             Leaderboard
+          </Link>
+          <Link
+            to="/friends"
+            className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              isActive('/friends') || isActive('/challenge') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            Friends
+          </Link>
+          <Link
+            to="/submit"
+            className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              isActive('/submit') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            Submit
           </Link>
         </div>
 

@@ -1,9 +1,46 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { Navbar } from '../components/Navbar'
+import { getFeaturedSubmission } from '../lib/api'
+
+type FeaturedQ = {
+  id: string
+  username: string
+  prompt: string
+  option_a: string
+  option_b: string
+  option_c: string
+  option_d: string
+  correct_option: string
+  explanation: string | null
+  featured_date: string
+}
 
 export default function LandingPage() {
   const { user } = useAuthStore()
+  const [featured, setFeatured] = useState<FeaturedQ | null>(null)
+  const [revealed, setRevealed] = useState(false)
+  const [selected, setSelected] = useState<string | null>(null)
+
+  useEffect(() => {
+    getFeaturedSubmission().then(setFeatured).catch(() => {})
+  }, [])
+
+  const options = featured
+    ? [
+        { key: 'a', text: featured.option_a },
+        { key: 'b', text: featured.option_b },
+        { key: 'c', text: featured.option_c },
+        { key: 'd', text: featured.option_d },
+      ]
+    : []
+
+  function handleOptionClick(key: string) {
+    if (revealed) return
+    setSelected(key)
+    setRevealed(true)
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -50,6 +87,93 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
+
+        {/* Community Question of the Day */}
+        {featured && (
+          <div className="mt-24 text-left">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="text-2xl">🏆</span>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Community Question of the Day</h2>
+                <p className="text-sm text-gray-500">
+                  Submitted by{' '}
+                  <span className="font-semibold text-indigo-600">@{featured.username}</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6">
+              <p className="text-lg font-semibold text-gray-900 mb-5">{featured.prompt}</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                {options.map((opt) => {
+                  const isCorrect = opt.key === featured.correct_option
+                  const isSelected = selected === opt.key
+                  const isWrong = isSelected && !isCorrect
+
+                  let cls = 'border-gray-200 bg-white text-gray-700 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer'
+                  if (revealed && isCorrect) cls = 'border-green-400 bg-green-50 text-green-800'
+                  else if (revealed && isWrong) cls = 'border-red-400 bg-red-50 text-red-800'
+                  else if (revealed) cls = 'border-gray-200 bg-white text-gray-400 cursor-default'
+
+                  return (
+                    <button
+                      key={opt.key}
+                      onClick={() => handleOptionClick(opt.key)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium text-left transition-colors ${cls}`}
+                    >
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                        revealed && isCorrect ? 'bg-green-500 text-white' :
+                        revealed && isWrong ? 'bg-red-400 text-white' :
+                        'bg-gray-100 text-gray-500'
+                      }`}>
+                        {opt.key.toUpperCase()}
+                      </span>
+                      {opt.text}
+                      {revealed && isCorrect && <span className="ml-auto text-green-600 text-xs">✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {revealed && featured.explanation && (
+                <div className="bg-white bg-opacity-70 rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed">
+                  💡 {featured.explanation}
+                </div>
+              )}
+
+              {!revealed && (
+                <p className="text-xs text-indigo-400 text-center mt-2">Tap an answer to reveal it</p>
+              )}
+            </div>
+
+            <p className="text-center text-sm text-gray-400 mt-4">
+              Think you've got a great trivia question?{' '}
+              <Link to={user ? '/submit' : '/signup'} className="text-indigo-600 font-medium hover:underline">
+                Submit yours
+              </Link>{' '}
+              and get featured here.
+            </p>
+          </div>
+        )}
+
+        {/* Submit CTA (when no featured question) */}
+        {!featured && (
+          <div className="mt-20 bg-gray-50 border border-gray-100 rounded-2xl p-8 text-center">
+            <div className="text-3xl mb-3">💡</div>
+            <h3 className="font-bold text-gray-900 mb-2">Got a great trivia question?</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Submit it and if it's selected as the daily community pick, you'll be featured right here.
+            </p>
+            <Link
+              to={user ? '/submit' : '/signup'}
+              className="inline-block bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-indigo-700 text-sm"
+            >
+              {user ? 'Submit a Question' : 'Sign up to Submit'}
+            </Link>
+          </div>
+        )}
+
       </main>
     </div>
   )

@@ -278,34 +278,154 @@ export async function getEndlessDailyStreaks(limit = 50): Promise<{ rank: number
   }))
 }
 
-// ─── Challenges ──────────────────────────────────────────────────────────────
+// ─── Friends ─────────────────────────────────────────────────────────────────
 
-export async function createChallenge(
-  challengerUserId: string,
-  opponentEmail: string,
-  dailySetId: string
-) {
-  const { data, error } = await supabase.functions.invoke('send-challenge', {
-    body: {
-      challenger_user_id: challengerUserId,
-      opponent_email: opponentEmail,
-      daily_set_id: dailySetId,
-    },
-  })
+export async function searchUsers(query: string) {
+  const { data, error } = await supabase.rpc('find_user_by_username_or_email', { p_query: query })
+  if (error) throw error
+  return (data ?? []) as { id: string; username: string; display_name: string | null }[]
+}
+
+export async function sendFriendRequest(addresseeId: string) {
+  const { data, error } = await supabase.from('friendships').insert({ addressee_id: addresseeId }).select().single()
   if (error) throw error
   return data
 }
 
-export async function getChallengeByToken(token: string) {
-  const { data, error } = await supabase
-    .from('friend_challenges')
-    .select(`
-      *,
-      challenger: profiles!challenger_user_id ( username, display_name ),
-      daily_sets ( set_date, title )
-    `)
-    .eq('id', token)
-    .maybeSingle()
+export async function respondToFriendRequest(friendshipId: string, accept: boolean) {
+  const { error } = await supabase.from('friendships')
+    .update({ status: accept ? 'accepted' : 'declined' }).eq('id', friendshipId)
+  if (error) throw error
+}
+
+export async function removeFriend(friendshipId: string) {
+  const { error } = await supabase.from('friendships').delete().eq('id', friendshipId)
+  if (error) throw error
+}
+
+export async function getFriendships() {
+  const { data, error } = await supabase.from('friendships').select(`
+    id, status, created_at,
+    requester:profiles!friendships_requester_id_fkey ( id, username, display_name ),
+    addressee:profiles!friendships_addressee_id_fkey ( id, username, display_name )
+  `).order('created_at', { ascending: false })
+  if (error) throw error
+  return (data ?? []) as any[]
+}
+
+// ─── Challenges ──────────────────────────────────────────────────────────────
+
+export async function createChallenge(challengedId: string): Promise<{ challenge_id: string; session_id: string; questions: any[] }> {
+  const { data, error } = await supabase.functions.invoke('create-challenge', { body: { challenged_id: challengedId } })
   if (error) throw error
   return data
+}
+
+export async function startChallenge(challengeId: string): Promise<{ session_id: string; questions: any[] }> {
+  const { data, error } = await supabase.functions.invoke('start-challenge', { body: { challenge_id: challengeId } })
+  if (error) throw error
+  return data
+}
+
+export async function finalizeChallenge(payload: {
+  challenge_id: string
+  session_id: string
+  answers: { question_id: string; selected_option_id: string; response_time_ms: number }[]
+}) {
+  const { data, error } = await supabase.functions.invoke('finalize-challenge', { body: payload })
+  if (error) throw error
+  return data
+}
+
+export async function getMyChallenges() {
+  const { data, error } = await supabase.from('challenges').select(`
+    id, status, winner_id, created_at, expires_at,
+    challenger:profiles!challenges_challenger_id_fkey ( id, username, display_name ),
+    challenged:profiles!challenges_challenged_id_fkey ( id, username, display_name ),
+    challenger_session:game_sessions!challenges_challenger_session_id_fkey ( score, correct_count, duration_ms ),
+    challenged_session:game_sessions!challenges_challenged_session_id_fkey ( score, correct_count, duration_ms )
+  `).order('created_at', { ascending: false })
+  if (error) throw error
+  return (data ?? []) as any[]
+}
+
+export async function declineChallenge(challengeId: string) {
+  const { error } = await supabase.from('challenges').update({ status: 'declined' }).eq('id', challengeId)
+  if (error) throw error
+}
+
+// ─── Question Submissions ─────────────────────────────────────────────────────
+
+export async function submitQuestion(payload: {
+  prompt: string
+  option_a: string
+  option_b: string
+  option_c: string
+  option_d: string
+  correct_option: string
+  explanation: string | null
+}) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not logged in')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username')
+    .eq('id', user.id)
+    .single()
+
+  const { error } = await supabase.from('question_submissions').insert({
+    user_id: user.id,
+    username: profile?.username ?? user.email?.split('@')[0] ?? 'unknown',
+    ...payload,
+  })
+  if (error) throw error
+}
+
+export async function getMySubmissions() {
+  const { data, error } = await supabase
+    .from('question_submissions')
+    .select('id, prompt, status, featured_date, created_at')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getFeaturedSubmission(date?: string): Promise<{
+  id: string
+  username: string
+  prompt: string
+  option_a: string
+  option_b: string
+  option_c: string
+  option_d: string
+  correct_option: string
+  explanation: string | null
+  featured_date: string
+} | null> {
+  const { data, error } = await supabase.rpc('get_featured_submission', {
+    p_date: date ?? new Date().toISOString().split('T')[0],
+  })
+  if (error) throw error
+  return (data ?? [])[0] ?? null
+}
+
+// ─── Admin: Submissions ────────────────────────────────────────────────────────
+
+export async function adminGetSubmissions(status?: string) {
+  const { data, error } = await supabase.rpc('admin_get_submissions', {
+    p_status: status ?? null,
+  })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function adminReviewSubmission(id: string, status: string, featuredDate?: string) {
+  const updates: Record<string, unknown> = { status }
+  if (featuredDate) updates.featured_date = featuredDate
+  const { error } = await supabase
+    .from('question_submissions')
+    .update(updates)
+    .eq('id', id)
+  if (error) throw error
 }
