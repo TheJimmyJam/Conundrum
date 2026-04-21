@@ -489,6 +489,7 @@ export async function getCommunityCorrectCount(): Promise<number> {
 // ─── Question count (public, cached module-level) ────────────────────────────
 
 let _questionCountCache: number | null = null
+export function invalidateQuestionCount() { _questionCountCache = null }
 export async function getQuestionCount(): Promise<number> {
   if (_questionCountCache !== null) return _questionCountCache
   const { data, error } = await supabase.rpc('get_question_count')
@@ -623,6 +624,8 @@ export async function adminReviewSubmission(id: string, status: string, featured
     p_featured_date: featuredDate ?? null,
   })
   if (error) throw error
+  // Bust the vault count cache so the homepage reflects the new question
+  if (status === 'approved') invalidateQuestionCount()
 }
 
 // ─── Admin: Players ───────────────────────────────────────────────────────────
