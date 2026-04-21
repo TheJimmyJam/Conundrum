@@ -51,7 +51,7 @@ BEGIN
     INTO v_q_ids
     FROM (
       SELECT q.id,
-             COALESCE(qs.correct_rate, 0.5) AS rate
+             CASE WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers ELSE 0.5 END AS rate
       FROM questions q
       LEFT JOIN question_stats qs ON qs.question_id = q.id
       WHERE q.is_active = true
@@ -82,7 +82,7 @@ BEGIN
       INTO v_q_ids
       FROM (
         SELECT q.id,
-               COALESCE(qs.correct_rate, 0.5) AS rate
+               CASE WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers ELSE 0.5 END AS rate
         FROM questions q
         LEFT JOIN question_stats qs ON qs.question_id = q.id
         WHERE q.is_active = true
