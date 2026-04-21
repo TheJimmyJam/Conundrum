@@ -9,6 +9,7 @@ import {
   getEndlessLifetimeStreaks,
   getEndlessDailyStreaks,
 } from '../lib/api'
+import { GlobalCrownBadge, FriendsCrownBadge } from '../components/CrownIcons'
 import type { LeaderboardEntry } from '../types'
 
 type Tab = 'daily' | 'lifetime' | 'days'
@@ -121,7 +122,7 @@ export default function LeaderboardPage() {
             <p className="text-xs text-gray-400 mb-5">{subDesc[dailySub]}</p>
 
             {dailySub === 'global' ? (
-              <DailyTable entries={globalEntries} userId={user?.id} />
+              <DailyTable entries={globalEntries} userId={user?.id} crownType="global" />
             ) : !user ? (
               <div className="text-center py-20">
                 <p className="text-gray-400 mb-4">Sign in to see your friends' scores.</p>
@@ -139,7 +140,7 @@ export default function LeaderboardPage() {
                 </Link>
               </div>
             ) : (
-              <DailyTable entries={friendEntries} userId={user?.id} />
+              <DailyTable entries={friendEntries} userId={user?.id} crownType="friends" />
             )}
           </>
         ) : tab === 'lifetime' ? (
@@ -158,7 +159,7 @@ export default function LeaderboardPage() {
   )
 }
 
-function DailyTable({ entries, userId }: { entries: LeaderboardEntry[]; userId?: string }) {
+function DailyTable({ entries, userId, crownType }: { entries: LeaderboardEntry[]; userId?: string; crownType?: 'global' | 'friends' }) {
   if (entries.length === 0) return (
     <div className="text-center py-20 text-gray-400">No scores yet today. Be the first!</div>
   )
@@ -166,19 +167,26 @@ function DailyTable({ entries, userId }: { entries: LeaderboardEntry[]; userId?:
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
       {entries.map((entry) => {
         const isMe = entry.user_id === userId
+        const isFirst = entry.rank === 1
         return (
           <div
             key={entry.user_id}
-            className={`flex items-center gap-4 px-5 py-4 border-b border-gray-50 last:border-0 ${isMe ? 'bg-indigo-50' : ''}`}
+            className={`flex items-center gap-4 px-5 py-4 border-b border-gray-50 last:border-0 ${
+              isMe ? 'bg-indigo-50' : isFirst ? 'bg-yellow-50/50' : ''
+            }`}
           >
             <div className="w-8 flex justify-center flex-shrink-0">
               <RankBadge rank={entry.rank} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm truncate">
-                {entry.display_name ?? entry.username}
-                {isMe && <span className="ml-2 text-xs text-indigo-500 font-normal">you</span>}
-              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-semibold text-gray-900 text-sm truncate">
+                  {entry.display_name ?? entry.username}
+                </p>
+                {isMe && <span className="text-xs text-indigo-500 font-normal">you</span>}
+                {isFirst && crownType === 'global' && <GlobalCrownBadge />}
+                {isFirst && crownType === 'friends' && <FriendsCrownBadge />}
+              </div>
               <p className="text-xs text-gray-400 mt-0.5">
                 {entry.correct_count}/10 correct · {formatDuration(Number(entry.duration_ms))}
               </p>

@@ -428,6 +428,14 @@ export async function getFeaturedSubmission(date?: string): Promise<{
   return (data ?? [])[0] ?? null
 }
 
+// ─── Crowns ───────────────────────────────────────────────────────────────────
+
+export async function getPlayerCrowns(): Promise<{ global: number; friends: number }> {
+  const { data, error } = await supabase.rpc('get_player_crowns')
+  if (error) throw error
+  return data as { global: number; friends: number }
+}
+
 // ─── Awards ───────────────────────────────────────────────────────────────────
 
 export async function syncPlayerAwards(): Promise<{
