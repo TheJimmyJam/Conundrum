@@ -39,9 +39,10 @@ export default function LandingPage() {
       const cached = localStorage.getItem(storageKey)
       if (cached) {
         try {
-          const { isCorrect } = JSON.parse(cached)
+          const { isCorrect, selected: savedSelected } = JSON.parse(cached)
           setAnswerState(isCorrect ? 'correct' : 'wrong')
-          setShowTally(true)
+          if (savedSelected) setSelected(savedSelected)
+          // Don't show tally — show the full revealed question so they can review it
           getCommunityCorrectCount().then(setCorrectCount).catch(() => {})
           return
         } catch {
@@ -54,7 +55,7 @@ export default function LandingPage() {
         const existing = await getMyTodayCommunityAnswer(sub.id).catch(() => null)
         if (existing) {
           setAnswerState(existing.is_correct ? 'correct' : 'wrong')
-          setShowTally(true)
+          // Don't show tally — show the full revealed question so they can review it
           localStorage.setItem(storageKey, JSON.stringify({ isCorrect: existing.is_correct }))
           getCommunityCorrectCount().then(setCorrectCount).catch(() => {})
         }
@@ -78,8 +79,8 @@ export default function LandingPage() {
     setSelected(key)
     setAnswerState(isCorrect ? 'correct' : 'wrong')
 
-    // Persist immediately so remounts stay locked
-    localStorage.setItem(`cqa_${featured.id}`, JSON.stringify({ isCorrect }))
+    // Persist immediately so remounts stay locked — store selected key too so we can restore it
+    localStorage.setItem(`cqa_${featured.id}`, JSON.stringify({ isCorrect, selected: key }))
 
     if (user) {
       await recordCommunityAnswer(featured.id, isCorrect)
@@ -245,6 +246,27 @@ export default function LandingPage() {
                   {answerState !== 'unanswered' && featured.explanation && (
                     <div className="bg-white bg-opacity-70 rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed">
                       💡 {featured.explanation}
+                    </div>
+                  )}
+
+                  {/* Community count — shown in review state (already answered, no tally animation) */}
+                  {answerState !== 'unanswered' && !showTally && (
+                    <div className="mt-4 flex justify-center">
+                      {user && correctCount !== null ? (
+                        <div className="inline-flex items-center gap-3 bg-white rounded-2xl border border-indigo-100 px-5 py-3 shadow-sm">
+                          <span className="text-2xl font-black text-indigo-600">{correctCount}</span>
+                          <div className="text-left">
+                            <p className="text-sm font-semibold text-gray-800">
+                              community {correctCount === 1 ? 'question' : 'questions'} correct
+                            </p>
+                            <p className="text-xs text-gray-400">lifetime total</p>
+                          </div>
+                        </div>
+                      ) : !user ? (
+                        <p className="text-sm text-gray-400">
+                          <Link to="/signup" className="text-indigo-600 font-medium hover:underline">Sign up</Link> to track your community question streak.
+                        </p>
+                      ) : null}
                     </div>
                   )}
 
