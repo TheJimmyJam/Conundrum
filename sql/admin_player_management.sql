@@ -45,16 +45,16 @@ BEGIN
 
   RETURN QUERY
   SELECT
-    p.id,
-    p.username,
-    p.display_name,
-    u.email,
-    p.role,
-    p.status,
-    p.created_at,
+    p.id::uuid,
+    p.username::text,
+    p.display_name::text,
+    u.email::text,
+    p.role::text,
+    p.status::text,
+    p.created_at::timestamptz,
     COUNT(gs.id)::bigint        AS games_played,
     MAX(gs.score)::bigint       AS best_score,
-    (u.email LIKE '%@demo.conundrum.test') AS is_demo
+    (u.email LIKE '%@demo.conundrum.test')::boolean AS is_demo
   FROM profiles p
   LEFT JOIN auth.users u   ON u.id = p.id
   LEFT JOIN game_sessions gs ON gs.user_id = p.id AND gs.status = 'completed'
