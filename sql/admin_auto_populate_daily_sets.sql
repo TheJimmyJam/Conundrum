@@ -10,9 +10,9 @@
 --
 -- Difficulty bucketing (Einstein Scale first, fallback to stored label):
 --   If the question has answer data (total_answers > 0):
---     correct_rate ≥ 0.70  → easy   (Einstein tiers 1–3)
---     correct_rate ≥ 0.40  → medium (Einstein tiers 4–6)
---     correct_rate <  0.40 → hard   (Einstein tiers 7–10)
+--     correct_rate >= 0.70  -> easy   (Einstein tiers 1-3)
+--     correct_rate >= 0.40  -> medium (Einstein tiers 4-6)
+--     correct_rate <  0.40  -> hard   (Einstein tiers 7-10)
 --   Otherwise: use q.difficulty (easy / medium / hard)
 --
 -- Fallback: if strict (60-day recency) pool is too small, relaxes to just
@@ -58,121 +58,7 @@ BEGIN
     SELECT ARRAY_AGG(sub.id ORDER BY sub.diff_order ASC, sub.rate DESC)
     INTO v_q_ids
     FROM (
-      -- 3 easy
-      -- Einstein Scale: rate ≥ 0.70 → easy. Fallback: q.difficulty = 'easy'
-      SELECT q.id, 1 AS diff_order,
-        CASE
-          WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers
-          ELSE 0.80  -- unranked easy questions sort toward middle of easy range
-        END AS rate
-      FROM questions q
-      LEFT JOIN question_stats qs ON qs.question_id = q.id
-      WHERE q.is_active = true
-        AND (
-          CASE
-            WHEN qs.total_answers > 0
-              THEN CASE
-                WHEN qs.correct_answers::float / qs.total_answers >= 0.70 THEN 'easy'
-                WHEN qs.correct_answers::float / qs.total_answers >= 0.40 THEN 'medium'
-                ELSE 'hard'
-              END
-            ELSE q.difficulty
-          END
-        ) = 'easy'
-        AND NOT EXISTS (
-          SELECT 1 FROM daily_set_questions dsq
-          JOIN daily_sets ds ON ds.id = dsq.daily_set_id
-          WHERE dsq.question_id = q.id AND ds.set_date >= CURRENT_DATE
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM daily_set_questions dsq
-          JOIN daily_sets ds ON ds.id = dsq.daily_set_id
-          WHERE dsq.question_id = q.id
-            AND ds.set_date >= (CURRENT_DATE - 60)
-            AND ds.set_date < CURRENT_DATE
-        )
-      ORDER BY RANDOM() LIMIT 3
-
-      UNION ALL
-
-      -- 3 medium
-      -- Einstein Scale: 0.40 ≤ rate < 0.70 → medium. Fallback: q.difficulty = 'medium'
-      SELECT q.id, 2 AS diff_order,
-        CASE
-          WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers
-          ELSE 0.55  -- unranked medium questions sort toward middle of medium range
-        END AS rate
-      FROM questions q
-      LEFT JOIN question_stats qs ON qs.question_id = q.id
-      WHERE q.is_active = true
-        AND (
-          CASE
-            WHEN qs.total_answers > 0
-              THEN CASE
-                WHEN qs.correct_answers::float / qs.total_answers >= 0.70 THEN 'easy'
-                WHEN qs.correct_answers::float / qs.total_answers >= 0.40 THEN 'medium'
-                ELSE 'hard'
-              END
-            ELSE q.difficulty
-          END
-        ) = 'medium'
-        AND NOT EXISTS (
-          SELECT 1 FROM daily_set_questions dsq
-          JOIN daily_sets ds ON ds.id = dsq.daily_set_id
-          WHERE dsq.question_id = q.id AND ds.set_date >= CURRENT_DATE
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM daily_set_questions dsq
-          JOIN daily_sets ds ON ds.id = dsq.daily_set_id
-          WHERE dsq.question_id = q.id
-            AND ds.set_date >= (CURRENT_DATE - 60)
-            AND ds.set_date < CURRENT_DATE
-        )
-      ORDER BY RANDOM() LIMIT 3
-
-      UNION ALL
-
-      -- 4 hard
-      -- Einstein Scale: rate < 0.40 → hard. Fallback: q.difficulty = 'hard'
-      SELECT q.id, 3 AS diff_order,
-        CASE
-          WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers
-          ELSE 0.25  -- unranked hard questions sort toward middle of hard range
-        END AS rate
-      FROM questions q
-      LEFT JOIN question_stats qs ON qs.question_id = q.id
-      WHERE q.is_active = true
-        AND (
-          CASE
-            WHEN qs.total_answers > 0
-              THEN CASE
-                WHEN qs.correct_answers::float / qs.total_answers >= 0.70 THEN 'easy'
-                WHEN qs.correct_answers::float / qs.total_answers >= 0.40 THEN 'medium'
-                ELSE 'hard'
-              END
-            ELSE q.difficulty
-          END
-        ) = 'hard'
-        AND NOT EXISTS (
-          SELECT 1 FROM daily_set_questions dsq
-          JOIN daily_sets ds ON ds.id = dsq.daily_set_id
-          WHERE dsq.question_id = q.id AND ds.set_date >= CURRENT_DATE
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM daily_set_questions dsq
-          JOIN daily_sets ds ON ds.id = dsq.daily_set_id
-          WHERE dsq.question_id = q.id
-            AND ds.set_date >= (CURRENT_DATE - 60)
-            AND ds.set_date < CURRENT_DATE
-        )
-      ORDER BY RANDOM() LIMIT 4
-    ) sub;
-
-    -- ── Attempt 2: relax 60-day rule — avoid only current/future sets ──────────
-    IF array_length(v_q_ids, 1) IS NULL OR array_length(v_q_ids, 1) < 10 THEN
-      SELECT ARRAY_AGG(sub.id ORDER BY sub.diff_order ASC, sub.rate DESC)
-      INTO v_q_ids
-      FROM (
+      SELECT * FROM (
         SELECT q.id, 1 AS diff_order,
           CASE
             WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers
@@ -197,10 +83,19 @@ BEGIN
             JOIN daily_sets ds ON ds.id = dsq.daily_set_id
             WHERE dsq.question_id = q.id AND ds.set_date >= CURRENT_DATE
           )
+          AND NOT EXISTS (
+            SELECT 1 FROM daily_set_questions dsq
+            JOIN daily_sets ds ON ds.id = dsq.daily_set_id
+            WHERE dsq.question_id = q.id
+              AND ds.set_date >= (CURRENT_DATE - 60)
+              AND ds.set_date < CURRENT_DATE
+          )
         ORDER BY RANDOM() LIMIT 3
+      ) easy3
 
-        UNION ALL
+      UNION ALL
 
+      SELECT * FROM (
         SELECT q.id, 2 AS diff_order,
           CASE
             WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers
@@ -225,10 +120,19 @@ BEGIN
             JOIN daily_sets ds ON ds.id = dsq.daily_set_id
             WHERE dsq.question_id = q.id AND ds.set_date >= CURRENT_DATE
           )
+          AND NOT EXISTS (
+            SELECT 1 FROM daily_set_questions dsq
+            JOIN daily_sets ds ON ds.id = dsq.daily_set_id
+            WHERE dsq.question_id = q.id
+              AND ds.set_date >= (CURRENT_DATE - 60)
+              AND ds.set_date < CURRENT_DATE
+          )
         ORDER BY RANDOM() LIMIT 3
+      ) med3
 
-        UNION ALL
+      UNION ALL
 
+      SELECT * FROM (
         SELECT q.id, 3 AS diff_order,
           CASE
             WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers
@@ -253,7 +157,109 @@ BEGIN
             JOIN daily_sets ds ON ds.id = dsq.daily_set_id
             WHERE dsq.question_id = q.id AND ds.set_date >= CURRENT_DATE
           )
+          AND NOT EXISTS (
+            SELECT 1 FROM daily_set_questions dsq
+            JOIN daily_sets ds ON ds.id = dsq.daily_set_id
+            WHERE dsq.question_id = q.id
+              AND ds.set_date >= (CURRENT_DATE - 60)
+              AND ds.set_date < CURRENT_DATE
+          )
         ORDER BY RANDOM() LIMIT 4
+      ) hard4
+    ) sub;
+
+    -- ── Attempt 2: relax 60-day rule — avoid only current/future sets ──────────
+    IF array_length(v_q_ids, 1) IS NULL OR array_length(v_q_ids, 1) < 10 THEN
+      SELECT ARRAY_AGG(sub.id ORDER BY sub.diff_order ASC, sub.rate DESC)
+      INTO v_q_ids
+      FROM (
+        SELECT * FROM (
+          SELECT q.id, 1 AS diff_order,
+            CASE
+              WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers
+              ELSE 0.80
+            END AS rate
+          FROM questions q
+          LEFT JOIN question_stats qs ON qs.question_id = q.id
+          WHERE q.is_active = true
+            AND (
+              CASE
+                WHEN qs.total_answers > 0
+                  THEN CASE
+                    WHEN qs.correct_answers::float / qs.total_answers >= 0.70 THEN 'easy'
+                    WHEN qs.correct_answers::float / qs.total_answers >= 0.40 THEN 'medium'
+                    ELSE 'hard'
+                  END
+                ELSE q.difficulty
+              END
+            ) = 'easy'
+            AND NOT EXISTS (
+              SELECT 1 FROM daily_set_questions dsq
+              JOIN daily_sets ds ON ds.id = dsq.daily_set_id
+              WHERE dsq.question_id = q.id AND ds.set_date >= CURRENT_DATE
+            )
+          ORDER BY RANDOM() LIMIT 3
+        ) easy3
+
+        UNION ALL
+
+        SELECT * FROM (
+          SELECT q.id, 2 AS diff_order,
+            CASE
+              WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers
+              ELSE 0.55
+            END AS rate
+          FROM questions q
+          LEFT JOIN question_stats qs ON qs.question_id = q.id
+          WHERE q.is_active = true
+            AND (
+              CASE
+                WHEN qs.total_answers > 0
+                  THEN CASE
+                    WHEN qs.correct_answers::float / qs.total_answers >= 0.70 THEN 'easy'
+                    WHEN qs.correct_answers::float / qs.total_answers >= 0.40 THEN 'medium'
+                    ELSE 'hard'
+                  END
+                ELSE q.difficulty
+              END
+            ) = 'medium'
+            AND NOT EXISTS (
+              SELECT 1 FROM daily_set_questions dsq
+              JOIN daily_sets ds ON ds.id = dsq.daily_set_id
+              WHERE dsq.question_id = q.id AND ds.set_date >= CURRENT_DATE
+            )
+          ORDER BY RANDOM() LIMIT 3
+        ) med3
+
+        UNION ALL
+
+        SELECT * FROM (
+          SELECT q.id, 3 AS diff_order,
+            CASE
+              WHEN qs.total_answers > 0 THEN qs.correct_answers::float / qs.total_answers
+              ELSE 0.25
+            END AS rate
+          FROM questions q
+          LEFT JOIN question_stats qs ON qs.question_id = q.id
+          WHERE q.is_active = true
+            AND (
+              CASE
+                WHEN qs.total_answers > 0
+                  THEN CASE
+                    WHEN qs.correct_answers::float / qs.total_answers >= 0.70 THEN 'easy'
+                    WHEN qs.correct_answers::float / qs.total_answers >= 0.40 THEN 'medium'
+                    ELSE 'hard'
+                  END
+                ELSE q.difficulty
+              END
+            ) = 'hard'
+            AND NOT EXISTS (
+              SELECT 1 FROM daily_set_questions dsq
+              JOIN daily_sets ds ON ds.id = dsq.daily_set_id
+              WHERE dsq.question_id = q.id AND ds.set_date >= CURRENT_DATE
+            )
+          ORDER BY RANDOM() LIMIT 4
+        ) hard4
       ) sub;
     END IF;
 
