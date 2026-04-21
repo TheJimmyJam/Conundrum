@@ -73,6 +73,11 @@ export default function AdminDailySet() {
   const [removing, setRemoving] = useState<string | null>(null)
   const [sorting, setSorting] = useState<string | null>(null)
 
+  // Per-question detail expand (question_id → details)
+  const [expandedQ, setExpandedQ] = useState<string | null>(null)
+  type QDetail = { options: { id: string; text: string; sort_order: number }[]; correct_option_id: string; explanation: string | null }
+  const [qDetails, setQDetails] = useState<Record<string, QDetail>>({})
+
   // Question picker modal
   const [pickerFor, setPickerFor] = useState<{ setId: string; slot: number } | null>(null)
   const [pickerSearch, setPickerSearch] = useState('')
@@ -228,6 +233,31 @@ export default function AdminDailySet() {
       showToast(`✗ ${err?.message ?? 'Sort failed'}`)
     } finally {
       setSorting(null)
+    }
+  }
+
+  // ── Question detail expand ───────────────────────────────────────────────────
+
+  async function toggleQDetail(questionId: string) {
+    if (expandedQ === questionId) { setExpandedQ(null); return }
+    setExpandedQ(questionId)
+    if (qDetails[questionId]) return  // already cached
+    try {
+      const [{ data: opts }, { data: ans }, { data: q }] = await Promise.all([
+        supabase.from('question_options').select('id, option_text, sort_order').eq('question_id', questionId).order('sort_order'),
+        supabase.from('question_answers').select('correct_option_id').eq('question_id', questionId).single(),
+        supabase.from('questions').select('explanation').eq('id', questionId).single(),
+      ])
+      setQDetails(prev => ({
+        ...prev,
+        [questionId]: {
+          options: (opts ?? []).map((o: any) => ({ id: o.id, text: o.option_text, sort_order: o.sort_order })),
+          correct_option_id: ans?.correct_option_id ?? '',
+          explanation: q?.explanation ?? null,
+        },
+      }))
+    } catch (err: any) {
+      showToast(`✗ ${err?.message ?? 'Failed to load question details'}`)
     }
   }
 
@@ -510,35 +540,89 @@ export default function AdminDailySet() {
                               const usedElsewhere = usage && (usage.times_used > 1 || (usage.times_used === 1 && usage.upcoming_date && usage.upcoming_date !== s.set_date?.toString()))
 
                               return (
-                                <div key={slot} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${q ? 'bg-gray-50' : 'bg-indigo-50 border border-dashed border-indigo-200'}`}>
-                                  <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">{slot}</span>
-                                  {q ? (
-                                    <>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-gray-900 font-medium truncate" title={q.prompt}>{q.prompt}</p>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                          <span className="text-xs text-gray-400">{q.category}</span>
-                                          {usedElsewhere && (
-                                            <span className="text-xs font-semibold text-amber-600">⚠ also in another set</span>
-                                          )}
+                                <div key={slot} className={`rounded-xl overflow-hidden ${q ? 'bg-gray-50' : 'bg-indigo-50 border border-dashed border-indigo-200'}`}>
+                                  <div className="flex items-center gap-3 px-3 py-2.5">
+                                    <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">{slot}</span>
+                                    {q ? (
+                                      <>
+                                        <button
+                                          className="flex-1 min-w-0 text-left"
+                                          onClick={() => toggleQDetail(q.question_id)}
+                                        >
+                                          <p className="text-sm text-gray-900 font-medium leading-snug">{q.prompt}</p>
+                                          <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-xs text-gray-400">{q.category}</span>
+                                            {usedElsewhere && (
+                                              <span className="text-xs font-semibold text-amber-600">⚠ also in another set</span>
+                                            )}
+                                          </div>
+                                        </button>
+                                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${diffBadge(q.difficulty)}`}>{q.difficulty}</span>
+                                        <button
+                                          onClick={() => toggleQDetail(q.question_id)}
+                                          className="text-gray-400 hover:text-indigo-600 flex-shrink-0 text-xs font-medium"
+                                          title={expandedQ === q.question_id ? 'Collapse' : 'View answers'}
+                                        >
+                                          {expandedQ === q.question_id ? '▲' : '▼'}
+                                        </button>
+                                        <button
+                                          onClick={() => handleRemoveQuestion(q.dsq_id, s.id)}
+                                          disabled={removing === q.dsq_id}
+                                          className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 disabled:opacity-40 text-lg leading-none"
+                                          title="Remove from slot"
+                                        >×</button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <p className="flex-1 text-xs text-indigo-400 italic">Empty slot</p>
+                                        <button
+                                          onClick={() => openPicker(s.id, slot)}
+                                          className="text-xs bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700"
+                                        >+ Add</button>
+                                      </>
+                                    )}
+                                  </div>
+
+                                  {/* Expanded answer detail */}
+                                  {q && expandedQ === q.question_id && (
+                                    <div className="border-t border-gray-200 px-3 pb-3 pt-2 bg-white">
+                                      {!qDetails[q.question_id] ? (
+                                        <div className="flex justify-center py-3">
+                                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-500 border-t-transparent" />
                                         </div>
-                                      </div>
-                                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${diffBadge(q.difficulty)}`}>{q.difficulty}</span>
-                                      <button
-                                        onClick={() => handleRemoveQuestion(q.dsq_id, s.id)}
-                                        disabled={removing === q.dsq_id}
-                                        className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 disabled:opacity-40 text-lg leading-none"
-                                        title="Remove from slot"
-                                      >×</button>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <p className="flex-1 text-xs text-indigo-400 italic">Empty slot</p>
-                                      <button
-                                        onClick={() => openPicker(s.id, slot)}
-                                        className="text-xs bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700"
-                                      >+ Add</button>
-                                    </>
+                                      ) : (
+                                        <>
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                                            {qDetails[q.question_id].options
+                                              .sort((a, b) => a.sort_order - b.sort_order)
+                                              .map((opt, idx) => {
+                                                const isCorrect = opt.id === qDetails[q.question_id].correct_option_id
+                                                const letter = ['A', 'B', 'C', 'D'][idx]
+                                                return (
+                                                  <div
+                                                    key={opt.id}
+                                                    className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-sm ${
+                                                      isCorrect
+                                                        ? 'bg-green-50 border-green-300 text-green-800'
+                                                        : 'bg-gray-50 border-gray-200 text-gray-600'
+                                                    }`}
+                                                  >
+                                                    <span className={`font-bold flex-shrink-0 ${isCorrect ? 'text-green-600' : 'text-gray-400'}`}>
+                                                      {letter}{isCorrect ? ' ✓' : ''}
+                                                    </span>
+                                                    <span>{opt.text}</span>
+                                                  </div>
+                                                )
+                                              })}
+                                          </div>
+                                          {qDetails[q.question_id].explanation && (
+                                            <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-xs text-amber-800">
+                                              💡 {qDetails[q.question_id].explanation}
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               )
