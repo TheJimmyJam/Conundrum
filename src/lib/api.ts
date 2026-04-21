@@ -14,6 +14,44 @@ import type {
 
 // ─── Profile ────────────────────────────────────────────────────────────────
 
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+export type AppNotification = {
+  id: string
+  type: string
+  payload: Record<string, any>
+  read_at: string | null
+  created_at: string
+}
+
+export async function getUnreadNotifications(): Promise<AppNotification[]> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('id, type, payload, read_at, created_at')
+    .is('read_at', null)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function markNotificationRead(id: string) {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function markAllNotificationsRead() {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .is('read_at', null)
+  if (error) throw error
+}
+
+// ─── Profile ────────────────────────────────────────────────────────────────
+
 export async function getProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from('profiles')

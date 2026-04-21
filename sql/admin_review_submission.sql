@@ -1,3 +1,13 @@
+-- ─────────────────────────────────────────────────────────────────────────────
+-- admin_review_submission
+--
+-- Approves or rejects a user-submitted question.
+-- On approval:
+--   - Promotes the question to the vault (questions table)
+--   - Inserts the four answer options + correct answer
+--   - Sends a submission_approved notification to the submitter
+-- ─────────────────────────────────────────────────────────────────────────────
+
 CREATE OR REPLACE FUNCTION admin_review_submission(
   p_id           uuid,
   p_status       text,
@@ -27,7 +37,7 @@ BEGIN
 
   -- Fetch current submission state
   SELECT qs.status, qs.prompt, qs.option_a, qs.option_b, qs.option_c, qs.option_d,
-         qs.correct_option, qs.explanation, qs.category_id
+         qs.correct_option, qs.explanation, qs.category_id, qs.user_id
   INTO v_sub
   FROM question_submissions qs
   WHERE qs.id = p_id;
@@ -41,10 +51,10 @@ BEGIN
   -- Update the submission record
   UPDATE question_submissions
   SET
-    status       = p_status,
+    status        = p_status,
     featured_date = COALESCE(p_featured_date, featured_date),
-    reviewed_by  = auth.uid(),
-    reviewed_at  = now()
+    reviewed_by   = auth.uid(),
+    reviewed_at   = now()
   WHERE id = p_id;
 
   -- ── Promote to vault when transitioning to approved ──────────────────────
@@ -52,7 +62,7 @@ BEGIN
   IF p_status = 'approved' AND v_current_status <> 'approved' THEN
 
     -- 1. Create the question
-    v_question_id := uuid_generate_v4();
+    v_question_id := gen_random_uuid();
     INSERT INTO questions (id, prompt, explanation, category_id, question_type, difficulty, is_active, created_at)
     VALUES (
       v_question_id,
@@ -66,10 +76,10 @@ BEGIN
     );
 
     -- 2. Create the four options
-    v_opt_a_id := uuid_generate_v4();
-    v_opt_b_id := uuid_generate_v4();
-    v_opt_c_id := uuid_generate_v4();
-    v_opt_d_id := uuid_generate_v4();
+    v_opt_a_id := gen_random_uuid();
+    v_opt_b_id := gen_random_uuid();
+    v_opt_c_id := gen_random_uuid();
+    v_opt_d_id := gen_random_uuid();
 
     INSERT INTO question_options (id, question_id, option_text, sort_order) VALUES
       (v_opt_a_id, v_question_id, v_sub.option_a, 0),
@@ -87,6 +97,21 @@ BEGIN
 
     INSERT INTO question_answers (question_id, correct_option_id)
     VALUES (v_question_id, v_correct_opt_id);
+
+    -- 4. Notify the submitter (only if they have an account)
+    IF v_sub.user_id IS NOT NULL THEN
+      INSERT INTO notifications (id, user_id, type, payload, created_at)
+      VALUES (
+        gen_random_uuid(),
+        v_sub.user_id,
+        'submission_approved',
+        jsonb_build_object(
+          'prompt', v_sub.prompt,
+          'message', 'You knew something we didn''t — thanks for sharing it!'
+        ),
+        now()
+      );
+    END IF;
 
   END IF;
 
