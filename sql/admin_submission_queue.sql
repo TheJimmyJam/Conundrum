@@ -41,9 +41,11 @@ $$;
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Admin: Get queue (today's featured + all approved, oldest first)
--- NOTE: All SELECT columns must use explicit AS aliases to avoid the
--- PostgreSQL "column reference is ambiguous" error with RETURNS TABLE.
+-- Admin: Get queue
+--   Row 1:   today's live question (status='featured', featured_date=today)
+--   Rows 2+: upcoming queue, ordered by featured_date ASC then created_at ASC
+--            includes both pre-dated (featured_date > today) and undated
+--            (status='approved') submissions
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION admin_get_submission_queue()
 RETURNS TABLE (
@@ -64,12 +66,16 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  v_today date;
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
   ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
+
+  v_today := (NOW() AT TIME ZONE 'America/New_York')::date;
 
   RETURN QUERY
   SELECT
@@ -86,9 +92,21 @@ BEGIN
     qs.featured_date  AS featured_date,
     qs.created_at     AS created_at
   FROM question_submissions qs
-  WHERE qs.status IN ('featured', 'approved')
+  WHERE
+    -- Today's live question
+    (qs.status = 'featured' AND qs.featured_date = v_today)
+    OR
+    -- Future pre-dated queue items
+    (qs.status = 'featured' AND qs.featured_date > v_today)
+    OR
+    -- Old-style undated queue items
+    (qs.status = 'approved')
   ORDER BY
-    CASE WHEN qs.status = 'featured' THEN 0 ELSE 1 END,
+    -- Today's live first
+    CASE WHEN qs.status = 'featured' AND qs.featured_date = v_today THEN 0 ELSE 1 END ASC,
+    -- Future dated items in date order
+    qs.featured_date ASC NULLS LAST,
+    -- Undated items by submission age
     qs.created_at ASC;
 END;
 $$;

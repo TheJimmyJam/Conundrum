@@ -83,7 +83,7 @@ export default function AdminDailySubmission() {
   }
 
   async function handleDelete(s: QueuedSubmission) {
-    const label = s.status === 'featured' ? 'today\'s live submission' : 'this queued submission'
+    const label = (s.status === 'featured' && s.featured_date === todayISO) ? "today's live submission" : 'this queued submission'
     if (!confirm(`Delete ${label}?\n\n"${s.prompt.slice(0, 80)}…"\n\nIt will be rejected and removed from the queue.`)) return
     setActing(s.id)
     try {
@@ -109,14 +109,13 @@ export default function AdminDailySubmission() {
     }
   }
 
+  const todayISO = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
   const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-  const featured = items.find(i => i.status === 'featured')
-  const queue = items.filter(i => i.status === 'approved')
 
-  // Next auto-rotate: tomorrow at 6am EST
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const nextRotate = tomorrow.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+  // Today's live = featured with today's date
+  const featured = items.find(i => i.status === 'featured' && i.featured_date === todayISO)
+  // Queue = everything else: future-dated featured + undated approved
+  const queue = items.filter(i => !(i.status === 'featured' && i.featured_date === todayISO))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -183,40 +182,49 @@ export default function AdminDailySubmission() {
                 <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest">
                   Queue — {queue.length} upcoming
                 </h2>
-                {queue.length > 0 && (
-                  <span className="text-xs text-gray-400">Next up: {nextRotate} at 6 AM EST</span>
-                )}
               </div>
 
               {queue.length === 0 ? (
                 <div className="bg-white border border-dashed border-gray-200 rounded-2xl px-6 py-10 text-center">
                   <div className="text-3xl mb-2">🪣</div>
-                  <p className="text-gray-500 text-sm">Queue is empty. Accept submissions to add them.</p>
+                  <p className="text-gray-500 text-sm">Queue is empty.</p>
+                  <p className="text-gray-400 text-xs mt-1">Go to <strong>Question Submissions</strong>, approve a question, then hit <strong>Add to Queue</strong>.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {queue.map((s, i) => (
-                    <SubmissionCard
-                      key={s.id}
-                      s={s}
-                      badge={
-                        <span className="text-xs bg-gray-100 text-gray-500 font-semibold px-2.5 py-1 rounded-full">
-                          #{i + 1} in queue
-                        </span>
-                      }
-                      isEditing={editing === s.id}
-                      editState={editState}
-                      onEditChange={setEditState}
-                      onEdit={() => startEdit(s)}
-                      onCancelEdit={cancelEdit}
-                      onSave={() => saveEdit(s.id)}
-                      saving={saving}
-                      acting={acting === s.id}
-                      onDelete={() => handleDelete(s)}
-                      showFeatureNow
-                      onFeatureNow={() => handleFeatureNow(s)}
-                    />
-                  ))}
+                  {queue.map((s, i) => {
+                    const dateBadge = s.featured_date
+                      ? new Date(s.featured_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                      : null
+                    return (
+                      <SubmissionCard
+                        key={s.id}
+                        s={s}
+                        badge={
+                          dateBadge ? (
+                            <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
+                              📅 {dateBadge}
+                            </span>
+                          ) : (
+                            <span className="text-xs bg-gray-100 text-gray-500 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
+                              #{i + 1} in queue
+                            </span>
+                          )
+                        }
+                        isEditing={editing === s.id}
+                        editState={editState}
+                        onEditChange={setEditState}
+                        onEdit={() => startEdit(s)}
+                        onCancelEdit={cancelEdit}
+                        onSave={() => saveEdit(s.id)}
+                        saving={saving}
+                        acting={acting === s.id}
+                        onDelete={() => handleDelete(s)}
+                        showFeatureNow
+                        onFeatureNow={() => handleFeatureNow(s)}
+                      />
+                    )
+                  })}
                 </div>
               )}
             </section>
