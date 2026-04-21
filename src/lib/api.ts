@@ -198,10 +198,16 @@ export async function getNextEndlessQuestion(sessionId: string): Promise<{
   done: boolean
   question?: QuestionWithOptions
 }> {
-  const { data, error } = await supabase.functions.invoke('get-next-question', {
-    body: { session_id: sessionId },
+  // Single DB round-trip RPC — much faster than the edge function approach
+  const { data, error } = await supabase.rpc('get_endless_question', {
+    p_session_id: sessionId,
   })
   if (error) throw error
+  if (data?.error) throw new Error(data.error)
+  // Normalize options: RPC returns 'options', frontend expects 'options'
+  if (data?.question?.options) {
+    data.question.options = data.question.options
+  }
   return data
 }
 

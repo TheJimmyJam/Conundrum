@@ -4,7 +4,7 @@ import { getNextEndlessQuestion, submitEndlessAnswer, endEndlessSession } from '
 import { useGameStore } from '../store/gameStore'
 import type { QuestionWithOptions } from '../types'
 
-type Phase = 'loading' | 'question' | 'feedback' | 'done' | 'quitting'
+type Phase = 'loading' | 'question' | 'feedback' | 'done' | 'quitting' | 'error'
 
 export default function EndlessPlayPage() {
   const navigate = useNavigate()
@@ -30,14 +30,19 @@ export default function EndlessPlayPage() {
   const loadNextQuestion = useCallback(async () => {
     setPhase('loading')
     setPendingOptionId(null)
-    const result = await getNextEndlessQuestion(sessionId)
-    if (result.done) {
-      await finishSession()
-    } else {
-      setQuestion(result.question!)
-      setQuestionCount((c) => c + 1)
-      setTimer(15)
-      setPhase('question')
+    try {
+      const result = await getNextEndlessQuestion(sessionId)
+      if (result.done) {
+        await finishSession()
+      } else {
+        setQuestion(result.question!)
+        setQuestionCount((c) => c + 1)
+        setTimer(15)
+        setPhase('question')
+      }
+    } catch (err) {
+      console.error('Failed to load question:', err)
+      setPhase('error')
     }
   }, [sessionId])
 
@@ -103,6 +108,22 @@ export default function EndlessPlayPage() {
     const result = await endEndlessSession(sessionId)
     navigate(`/endless/results/${sessionId}`, { state: { result } })
   }
+
+  if (phase === 'error') return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="text-center max-w-sm">
+        <div className="text-5xl mb-4">⚠️</div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Couldn't load a question</h2>
+        <p className="text-gray-500 text-sm mb-6">Something went wrong fetching your next question. Try again.</p>
+        <button
+          onClick={() => loadNextQuestion()}
+          className="bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-indigo-700"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+  )
 
   if (phase === 'loading' || phase === 'done') return (
     <div className="min-h-screen flex items-center justify-center">
