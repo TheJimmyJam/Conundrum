@@ -20,7 +20,7 @@ AS $$
 BEGIN
   -- Caller must be admin
   IF NOT EXISTS (
-    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+    SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
   ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
@@ -60,7 +60,7 @@ AS $$
 BEGIN
   -- Caller must be admin
   IF NOT EXISTS (
-    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+    SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
   ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;

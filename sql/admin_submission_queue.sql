@@ -66,7 +66,7 @@ SET search_path = public
 AS $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+    SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
   ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
@@ -114,7 +114,7 @@ SET search_path = public
 AS $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+    SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
   ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
@@ -144,7 +144,7 @@ SET search_path = public
 AS $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+    SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
   ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
@@ -169,7 +169,7 @@ DECLARE
   v_today date;
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+    SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
   ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
