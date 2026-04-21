@@ -174,6 +174,9 @@ export default function FriendsPage() {
   const pendingIncoming = friendships.filter(
     (f) => f.status === 'pending' && f.addressee.id === user?.id
   )
+  const pendingOutgoing = friendships.filter(
+    (f) => f.status === 'pending' && f.requester.id === user?.id
+  )
   const acceptedFriends = friendships.filter((f) => f.status === 'accepted')
 
   const pendingChallenges = challenges.filter(
@@ -291,6 +294,34 @@ export default function FriendsPage() {
                           Decline
                         </button>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Pending outgoing requests */}
+            {pendingOutgoing.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  Sent Requests
+                  <span className="ml-2 text-xs bg-amber-100 text-amber-600 font-semibold px-1.5 py-0.5 rounded-full normal-case">
+                    {pendingOutgoing.length} pending
+                  </span>
+                </h2>
+                <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+                  {pendingOutgoing.map((f) => (
+                    <div key={f.id} className="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{displayName(f.addressee)}</p>
+                        <p className="text-xs text-gray-400">@{f.addressee.username} · waiting for them to accept</p>
+                      </div>
+                      <button
+                        onClick={() => handleRemove(f.id)}
+                        className="text-xs border border-gray-200 text-gray-400 px-3 py-1.5 rounded-lg hover:bg-gray-50 hover:text-red-500 transition-colors"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   ))}
                 </div>
