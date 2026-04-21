@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { adminGetSubmissions, adminReviewSubmission, adminClearFeaturedSubmission } from '../../lib/api'
 
 type Submission = {
@@ -68,6 +69,9 @@ export default function AdminSubmissions() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-6 py-12">
+        <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-6">
+          ← Admin
+        </Link>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Question Submissions</h1>
         <p className="text-gray-500 mb-8">Review, approve, and feature community-submitted trivia questions.</p>
 
