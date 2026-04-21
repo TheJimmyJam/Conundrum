@@ -723,6 +723,27 @@ export async function adminRemoveQuestionFromSet(dsqId: string) {
   if (error) throw error
 }
 
+// ─── Admin: Demo Data ─────────────────────────────────────────────────────────
+
+export async function adminGenerateDemoUsers(count: number): Promise<{ generated: number; daily_set_date: string; message: string }> {
+  const { data, error } = await supabase.rpc('admin_generate_demo_users', { p_count: count })
+  if (error) throw error
+  const row = (data ?? [])[0]
+  return { generated: Number(row?.generated ?? 0), daily_set_date: row?.daily_set_date ?? '', message: row?.message ?? '' }
+}
+
+export async function adminRemoveDemoUsers(): Promise<number> {
+  const { data, error } = await supabase.rpc('admin_remove_demo_users')
+  if (error) throw error
+  return Number(data ?? 0)
+}
+
+export async function adminCountDemoUsers(): Promise<number> {
+  const { data, error } = await supabase.rpc('admin_count_demo_users')
+  if (error) throw error
+  return Number(data ?? 0)
+}
+
 export async function adminReorderSetQuestions(setId: string, orderedDsqIds: string[]) {
   const { error } = await supabase.rpc('admin_reorder_set_questions', {
     p_set_id: setId,
