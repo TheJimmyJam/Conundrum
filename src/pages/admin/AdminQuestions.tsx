@@ -25,7 +25,7 @@ import {
   type AdminSetQuestion,
   type RankedQuestion,
 } from '../../lib/api'
-import { getTierInfo, TIER_NAMES } from '../../lib/questionTier'
+import { getTierInfo } from '../../lib/questionTier'
 import type { Category } from '../../types'
 
 const PAGE_SIZE = 50
@@ -376,9 +376,7 @@ function RankingsTab({ categories }: { categories: Category[] }) {
                 return (
                   <tr key={r.question_id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="px-5 py-3">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full border whitespace-nowrap ${info.color} ${info.textColor} ${info.borderColor}`}>
-                        {info.shortName}
-                      </span>
+                      <TierBadge tier={r.tier} />
                     </td>
                     <td className="px-4 py-3 max-w-xs">
                       <p className="text-gray-900 font-medium truncate text-xs" title={r.prompt}>{r.prompt}</p>
