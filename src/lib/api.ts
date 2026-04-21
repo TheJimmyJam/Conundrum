@@ -633,19 +633,43 @@ export type AdminPlayer = {
   display_name: string | null
   email: string
   role: string
+  status: 'active' | 'banned' | 'frozen'
   created_at: string
   games_played: number
   best_score: number | null
+  is_demo: boolean
 }
 
-export async function adminSearchPlayers(query = ''): Promise<AdminPlayer[]> {
-  const { data, error } = await supabase.rpc('admin_search_players', { p_query: query })
+export async function adminSearchPlayers(query = '', limit = 200, offset = 0): Promise<AdminPlayer[]> {
+  const { data, error } = await supabase.rpc('admin_search_players', {
+    p_query: query,
+    p_limit: limit,
+    p_offset: offset,
+  })
   if (error) throw error
   return (data ?? []).map((r: any) => ({
     ...r,
     games_played: Number(r.games_played ?? 0),
     best_score: r.best_score != null ? Number(r.best_score) : null,
+    is_demo: r.is_demo ?? false,
   }))
+}
+
+export async function adminSetPlayerStatus(userId: string, status: 'active' | 'banned' | 'frozen') {
+  const { error } = await supabase.rpc('admin_set_player_status', {
+    p_user_id: userId,
+    p_status: status,
+  })
+  if (error) throw error
+}
+
+export async function adminUpdatePlayerProfile(userId: string, displayName: string, username: string) {
+  const { error } = await supabase.rpc('admin_update_player_profile', {
+    p_user_id: userId,
+    p_display_name: displayName,
+    p_username: username,
+  })
+  if (error) throw error
 }
 
 export async function adminResetPlayerDaily(userId: string): Promise<number> {
