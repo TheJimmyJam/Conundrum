@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { Navbar } from '../components/Navbar'
-import { getFeaturedSubmission } from '../lib/api'
+import { getFeaturedSubmission, recordCommunityAnswer, getCommunityCorrectCount } from '../lib/api'
 
 type FeaturedQ = {
   id: string
@@ -17,11 +17,15 @@ type FeaturedQ = {
   featured_date: string
 }
 
+type AnswerState = 'unanswered' | 'correct' | 'wrong'
+
 export default function LandingPage() {
   const { user } = useAuthStore()
   const [featured, setFeatured] = useState<FeaturedQ | null>(null)
-  const [revealed, setRevealed] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
+  const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
+  const [showTally, setShowTally] = useState(false)
+  const [correctCount, setCorrectCount] = useState<number | null>(null)
 
   useEffect(() => {
     getFeaturedSubmission().then(setFeatured).catch(() => {})
@@ -36,10 +40,20 @@ export default function LandingPage() {
       ]
     : []
 
-  function handleOptionClick(key: string) {
-    if (revealed) return
+  async function handleOptionClick(key: string) {
+    if (answerState !== 'unanswered' || !featured) return
+    const isCorrect = key === featured.correct_option
     setSelected(key)
-    setRevealed(true)
+    setAnswerState(isCorrect ? 'correct' : 'wrong')
+
+    if (user) {
+      await recordCommunityAnswer(featured.id, isCorrect)
+      const count = await getCommunityCorrectCount()
+      setCorrectCount(count)
+    }
+
+    // After 1.8s, slide to tally view
+    setTimeout(() => setShowTally(true), 1800)
   }
 
   return (
@@ -102,48 +116,107 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6">
-              <p className="text-lg font-semibold text-gray-900 mb-5">{featured.prompt}</p>
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6 overflow-hidden">
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                {options.map((opt) => {
-                  const isCorrect = opt.key === featured.correct_option
-                  const isSelected = selected === opt.key
-                  const isWrong = isSelected && !isCorrect
+              {/* Tally view — slides in after answering */}
+              {showTally ? (
+                <div className="text-center py-6 animate-fade-in">
+                  {answerState === 'correct' ? (
+                    <>
+                      <div className="text-5xl mb-3">🎉</div>
+                      <h3 className="text-2xl font-bold text-green-700 mb-1">Correct!</h3>
+                      <p className="text-gray-500 text-sm mb-6">Nice one — you knew that.</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-5xl mb-3">😬</div>
+                      <h3 className="text-2xl font-bold text-red-600 mb-1">Not quite!</h3>
+                      <p className="text-gray-500 text-sm mb-2">
+                        The correct answer was{' '}
+                        <span className="font-semibold text-gray-800">
+                          {options.find(o => o.key === featured.correct_option)?.text}
+                        </span>
+                      </p>
+                      {featured.explanation && (
+                        <p className="text-xs text-gray-400 mb-6">💡 {featured.explanation}</p>
+                      )}
+                    </>
+                  )}
 
-                  let cls = 'border-gray-200 bg-white text-gray-700 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer'
-                  if (revealed && isCorrect) cls = 'border-green-400 bg-green-50 text-green-800'
-                  else if (revealed && isWrong) cls = 'border-red-400 bg-red-50 text-red-800'
-                  else if (revealed) cls = 'border-gray-200 bg-white text-gray-400 cursor-default'
-
-                  return (
-                    <button
-                      key={opt.key}
-                      onClick={() => handleOptionClick(opt.key)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium text-left transition-colors ${cls}`}
-                    >
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                        revealed && isCorrect ? 'bg-green-500 text-white' :
-                        revealed && isWrong ? 'bg-red-400 text-white' :
-                        'bg-gray-100 text-gray-500'
-                      }`}>
-                        {opt.key.toUpperCase()}
-                      </span>
-                      {opt.text}
-                      {revealed && isCorrect && <span className="ml-auto text-green-600 text-xs">✓</span>}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {revealed && featured.explanation && (
-                <div className="bg-white bg-opacity-70 rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed">
-                  💡 {featured.explanation}
+                  {user && correctCount !== null ? (
+                    <div className="inline-flex items-center gap-3 bg-white rounded-2xl border border-indigo-100 px-6 py-4 shadow-sm">
+                      <span className="text-3xl font-black text-indigo-600">{correctCount}</span>
+                      <div className="text-left">
+                        <p className="text-sm font-semibold text-gray-800">
+                          community {correctCount === 1 ? 'question' : 'questions'} correct
+                        </p>
+                        <p className="text-xs text-gray-400">lifetime total</p>
+                      </div>
+                    </div>
+                  ) : !user ? (
+                    <p className="text-sm text-gray-400">
+                      <Link to="/signup" className="text-indigo-600 font-medium hover:underline">Sign up</Link> to track your community question streak.
+                    </p>
+                  ) : null}
                 </div>
-              )}
+              ) : (
+                <>
+                  {/* Answer feedback banner */}
+                  {answerState === 'correct' && (
+                    <div className="flex items-center gap-2 bg-green-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl mb-4 animate-fade-in">
+                      <span className="text-lg">🎉</span> Correct! Well done!
+                    </div>
+                  )}
+                  {answerState === 'wrong' && (
+                    <div className="flex items-center gap-2 bg-red-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl mb-4 animate-fade-in">
+                      <span className="text-lg">😬</span> Not quite — see the correct answer below.
+                    </div>
+                  )}
 
-              {!revealed && (
-                <p className="text-xs text-indigo-400 text-center mt-2">Tap an answer to reveal it</p>
+                  <p className="text-lg font-semibold text-gray-900 mb-5">{featured.prompt}</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    {options.map((opt) => {
+                      const isCorrect = opt.key === featured.correct_option
+                      const isSelected = selected === opt.key
+                      const isWrong = isSelected && !isCorrect
+                      const revealed = answerState !== 'unanswered'
+
+                      let cls = 'border-gray-200 bg-white text-gray-700 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer'
+                      if (revealed && isCorrect) cls = 'border-green-400 bg-green-50 text-green-800'
+                      else if (revealed && isWrong) cls = 'border-red-400 bg-red-50 text-red-800'
+                      else if (revealed) cls = 'border-gray-200 bg-white text-gray-400 cursor-default'
+
+                      return (
+                        <button
+                          key={opt.key}
+                          onClick={() => handleOptionClick(opt.key)}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium text-left transition-colors ${cls}`}
+                        >
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                            revealed && isCorrect ? 'bg-green-500 text-white' :
+                            revealed && isWrong ? 'bg-red-400 text-white' :
+                            'bg-gray-100 text-gray-500'
+                          }`}>
+                            {opt.key.toUpperCase()}
+                          </span>
+                          {opt.text}
+                          {revealed && isCorrect && <span className="ml-auto text-green-600 text-xs">✓</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {answerState !== 'unanswered' && featured.explanation && (
+                    <div className="bg-white bg-opacity-70 rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed">
+                      💡 {featured.explanation}
+                    </div>
+                  )}
+
+                  {answerState === 'unanswered' && (
+                    <p className="text-xs text-indigo-400 text-center mt-2">Tap an answer to reveal it</p>
+                  )}
+                </>
               )}
             </div>
 

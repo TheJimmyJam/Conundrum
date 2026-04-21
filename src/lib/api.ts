@@ -434,6 +434,25 @@ export async function getFeaturedSubmission(date?: string): Promise<{
   return (data ?? [])[0] ?? null
 }
 
+// ─── Community Question Answers ───────────────────────────────────────────────
+
+export async function recordCommunityAnswer(submissionId: string, isCorrect: boolean) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('community_question_answers').insert({
+    user_id: user.id,
+    submission_id: submissionId,
+    is_correct: isCorrect,
+  })
+  // ignore duplicate errors (already answered today)
+}
+
+export async function getCommunityCorrectCount(): Promise<number> {
+  const { data, error } = await supabase.rpc('get_community_correct_count')
+  if (error) return 0
+  return Number(data ?? 0)
+}
+
 // ─── Question count (public, cached module-level) ────────────────────────────
 
 let _questionCountCache: number | null = null
