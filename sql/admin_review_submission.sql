@@ -98,7 +98,13 @@ BEGIN
     INSERT INTO question_answers (question_id, correct_option_id)
     VALUES (v_question_id, v_correct_opt_id);
 
-    -- 4. Notify the submitter (only if they have an account)
+    -- 4. Link the vault question back to the submission so community
+    --    answers can feed into question_stats via the trigger
+    UPDATE question_submissions
+    SET question_id = v_question_id
+    WHERE id = p_id;
+
+    -- 5. Notify the submitter (only if they have an account)
     IF v_sub.user_id IS NOT NULL THEN
       INSERT INTO notifications (id, user_id, type, payload, created_at)
       VALUES (
