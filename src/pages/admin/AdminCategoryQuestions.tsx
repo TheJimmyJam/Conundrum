@@ -35,6 +35,7 @@ export default function AdminCategoryQuestions() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
+  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all')
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<Record<string, ExpandedData | null>>({})
   const [loadingExpand, setLoadingExpand] = useState<string | null>(null)
@@ -51,7 +52,12 @@ export default function AdminCategoryQuestions() {
 
   useEffect(() => {
     load()
-  }, [categoryId, page])
+  }, [categoryId, page, difficultyFilter])
+
+  function handleFilterChange(filter: 'all' | 'easy' | 'medium' | 'hard') {
+    setDifficultyFilter(filter)
+    setPage(0)
+  }
 
   async function load() {
     setLoading(true)
@@ -61,10 +67,17 @@ export default function AdminCategoryQuestions() {
     const from = page * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
 
-    const { data, error, count } = await supabase
+    let query = supabase
       .from('questions')
       .select('id, prompt, difficulty, created_at', { count: 'exact' })
       .eq('category_id', categoryId!)
+
+    if (difficultyFilter !== 'all') {
+      query = query.eq('difficulty', difficultyFilter)
+    }
+
+    const { data, error, count } = await query
+      .order('difficulty', { ascending: true })
       .order('created_at', { ascending: false })
       .range(from, to)
 
@@ -222,9 +235,31 @@ export default function AdminCategoryQuestions() {
           <span className="text-gray-300">/</span>
           <h1 className="text-2xl font-bold text-gray-900">{categoryName}</h1>
         </div>
-        <p className="text-sm text-gray-400 mb-8">
+        <p className="text-sm text-gray-400 mb-4">
           {total.toLocaleString()} question{total !== 1 ? 's' : ''} · Page {page + 1} of {totalPages || 1}
         </p>
+
+        {/* Difficulty filter */}
+        <div className="flex gap-2 mb-6">
+          {(['all', 'easy', 'medium', 'hard'] as const).map(f => {
+            const active = difficultyFilter === f
+            const colorMap = {
+              all: active ? 'bg-gray-800 text-white' : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-400',
+              easy: active ? 'bg-green-500 text-white' : 'bg-white text-green-600 border border-green-200 hover:border-green-400',
+              medium: active ? 'bg-yellow-400 text-white' : 'bg-white text-yellow-600 border border-yellow-200 hover:border-yellow-400',
+              hard: active ? 'bg-red-500 text-white' : 'bg-white text-red-500 border border-red-200 hover:border-red-400',
+            }
+            return (
+              <button
+                key={f}
+                onClick={() => handleFilterChange(f)}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-colors ${colorMap[f]}`}
+              >
+                {f === 'all' ? 'All' : f}
+              </button>
+            )
+          })}
+        </div>
 
         {/* Questions list */}
         {loading ? (
