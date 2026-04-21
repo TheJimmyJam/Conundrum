@@ -478,7 +478,6 @@ export default function AdminDailySet() {
                                           )}
                                         </div>
                                       </div>
-                                      <TierBadgeFromQuestion questionId={q.question_id} usageMap={usageMap} />
                                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${diffBadge(q.difficulty)}`}>{q.difficulty}</span>
                                       <button
                                         onClick={() => handleRemoveQuestion(q.dsq_id, s.id)}
