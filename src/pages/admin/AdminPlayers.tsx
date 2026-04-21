@@ -64,7 +64,10 @@ export default function AdminPlayers() {
   async function search(q: string) {
     setLoading(true)
     try { setPlayers(await adminSearchPlayers(q)) }
-    catch (err: any) { console.error(err) }
+    catch (err: any) {
+      console.error('adminSearchPlayers error:', err)
+      showToast(`✗ ${err?.message ?? err?.error_description ?? JSON.stringify(err) ?? 'Failed to load players'}`)
+    }
     finally { setLoading(false) }
   }
 
