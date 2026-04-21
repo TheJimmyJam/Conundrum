@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { tierFromRate } from './questionTier'
 import type {
   Profile,
   Category,
@@ -168,16 +169,26 @@ export async function getDailySetQuestions(dailySetId: string): Promise<Question
       position,
       questions (
         id, prompt, question_type, difficulty, explanation, category_id,
-        question_options ( id, option_text, sort_order )
+        question_options ( id, option_text, sort_order ),
+        question_stats ( total_answers, correct_answers )
       )
     `)
     .eq('daily_set_id', dailySetId)
     .order('position')
   if (error) throw error
-  return (data ?? []).map((row: any) => ({
-    ...row.questions,
-    options: row.questions.question_options ?? [],
-  }))
+  return (data ?? []).map((row: any) => {
+    const stats = row.questions.question_stats
+    const rate = stats && stats.total_answers > 0
+      ? stats.correct_answers / stats.total_answers
+      : null
+    return {
+      ...row.questions,
+      options: row.questions.question_options ?? [],
+      total_answers: stats?.total_answers ?? 0,
+      correct_answers: stats?.correct_answers ?? 0,
+      difficulty_tier: rate !== null ? tierFromRate(rate) : null,
+    }
+  })
 }
 
 // ─── Finalize Session (daily) ─────────────────────────────────────────────────
@@ -718,4 +729,41 @@ export async function adminReorderSetQuestions(setId: string, orderedDsqIds: str
     p_ordered_ids: orderedDsqIds,
   })
   if (error) throw error
+}
+
+// ─── Admin: Question Rankings ─────────────────────────────────────────────────
+
+export type RankedQuestion = {
+  question_id: string
+  prompt: string
+  category: string
+  total_answers: number
+  correct_answers: number
+  correct_rate: number
+  tier: number
+  tier_name: string
+  total_ranked: number
+}
+
+export async function adminGetQuestionRankings(opts: {
+  limit?: number
+  offset?: number
+  tier?: number | null
+  category_id?: string | null
+}): Promise<RankedQuestion[]> {
+  const { data, error } = await supabase.rpc('admin_get_question_rankings', {
+    p_limit:       opts.limit       ?? 100,
+    p_offset:      opts.offset      ?? 0,
+    p_tier:        opts.tier        ?? null,
+    p_category_id: opts.category_id ?? null,
+  })
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({
+    ...r,
+    total_answers:   Number(r.total_answers),
+    correct_answers: Number(r.correct_answers),
+    correct_rate:    Number(r.correct_rate),
+    tier:            Number(r.tier),
+    total_ranked:    Number(r.total_ranked),
+  }))
 }

@@ -9,6 +9,7 @@ import {
   getDailySetQuestions,
   finalizeSession,
 } from '../lib/api'
+import { getTierInfo } from '../lib/questionTier'
 
 type Phase = 'loading' | 'already_played' | 'no_set' | 'playing' | 'submitting' | 'error'
 
@@ -158,7 +159,23 @@ export default function PlayPage() {
         </div>
 
         {/* Question */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-8 leading-snug">{question.prompt}</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-3 leading-snug">{question.prompt}</h2>
+        {question.difficulty_tier != null && (() => {
+          const info = getTierInfo(question.difficulty_tier)
+          const pct = question.total_answers
+            ? Math.round((question.correct_answers ?? 0) / question.total_answers * 100)
+            : null
+          return (
+            <div className="flex items-center gap-2 mb-6">
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${info.color} ${info.textColor} ${info.borderColor}`}>
+                {info.name}
+              </span>
+              {pct !== null && (
+                <span className="text-xs text-gray-400">{pct}% of players got this right</span>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Options */}
         <div className="grid grid-cols-1 gap-3">

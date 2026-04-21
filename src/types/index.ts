@@ -109,6 +109,10 @@ export interface LeaderboardEntry {
 
 export interface QuestionWithOptions extends Question {
   options: QuestionOption[]
+  // Populated when question_stats is joined; undefined if not yet answered by anyone
+  total_answers?: number
+  correct_answers?: number
+  difficulty_tier?: number | null  // 1 (easiest) – 10 (hardest), null = unranked
 }
 
 export interface FinalizeSessionPayload {

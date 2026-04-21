@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -19,15 +19,19 @@ import {
   adminGetDailySets,
   adminGetSetQuestions,
   adminReorderSetQuestions,
+  adminAddQuestionToSet,
+  adminGetQuestionRankings,
   type AdminDailySet,
   type AdminSetQuestion,
+  type RankedQuestion,
 } from '../../lib/api'
+import { getTierInfo, TIER_NAMES } from '../../lib/questionTier'
 import type { Category } from '../../types'
 
 const PAGE_SIZE = 50
 const DIFFICULTIES = ['easy', 'medium', 'hard'] as const
 
-type Tab = 'all' | 'upcoming'
+type Tab = 'all' | 'upcoming' | 'rankings'
 
 type Question = {
   id: string
@@ -57,7 +61,19 @@ const emptyNew = (): NewQ => ({
   correct_index: 0,
 })
 
-// ── Sortable row for upcoming daily ─────────────────────────────────────────
+// ── Tier badge ───────────────────────────────────────────────────────────────
+
+function TierBadge({ tier }: { tier: number | null | undefined }) {
+  const info = getTierInfo(tier ?? null)
+  if (!tier) return null
+  return (
+    <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${info.color} ${info.textColor} ${info.borderColor}`}>
+      {info.shortName}
+    </span>
+  )
+}
+
+// ── Sortable row for Upcoming Daily ─────────────────────────────────────────
 
 function SortableQuestionRow({
   q,
@@ -84,7 +100,6 @@ function SortableQuestionRow({
       style={style}
       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 bg-gray-50 border border-transparent ${isDragging ? 'border-indigo-300 shadow-md' : ''}`}
     >
-      {/* Drag handle */}
       <button
         {...attributes}
         {...listeners}
@@ -103,6 +118,302 @@ function SortableQuestionRow({
       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${diffBadge(q.difficulty)}`}>
         {q.difficulty}
       </span>
+    </div>
+  )
+}
+
+// ── Add-to-Daily modal ───────────────────────────────────────────────────────
+
+function AddToDailyModal({
+  question,
+  onClose,
+  onAdded,
+}: {
+  question: Question
+  onClose: () => void
+  onAdded: (msg: string) => void
+}) {
+  const today = new Date().toISOString().slice(0, 10)
+  const [sets, setSets] = useState<AdminDailySet[]>([])
+  const [setQs, setSetQs] = useState<Record<string, AdminSetQuestion[]>>({})
+  const [loading, setLoading] = useState(true)
+  const [selectedSet, setSelectedSet] = useState<string>('')
+  const [selectedSlot, setSelectedSlot] = useState<number>(0)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    adminGetDailySets()
+      .then(all => {
+        const upcoming = all.filter(s => s.set_date >= today).sort((a, b) => a.set_date.localeCompare(b.set_date))
+        setSets(upcoming)
+        // Load questions for each set to know which slots are taken
+        Promise.all(upcoming.map(s => adminGetSetQuestions(s.id).then(qs => ({ id: s.id, qs }))))
+          .then(results => {
+            const map: Record<string, AdminSetQuestion[]> = {}
+            results.forEach(r => { map[r.id] = r.qs })
+            setSetQs(map)
+          })
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  function openSlots(setId: string): number[] {
+    const taken = new Set((setQs[setId] ?? []).map(q => q.slot))
+    const also = (setQs[setId] ?? []).some(q => q.question_id === question.id)
+    if (also) return []
+    return Array.from({ length: 10 }, (_, i) => i + 1).filter(s => !taken.has(s))
+  }
+
+  async function handleAdd() {
+    if (!selectedSet || !selectedSlot) return setError('Select a set and an open slot.')
+    setSaving(true)
+    setError(null)
+    try {
+      await adminAddQuestionToSet(selectedSet, question.id, selectedSlot)
+      const setInfo = sets.find(s => s.id === selectedSet)
+      const dateStr = setInfo ? new Date(setInfo.set_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+      onAdded(`✓ Added to ${dateStr} — slot ${selectedSlot}.`)
+      onClose()
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to add')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const slots = selectedSet ? openSlots(selectedSet) : []
+  const alreadyIn = selectedSet ? (setQs[selectedSet] ?? []).some(q => q.question_id === question.id) : false
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-gray-900">Add to Upcoming Daily</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+        </div>
+        <p className="text-sm text-gray-600 mb-4 bg-gray-50 rounded-xl px-3 py-2 line-clamp-2">{question.prompt}</p>
+
+        {loading ? (
+          <div className="flex justify-center py-6">
+            <div className="animate-spin rounded-full h-5 w-5 border-4 border-indigo-600 border-t-transparent" />
+          </div>
+        ) : sets.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-4">No upcoming sets. Create one in Daily Sets first.</p>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Daily Set *</label>
+              <select
+                value={selectedSet}
+                onChange={e => { setSelectedSet(e.target.value); setSelectedSlot(0) }}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              >
+                <option value="">Choose a date…</option>
+                {sets.map(s => {
+                  const dateStr = new Date(s.set_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                  const qsForSet = setQs[s.id]
+                  const isFull = qsForSet && qsForSet.length >= 10
+                  const hasQ = qsForSet && qsForSet.some(q => q.question_id === question.id)
+                  return (
+                    <option key={s.id} value={s.id} disabled={isFull || hasQ}>
+                      {dateStr} — {s.title ?? 'Untitled'} ({qsForSet?.length ?? '?'}/10){isFull ? ' (full)' : ''}{hasQ ? ' (already added)' : ''}
+                    </option>
+                  )
+                })}
+              </select>
+            </div>
+
+            {selectedSet && alreadyIn && (
+              <p className="text-xs text-amber-600">This question is already in that set.</p>
+            )}
+
+            {selectedSet && !alreadyIn && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Slot *</label>
+                {slots.length === 0 ? (
+                  <p className="text-xs text-red-500">No open slots in this set.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {slots.map(slot => (
+                      <button
+                        key={slot}
+                        onClick={() => setSelectedSlot(slot)}
+                        className={`w-9 h-9 rounded-lg text-sm font-bold border transition-colors ${
+                          selectedSlot === slot
+                            ? 'bg-indigo-600 text-white border-indigo-600'
+                            : 'border-gray-200 text-gray-600 hover:border-indigo-400'
+                        }`}
+                      >
+                        {slot}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {error && <p className="text-sm text-red-500">{error}</p>}
+
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={handleAdd}
+                disabled={saving || !selectedSet || !selectedSlot || alreadyIn}
+                className="bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {saving ? 'Adding…' : 'Add to Daily'}
+              </button>
+              <button onClick={onClose} className="border border-gray-200 text-gray-600 text-sm px-4 py-2.5 rounded-xl hover:bg-gray-50">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Rankings tab ─────────────────────────────────────────────────────────────
+
+function RankingsTab({ categories }: { categories: Category[] }) {
+  const [rows, setRows] = useState<RankedQuestion[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tierFilter, setTierFilter] = useState<number | null>(null)
+  const [catFilter, setCatFilter] = useState<string | null>(null)
+  const [page, setPage] = useState(0)
+  const [totalRanked, setTotalRanked] = useState(0)
+  const PAGE = 100
+
+  useEffect(() => { setPage(0) }, [tierFilter, catFilter])
+  useEffect(() => { load() }, [tierFilter, catFilter, page])
+
+  async function load() {
+    setLoading(true)
+    try {
+      const data = await adminGetQuestionRankings({
+        limit: PAGE,
+        offset: page * PAGE,
+        tier: tierFilter,
+        category_id: catFilter,
+      })
+      setRows(data)
+      if (data.length > 0) setTotalRanked(data[0].total_ranked)
+    } catch (err: any) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const totalPages = Math.ceil(totalRanked / PAGE)
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <p className="text-gray-500 text-sm flex-1">
+          {totalRanked.toLocaleString()} questions ranked · tiers assigned by percentile (NTILE 10)
+        </p>
+      </div>
+
+      {/* Tier legend */}
+      <div className="flex flex-wrap gap-1.5 mb-5">
+        {[null, ...Array.from({ length: 10 }, (_, i) => i + 1)].map(t => {
+          const info = getTierInfo(t)
+          const active = tierFilter === t
+          return (
+            <button
+              key={t ?? 'all'}
+              onClick={() => setTierFilter(t)}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-all ${
+                active
+                  ? `${info.color} ${info.textColor} ${info.borderColor} ring-2 ring-offset-1 ring-current`
+                  : `${info.color} ${info.textColor} ${info.borderColor} opacity-70 hover:opacity-100`
+              }`}
+            >
+              {t === null ? 'All' : `${t}. ${info.shortName}`}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="flex gap-3 mb-5">
+        <select
+          value={catFilter ?? ''}
+          onChange={e => setCatFilter(e.target.value || null)}
+          className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+        >
+          <option value="">All categories</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent" />
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="bg-white border border-gray-100 rounded-2xl px-6 py-16 text-center">
+          <div className="text-3xl mb-2">📊</div>
+          <p className="text-gray-400 text-sm">No ranked questions yet. Data populates as players answer.</p>
+        </div>
+      ) : (
+        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="border-b border-gray-100">
+              <tr>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">Tier</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Question</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden md:table-cell">Category</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden sm:table-cell">Plays</th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Correct %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(r => {
+                const info = getTierInfo(r.tier)
+                const pct = Math.round(r.correct_rate * 100)
+                return (
+                  <tr key={r.question_id} className="border-b border-gray-50 hover:bg-gray-50">
+                    <td className="px-5 py-3">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full border whitespace-nowrap ${info.color} ${info.textColor} ${info.borderColor}`}>
+                        {info.shortName}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 max-w-xs">
+                      <p className="text-gray-900 font-medium truncate text-xs" title={r.prompt}>{r.prompt}</p>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">{r.category}</td>
+                    <td className="px-4 py-3 text-right text-xs text-gray-500 hidden sm:table-cell">{r.total_answers.toLocaleString()}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="w-16 h-1.5 rounded-full bg-gray-100 overflow-hidden hidden sm:block">
+                          <div
+                            className={`h-full rounded-full ${info.color.replace('bg-', 'bg-')}`}
+                            style={{ width: `${pct}%`, backgroundColor: undefined }}
+                          />
+                        </div>
+                        <span className={`text-xs font-bold ${info.textColor}`}>{pct}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
+              <p className="text-xs text-gray-400">Showing {page * PAGE + 1}–{Math.min((page + 1) * PAGE, totalRanked)} of {totalRanked.toLocaleString()}</p>
+              <div className="flex gap-2">
+                <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+                  className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-40">← Prev</button>
+                <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
+                  className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-40">Next →</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -309,6 +620,8 @@ export default function AdminQuestions() {
   const [newQ, setNewQ] = useState<NewQ>(emptyNew())
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [addToDailyQ, setAddToDailyQ] = useState<Question | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.from('categories').select('*').order('name')
@@ -392,6 +705,11 @@ export default function AdminQuestions() {
     }
   }
 
+  function showToast(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 4000)
+  }
+
   const totalPages = Math.ceil(total / PAGE_SIZE)
   const diffBadge = (d: string) =>
     d === 'easy'   ? 'bg-green-100 text-green-700' :
@@ -415,23 +733,29 @@ export default function AdminQuestions() {
 
         {/* Tabs */}
         <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-8">
-          {(['all', 'upcoming'] as Tab[]).map(t => (
+          {([
+            { key: 'all',      label: 'All Questions' },
+            { key: 'upcoming', label: '📅 Upcoming Daily' },
+            { key: 'rankings', label: '🏆 Rankings' },
+          ] as { key: Tab; label: string }[]).map(t => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={t.key}
+              onClick={() => setTab(t.key)}
               className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                tab === t
+                tab === t.key
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {t === 'all' ? 'All Questions' : '📅 Upcoming Daily'}
+              {t.label}
             </button>
           ))}
         </div>
 
         {tab === 'upcoming' ? (
           <UpcomingDaily diffBadge={diffBadge} />
+        ) : tab === 'rankings' ? (
+          <RankingsTab categories={categories} />
         ) : (
           <>
             {/* Add question panel */}
@@ -505,7 +829,6 @@ export default function AdminQuestions() {
               </div>
             )}
 
-            {/* Subtitle */}
             <p className="text-gray-500 mb-5">{total.toLocaleString()} questions total. Use Categories → a category for bulk editing.</p>
 
             {/* Filters */}
@@ -548,6 +871,7 @@ export default function AdminQuestions() {
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden md:table-cell">Category</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden sm:table-cell">Difficulty</th>
                       <th className="text-center px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Active</th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Daily</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -565,6 +889,15 @@ export default function AdminQuestions() {
                             title={q.is_active ? 'Disable' : 'Enable'}
                             className={`relative inline-flex h-5 w-9 rounded-full transition-colors focus:outline-none disabled:opacity-40 ${q.is_active ? 'bg-indigo-600' : 'bg-gray-200'}`}>
                             <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${q.is_active ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                          </button>
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <button
+                            onClick={() => setAddToDailyQ(q)}
+                            title="Add to upcoming daily set"
+                            className="text-xs text-indigo-500 hover:text-indigo-700 font-semibold hover:underline"
+                          >
+                            + Daily
                           </button>
                         </td>
                       </tr>
@@ -587,6 +920,22 @@ export default function AdminQuestions() {
           </>
         )}
       </div>
+
+      {/* Add to Daily modal */}
+      {addToDailyQ && (
+        <AddToDailyModal
+          question={addToDailyQ}
+          onClose={() => setAddToDailyQ(null)}
+          onAdded={msg => { showToast(msg) }}
+        />
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-lg z-50">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
