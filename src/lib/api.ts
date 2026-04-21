@@ -428,6 +428,17 @@ export async function getFeaturedSubmission(date?: string): Promise<{
   return (data ?? [])[0] ?? null
 }
 
+// ─── Awards ───────────────────────────────────────────────────────────────────
+
+export async function syncPlayerAwards(): Promise<{
+  stats: Record<string, number>
+  awards: Array<{ category: string; tier: number; earned_at: string }>
+}> {
+  const { data, error } = await supabase.rpc('sync_player_awards')
+  if (error) throw error
+  return data as any
+}
+
 // ─── Admin: Submissions ────────────────────────────────────────────────────────
 
 export async function adminGetSubmissions(status?: string) {

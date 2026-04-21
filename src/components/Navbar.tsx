@@ -121,6 +121,13 @@ export function Navbar() {
                     Profile
                   </Link>
                   <Link
+                    to="/awards"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    🏅 Awards
+                  </Link>
+                  <Link
                     to="/history"
                     onClick={() => setMenuOpen(false)}
                     className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
