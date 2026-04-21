@@ -167,23 +167,27 @@ function DailyTable({ entries, userId, crownType }: { entries: LeaderboardEntry[
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
       {entries.map((entry) => {
         const isMe = entry.user_id === userId
-        const isFirst = entry.rank === 1
+        const isFlagged = entry.anti_cheat_flag === true
+        const isFirst = entry.rank === 1 && !isFlagged
         return (
           <div
             key={entry.user_id}
             className={`flex items-center gap-4 px-5 py-4 border-b border-gray-50 last:border-0 ${
-              isMe ? 'bg-indigo-50' : isFirst ? 'bg-yellow-50/50' : ''
+              isFlagged ? 'bg-amber-50/60' : isMe ? 'bg-indigo-50' : isFirst ? 'bg-yellow-50/50' : ''
             }`}
           >
             <div className="w-8 flex justify-center flex-shrink-0">
-              <RankBadge rank={entry.rank} />
+              {isFlagged
+                ? <span className="text-base" title="Score flagged — not ranked">⚠️</span>
+                : <RankBadge rank={entry.rank} />}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-semibold text-gray-900 text-sm truncate">
+                <p className={`font-semibold text-sm truncate ${isFlagged ? 'text-gray-500' : 'text-gray-900'}`}>
                   {entry.display_name ?? entry.username}
                 </p>
                 {isMe && <span className="text-xs text-indigo-500 font-normal">you</span>}
+                {isFlagged && <span className="text-xs text-amber-600 font-normal">not ranked</span>}
                 {isFirst && crownType === 'global' && <GlobalCrownBadge />}
                 {isFirst && crownType === 'friends' && <FriendsCrownBadge />}
               </div>
@@ -192,7 +196,7 @@ function DailyTable({ entries, userId, crownType }: { entries: LeaderboardEntry[
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="font-bold text-gray-900">{entry.score.toLocaleString()}</p>
+              <p className={`font-bold ${isFlagged ? 'text-gray-400' : 'text-gray-900'}`}>{entry.score.toLocaleString()}</p>
               <p className="text-xs text-gray-400">pts</p>
             </div>
           </div>

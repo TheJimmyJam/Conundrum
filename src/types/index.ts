@@ -105,6 +105,7 @@ export interface LeaderboardEntry {
   score: number
   correct_count: number
   duration_ms: number
+  anti_cheat_flag?: boolean
 }
 
 export interface QuestionWithOptions extends Question {
