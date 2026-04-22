@@ -11,8 +11,8 @@ const MAX_SPEED = 50
 const SPEED_WINDOW = 20000
 const STREAK_BONUS = 10
 const STREAK_THRESHOLD = 3
-const MIN_RESPONSE_MS = 500   // below this per-answer is suspicious
-const ANTI_CHEAT_MIN_COUNT = 3 // need this many fast answers to flag (1 could be a timing glitch)
+const MIN_RESPONSE_MS = 1500  // below this per-answer is suspicious
+const ANTI_CHEAT_MIN_COUNT = 5 // need this many fast answers to flag (1 could be a timing glitch)
 
 function calcPoints(isCorrect: boolean, timeMs: number, streak: number): number {
   if (!isCorrect) return 0
