@@ -95,7 +95,7 @@ export default function ResultsPage() {
 
                 {/* Expanded detail */}
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-4 bg-white border-t border-white/10">
+                  <div className="px-5 pb-5 pt-4 bg-white/5 border-t border-white/10">
                     <p className="text-sm font-semibold text-white mb-4">{r.prompt}</p>
 
                     <div className="space-y-2 mb-4">
@@ -104,7 +104,7 @@ export default function ResultsPage() {
                         const isSelected = opt.id === r.selected_option_id
                         const isWrongPick = isSelected && !isCorrect
 
-                        let cls = 'border-white/10 bg-gray-50 text-gray-300'
+                        let cls = 'border-white/10 bg-white/5 text-gray-300'
                         let badge: React.ReactNode = null
 
                         if (isCorrect && isSelected) {
@@ -134,7 +134,7 @@ export default function ResultsPage() {
                     )}
 
                     {r.explanation && (
-                      <p className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 leading-relaxed">
+                      <p className="text-xs text-gray-400 bg-white/5 rounded-lg px-3 py-2 leading-relaxed">
                         💡 {r.explanation}
                       </p>
                     )}
