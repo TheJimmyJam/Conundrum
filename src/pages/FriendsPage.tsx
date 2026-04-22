@@ -12,6 +12,8 @@ import {
   declineChallenge,
 } from '../lib/api'
 
+const GAME_URL = 'https://conundrum2026.netlify.app'
+
 type Tab = 'friends' | 'challenges'
 
 type Friendship = {
@@ -47,7 +49,7 @@ function formatMs(ms: number) {
 }
 
 export default function FriendsPage() {
-  const { user } = useAuthStore()
+  const { user, profile } = useAuthStore()
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('friends')
 
@@ -58,8 +60,10 @@ export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
-  const [pendingRequest, setPendingRequest] = useState<string | null>(null) // userId being requested
+  const [pendingRequest, setPendingRequest] = useState<string | null>(null)
   const [challengingId, setChallengingId] = useState<string | null>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -169,6 +173,27 @@ export default function FriendsPage() {
     navigate(`/challenge/${challengeId}/play`)
   }
 
+  // ── Invite helpers ────────────────────────────────────────────────────────
+
+  function handleCopyLink() {
+    navigator.clipboard.writeText(GAME_URL).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2500)
+    })
+  }
+
+  function handleEmailInvite() {
+    const addr = inviteEmail.trim()
+    if (!addr) return
+    const name = profile?.display_name || profile?.username || 'a friend'
+    const subject = encodeURIComponent(`${name} is challenging you to Conundrum!`)
+    const body = encodeURIComponent(
+      `Hey!\n\n${name} wants you to play Conundrum — a daily trivia game where you can challenge friends, compete on leaderboards, and go head-to-head.\n\nJoin here: ${GAME_URL}\n\nSee you on the leaderboard!`
+    )
+    window.open(`mailto:${addr}?subject=${subject}&body=${body}`, '_self')
+    setInviteEmail('')
+  }
+
   // ── Derived lists ─────────────────────────────────────────────────────────
 
   const pendingIncoming = friendships.filter(
@@ -225,6 +250,76 @@ export default function FriendsPage() {
         {/* ── Friends Tab ─────────────────────────────────────────────────── */}
         {tab === 'friends' && (
           <div className="space-y-8">
+
+            {/* ── Invite Panel ─────────────────────────────────────────── */}
+            <section>
+              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Invite Friends</h2>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl mt-0.5">🎮</span>
+                  <div>
+                    <p className="text-base font-semibold text-white">Bring your crew to Conundrum</p>
+                    <p className="text-sm text-gray-400 mt-0.5">Share the link or send a personal invite — the more the merrier.</p>
+                  </div>
+                </div>
+
+                {/* Copy link */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 min-w-0">
+                    <span className="text-gray-500 text-sm truncate flex-1 select-all">{GAME_URL}</span>
+                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex-shrink-0 ${
+                      linkCopied
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                        : 'bg-amber-500 hover:bg-amber-400 text-black border border-amber-500'
+                    }`}
+                  >
+                    {linkCopied ? (
+                      <>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy Link
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Email invite */}
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Or send a personal invite</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleEmailInvite()}
+                      placeholder="friend@email.com"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                    <button
+                      onClick={handleEmailInvite}
+                      disabled={!inviteEmail.trim()}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-white/5 hover:bg-amber-500/10 border border-white/10 hover:border-amber-500/40 text-gray-300 hover:text-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      Send Invite
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             {/* Search */}
             <section>
@@ -305,7 +400,7 @@ export default function FriendsPage() {
               <section>
                 <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
                   Sent Requests
-                  <span className="ml-2 text-xs bg-amber-100 text-amber-600 font-semibold px-1.5 py-0.5 rounded-full normal-case">
+                  <span className="ml-2 text-xs bg-amber-500/15 text-amber-400 font-semibold px-1.5 py-0.5 rounded-full normal-case">
                     {pendingOutgoing.length} pending
                   </span>
                 </h2>
@@ -428,7 +523,7 @@ export default function FriendsPage() {
                               : 'You played — waiting for result'}
                           </p>
                         </div>
-                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">Pending</span>
+                        <span className="text-xs bg-amber-500/15 text-amber-400 px-2 py-1 rounded-full font-medium">Pending</span>
                       </div>
                     )
                   })}
@@ -454,8 +549,8 @@ export default function FriendsPage() {
                           <p className="text-sm font-semibold text-white">vs. {displayName(opponent)}</p>
                           <span className={`text-xs font-bold px-2 py-1 rounded-full ${
                             tied ? 'bg-white/10 text-gray-300' :
-                            won ? 'bg-green-100 text-green-700' :
-                            'bg-red-100 text-red-600'
+                            won ? 'bg-green-500/15 text-green-400' :
+                            'bg-red-500/15 text-red-400'
                           }`}>
                             {tied ? 'Tie' : won ? 'You Won!' : 'They Won'}
                           </span>
