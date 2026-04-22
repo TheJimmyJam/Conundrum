@@ -99,7 +99,7 @@ function SortableQuestionRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 bg-gray-50 border border-transparent ${isDragging ? 'border-amber-500/40 shadow-md' : ''}`}
+      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 bg-white/5 border border-transparent ${isDragging ? 'border-amber-500/40 shadow-md' : ''}`}
     >
       <button
         {...attributes}
@@ -171,7 +171,7 @@ function ScheduleCommunityModal({
           <button onClick={onClose} className="text-gray-400 hover:text-gray-300 text-2xl leading-none">×</button>
         </div>
 
-        <p className="text-sm text-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 line-clamp-3 mb-5">{question.prompt}</p>
+        <p className="text-sm text-gray-200 bg-white/5 rounded-xl px-3 py-2.5 line-clamp-3 mb-5">{question.prompt}</p>
 
         {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
 
@@ -274,7 +274,7 @@ function RankingsTab({ categories }: { categories: Category[] }) {
           <div className="animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent" />
         </div>
       ) : loadError ? (
-        <div className="bg-white border border-red-100 rounded-2xl px-6 py-10 text-center">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl px-6 py-10 text-center">
           <div className="text-2xl mb-2">⚠️</div>
           <p className="text-red-500 text-sm mb-1 font-semibold">Failed to load rankings</p>
           <p className="text-gray-400 text-xs mb-4 font-mono">{loadError}</p>
@@ -324,7 +324,7 @@ function RankingsTab({ categories }: { categories: Category[] }) {
                     <td className="px-4 py-3 text-right text-xs text-gray-400 hidden sm:table-cell">{pct}%</td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-2">
-                        <div className="w-20 h-1.5 rounded-full bg-gray-100 overflow-hidden hidden sm:block">
+                        <div className="w-20 h-1.5 rounded-full bg-white/10 overflow-hidden hidden sm:block">
                           <div className={`h-full rounded-full ${wilsonColor}`} style={{ width: `${r.wilson_score}%` }} />
                         </div>
                         <span className="text-xs font-bold tabular-nums text-gray-200 w-10 text-right">
@@ -473,7 +473,7 @@ function UpcomingDaily({ diffBadge }: { diffBadge: (d: string) => string }) {
                   <p className="font-semibold text-white text-sm">{s.title ?? <span className="text-gray-400 italic">Untitled set</span>}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{s.question_count}/10 questions</p>
                 </div>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.is_published ? 'bg-green-500/100/15 text-green-400' : 'bg-gray-100 text-gray-400'}`}>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.is_published ? 'bg-green-500/100/15 text-green-400' : 'bg-white/10 text-gray-400'}`}>
                   {s.is_published ? 'Live' : 'Draft'}
                 </span>
                 <svg className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -671,7 +671,7 @@ export default function AdminQuestions() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-8">
+        <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-fit mb-8 border border-white/10">
           {([
             { key: 'all',      label: 'All Questions' },
             { key: 'upcoming', label: '📅 Upcoming Daily' },
@@ -699,7 +699,7 @@ export default function AdminQuestions() {
           <>
             {/* Add question panel */}
             {showAdd && (
-              <div className="bg-white border border-indigo-100 rounded-2xl p-6 mb-6 shadow-lg shadow-black/20">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6 shadow-lg shadow-black/20">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-lg font-bold text-white">New Question</h2>
                   <button onClick={() => setShowAdd(false)} className="text-gray-400 hover:text-gray-300 text-2xl leading-none">×</button>
@@ -710,13 +710,13 @@ export default function AdminQuestions() {
                     <textarea rows={2} value={newQ.prompt}
                       onChange={e => setNewQ({ ...newQ, prompt: e.target.value })}
                       placeholder="Enter question text…"
-                      className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none" />
+                      className="w-full bg-white/5 text-white border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none placeholder-gray-500" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-400 mb-1">Category *</label>
                       <select style={{colorScheme:"dark"}} value={newQ.category_id} onChange={e => setNewQ({ ...newQ, category_id: e.target.value })}
-                        className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+                        className="w-full bg-white/5 text-white border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder-gray-500">
                         <option value="">Select category…</option>
                         {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
@@ -724,7 +724,7 @@ export default function AdminQuestions() {
                     <div>
                       <label className="block text-xs font-semibold text-gray-400 mb-1">Difficulty *</label>
                       <select style={{colorScheme:"dark"}} value={newQ.difficulty} onChange={e => setNewQ({ ...newQ, difficulty: e.target.value as any })}
-                        className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+                        className="w-full bg-white/5 text-white border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder-gray-500">
                         {DIFFICULTIES.map(d => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
                       </select>
                     </div>
@@ -741,7 +741,7 @@ export default function AdminQuestions() {
                           <input type="text" value={opt}
                             onChange={e => { const opts = [...newQ.options]; opts[i] = e.target.value; setNewQ({ ...newQ, options: opts }) }}
                             placeholder={`Option ${String.fromCharCode(65 + i)}`}
-                            className="flex-1 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                            className="flex-1 bg-white/5 text-white border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder-gray-500" />
                         </div>
                       ))}
                     </div>
@@ -751,7 +751,7 @@ export default function AdminQuestions() {
                     <input type="text" value={newQ.explanation}
                       onChange={e => setNewQ({ ...newQ, explanation: e.target.value })}
                       placeholder="Why is this the correct answer?"
-                      className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                      className="w-full bg-white/5 text-white border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder-gray-500" />
                   </div>
                   {saveError && <p className="text-sm text-red-500">{saveError}</p>}
                   <div className="flex gap-2 pt-1">
