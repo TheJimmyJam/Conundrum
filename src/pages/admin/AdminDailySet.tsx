@@ -42,7 +42,7 @@ function UsageBadge({ usage }: { usage: DailyQuestionUsage | undefined }) {
     )
   }
   return (
-    <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 border border-white/10 whitespace-nowrap">
+    <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-white/10 text-gray-400 border border-white/10 whitespace-nowrap">
       ✓ Used {usage.times_used}×
     </span>
   )
@@ -453,7 +453,7 @@ export default function AdminDailySet() {
 
         {/* New set form */}
         {showNew && (
-          <div className="bg-white border border-indigo-100 rounded-2xl p-6 mb-6 shadow-lg shadow-black/20">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6 shadow-lg shadow-black/20">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-white">New Daily Set</h2>
               <button onClick={() => setShowNew(false)} className="text-gray-400 hover:text-gray-300 text-2xl leading-none">×</button>
@@ -621,7 +621,7 @@ export default function AdminDailySet() {
                             className={`relative inline-flex h-5 w-9 rounded-full transition-colors focus:outline-none disabled:opacity-40 ${s.is_published ? 'bg-amber-500/100' : 'bg-gray-200'}`}>
                             <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${s.is_published ? 'translate-x-4' : 'translate-x-0.5'}`} />
                           </button>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.is_published ? 'bg-green-500/100/15 text-green-400' : 'bg-gray-100 text-gray-400'}`}>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.is_published ? 'bg-green-500/100/15 text-green-400' : 'bg-white/10 text-gray-400'}`}>
                             {s.is_published ? 'Live' : 'Draft'}
                           </span>
                           <button
@@ -659,7 +659,7 @@ export default function AdminDailySet() {
                               const usedElsewhere = usage && (usage.times_used > 1 || (usage.times_used === 1 && usage.upcoming_date && usage.upcoming_date !== s.set_date?.toString()))
 
                               return (
-                                <div key={slot} className={`rounded-xl overflow-hidden ${q ? 'bg-gray-50' : 'bg-amber-500/100/10 border border-dashed border-amber-500/30'}`}>
+                                <div key={slot} className={`rounded-xl overflow-hidden ${q ? 'bg-white/5' : 'bg-amber-500/100/10 border border-dashed border-amber-500/30'}`}>
                                   <div className="flex items-center gap-3 px-3 py-2.5">
                                     <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">{slot}</span>
                                     {q ? (
@@ -723,7 +723,7 @@ export default function AdminDailySet() {
                                                     className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-sm ${
                                                       isCorrect
                                                         ? 'bg-green-500/10 border-green-300 text-green-800'
-                                                        : 'bg-gray-50 border-white/10 text-gray-300'
+                                                        : 'bg-white/5 border-white/10 text-gray-300'
                                                     }`}
                                                   >
                                                     <span className={`font-bold flex-shrink-0 ${isCorrect ? 'text-green-400' : 'text-gray-400'}`}>
@@ -799,7 +799,7 @@ export default function AdminDailySet() {
                 </button>
                 <button
                   onClick={() => setConfirmDeleteAll(false)}
-                  className="text-sm border border-red-500/30 text-red-500 px-4 py-2 rounded-xl hover:bg-white"
+                  className="text-sm border border-red-500/30 text-red-500 px-4 py-2 rounded-xl hover:bg-red-500/10"
                 >
                   Cancel
                 </button>
@@ -811,7 +811,7 @@ export default function AdminDailySet() {
                 </p>
                 <button
                   onClick={() => setConfirmDeleteAll(true)}
-                  className="text-sm border border-red-300 text-red-400 font-semibold px-4 py-2 rounded-xl hover:bg-white whitespace-nowrap"
+                  className="text-sm border border-red-500/30 text-red-400 font-semibold px-4 py-2 rounded-xl hover:bg-red-500/10 whitespace-nowrap"
                 >
                   🗑 Delete all upcoming drafts
                 </button>
@@ -902,7 +902,7 @@ export default function AdminDailySet() {
                             </span>
                           )}
                           {tier === null && (
-                            <span className="text-xs px-2 py-0.5 rounded-full border bg-gray-100 text-gray-400 border-white/10">
+                            <span className="text-xs px-2 py-0.5 rounded-full border bg-white/10 text-gray-400 border-white/10">
                               Not yet on {EINSTEIN_SCALE_NAME}
                             </span>
                           )}
