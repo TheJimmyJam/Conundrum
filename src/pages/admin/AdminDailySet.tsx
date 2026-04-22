@@ -36,13 +36,13 @@ function UsageBadge({ usage }: { usage: DailyQuestionUsage | undefined }) {
   if (!usage) return null
   if (usage.upcoming_date) {
     return (
-      <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200 whitespace-nowrap">
+      <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-amber-500/100/15 text-amber-400 border border-amber-500/30 whitespace-nowrap">
         📅 Scheduled {usage.upcoming_date}
       </span>
     )
   }
   return (
-    <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 border border-gray-200 whitespace-nowrap">
+    <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 border border-white/10 whitespace-nowrap">
       ✓ Used {usage.times_used}×
     </span>
   )
@@ -404,9 +404,9 @@ export default function AdminDailySet() {
   const todayISO = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 
   const diffBadge = (d: string) =>
-    d === 'easy'   ? 'bg-green-100 text-green-700' :
-    d === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                     'bg-red-100 text-red-700'
+    d === 'easy'   ? 'bg-green-500/100/15 text-green-400' :
+    d === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
+                     'bg-red-500/100/15 text-red-400'
 
   function slotMap(setId: string): Record<number, AdminSetQuestion | undefined> {
     const result: Record<number, AdminSetQuestion | undefined> = {}
@@ -416,22 +416,22 @@ export default function AdminDailySet() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f1a]">
       <div className="max-w-4xl mx-auto px-6 py-12">
-        <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-6">
+        <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-300 mb-6">
           ← Admin
         </Link>
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-3xl font-bold text-gray-900">Daily Sets</h1>
+          <h1 className="text-3xl font-bold text-white">Daily Sets</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={handleAutoFill}
               disabled={autofilling}
-              className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-indigo-200 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 flex items-center gap-2"
+              className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-amber-500/30 text-amber-400 hover:bg-amber-500/100/10 disabled:opacity-50 flex items-center gap-2"
             >
               {autofilling ? (
                 <>
-                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-indigo-500 border-t-transparent" />
+                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-amber-500 border-t-transparent" />
                   Generating…
                 </>
               ) : (
@@ -440,45 +440,45 @@ export default function AdminDailySet() {
             </button>
             <button
               onClick={() => { setShowNew(true); setCreateError(null) }}
-              className="bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-indigo-700"
+              className="bg-amber-500/100 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-amber-600"
             >
               + New Set
             </button>
           </div>
         </div>
-        <p className="text-gray-500 mb-8">
+        <p className="text-gray-400 mb-8">
           10-question sets that reset daily at 6 AM ET — questions go easiest → hardest.
-          Use <strong className="font-semibold text-gray-700">Add 7 days</strong> to queue 7 more draft sets after the latest scheduled date — click it multiple times to build further out. Review and publish each one before it goes live.
+          Use <strong className="font-semibold text-gray-200">Add 7 days</strong> to queue 7 more draft sets after the latest scheduled date — click it multiple times to build further out. Review and publish each one before it goes live.
         </p>
 
         {/* New set form */}
         {showNew && (
-          <div className="bg-white border border-indigo-100 rounded-2xl p-6 mb-6 shadow-sm">
+          <div className="bg-white border border-indigo-100 rounded-2xl p-6 mb-6 shadow-lg shadow-black/20">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">New Daily Set</h2>
-              <button onClick={() => setShowNew(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+              <h2 className="text-lg font-bold text-white">New Daily Set</h2>
+              <button onClick={() => setShowNew(false)} className="text-gray-400 hover:text-gray-300 text-2xl leading-none">×</button>
             </div>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Date *</label>
+                <label className="block text-xs font-semibold text-gray-400 mb-1">Date *</label>
                 <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                  className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Title (optional)</label>
+                <label className="block text-xs font-semibold text-gray-400 mb-1">Title (optional)</label>
                 <input type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)}
                   placeholder="e.g. Science Special"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                  className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
               </div>
             </div>
             {createError && <p className="text-sm text-red-500 mb-3">{createError}</p>}
             <div className="flex gap-2">
               <button onClick={handleCreate} disabled={creating}
-                className="bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50">
+                className="bg-amber-500/100 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-600 disabled:opacity-50">
                 {creating ? 'Creating…' : 'Create Set'}
               </button>
               <button onClick={() => setShowNew(false)}
-                className="border border-gray-200 text-gray-600 text-sm px-4 py-2.5 rounded-xl hover:bg-gray-50">
+                className="border border-white/10 text-gray-300 text-sm px-4 py-2.5 rounded-xl hover:bg-white/5">
                 Cancel
               </button>
             </div>
@@ -488,10 +488,10 @@ export default function AdminDailySet() {
         {/* Sets list */}
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent" />
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent" />
           </div>
         ) : sets.length === 0 ? (
-          <div className="bg-white border border-gray-100 rounded-2xl px-6 py-16 text-center">
+          <div className="bg-white/5 border border-white/10 rounded-2xl px-6 py-16 text-center">
             <div className="text-3xl mb-2">📅</div>
             <p className="text-gray-400 text-sm">No daily sets yet. Create one to get started.</p>
           </div>
@@ -504,7 +504,7 @@ export default function AdminDailySet() {
               const isEditingTitle = s.id in editingTitle
 
               return (
-                <div key={s.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+                <div key={s.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
                   {/* Header row */}
                   <div className="flex items-center gap-4 px-5 py-4">
                     <button
@@ -512,7 +512,7 @@ export default function AdminDailySet() {
                       className="flex-1 text-left flex items-center gap-4 min-w-0"
                     >
                       <div className="flex-shrink-0 text-center">
-                        <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">
+                        <p className="text-xs font-semibold text-amber-400 uppercase tracking-wide">
                           {new Date(s.set_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </p>
                         <p className="text-xs text-gray-400">
@@ -531,10 +531,10 @@ export default function AdminDailySet() {
                               if (e.key === 'Escape') setEditingTitle(prev => { const n = { ...prev }; delete n[s.id]; return n })
                             }}
                             autoFocus
-                            className="border border-indigo-300 rounded-lg px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            className="border border-amber-500/40 rounded-lg px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-amber-400"
                           />
                         ) : (
-                          <p className="font-semibold text-gray-900 text-sm truncate">
+                          <p className="font-semibold text-white text-sm truncate">
                             {s.title ?? <span className="text-gray-400 italic">Untitled set</span>}
                           </p>
                         )}
@@ -549,7 +549,7 @@ export default function AdminDailySet() {
                     <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
                       {confirmDelete === s.id ? (
                         <>
-                          <span className="text-xs text-red-600 font-semibold">Delete this set?</span>
+                          <span className="text-xs text-red-400 font-semibold">Delete this set?</span>
                           <button
                             onClick={() => handleDeleteSet(s.id)}
                             disabled={deleting}
@@ -559,7 +559,7 @@ export default function AdminDailySet() {
                           </button>
                           <button
                             onClick={() => setConfirmDelete(null)}
-                            className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                            className="text-xs border border-white/10 text-gray-400 px-3 py-1.5 rounded-lg hover:bg-white/5"
                           >
                             Cancel
                           </button>
@@ -569,17 +569,17 @@ export default function AdminDailySet() {
                           {isEditingTitle ? (
                             <>
                               <button onClick={() => handleSaveTitle(s)} disabled={savingSet === s.id}
-                                className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                                className="text-xs bg-amber-500/100 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600 disabled:opacity-50">
                                 {savingSet === s.id ? 'Saving…' : 'Save'}
                               </button>
                               <button onClick={() => setEditingTitle(prev => { const n = { ...prev }; delete n[s.id]; return n })}
-                                className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                                className="text-xs border border-white/10 text-gray-400 px-3 py-1.5 rounded-lg hover:bg-white/5">
                                 Cancel
                               </button>
                             </>
                           ) : (
                             <button onClick={() => setEditingTitle(prev => ({ ...prev, [s.id]: s.title ?? '' }))}
-                              className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                              className="text-xs border border-white/10 text-gray-400 px-3 py-1.5 rounded-lg hover:bg-white/5">
                               ✏ Edit title
                             </button>
                           )}
@@ -592,13 +592,13 @@ export default function AdminDailySet() {
                                 <button
                                   onClick={() => handleGoLiveNow(s.id)}
                                   disabled={goingLive}
-                                  className="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600 disabled:opacity-50"
+                                  className="text-xs bg-amber-500/100 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600 disabled:opacity-50"
                                 >
                                   {goingLive ? 'Going live…' : '⚡ Yes, go live'}
                                 </button>
                                 <button
                                   onClick={() => setConfirmGoLive(null)}
-                                  className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                                  className="text-xs border border-white/10 text-gray-400 px-3 py-1.5 rounded-lg hover:bg-white/5"
                                 >
                                   Cancel
                                 </button>
@@ -607,7 +607,7 @@ export default function AdminDailySet() {
                               <button
                                 onClick={() => { setConfirmDelete(null); setConfirmGoLive(s.id) }}
                                 title="Push this set live on the homepage right now"
-                                className="text-xs border border-amber-300 text-amber-600 px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-colors"
+                                className="text-xs border border-amber-300 text-amber-600 px-3 py-1.5 rounded-lg hover:bg-amber-500/10 transition-colors"
                               >
                                 ⚡ Go Live
                               </button>
@@ -618,15 +618,15 @@ export default function AdminDailySet() {
                             onClick={() => handleTogglePublish(s)}
                             disabled={togglingPublish === s.id}
                             title={s.is_published ? 'Unpublish' : 'Publish'}
-                            className={`relative inline-flex h-5 w-9 rounded-full transition-colors focus:outline-none disabled:opacity-40 ${s.is_published ? 'bg-indigo-600' : 'bg-gray-200'}`}>
+                            className={`relative inline-flex h-5 w-9 rounded-full transition-colors focus:outline-none disabled:opacity-40 ${s.is_published ? 'bg-amber-500/100' : 'bg-gray-200'}`}>
                             <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${s.is_published ? 'translate-x-4' : 'translate-x-0.5'}`} />
                           </button>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.is_published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.is_published ? 'bg-green-500/100/15 text-green-400' : 'bg-gray-100 text-gray-400'}`}>
                             {s.is_published ? 'Live' : 'Draft'}
                           </span>
                           <button
                             onClick={() => { setConfirmGoLive(null); setConfirmDelete(s.id) }}
-                            className="text-xs border border-red-200 text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
+                            className="text-xs border border-red-500/30 text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-500/10 hover:text-red-400 hover:border-red-300 transition-colors"
                           >Delete</button>
                         </>
                       )}
@@ -635,10 +635,10 @@ export default function AdminDailySet() {
 
                   {/* Expanded: slots */}
                   {isOpen && (
-                    <div className="border-t border-gray-100 px-5 py-4">
+                    <div className="border-t border-white/10 px-5 py-4">
                       {loadingQs === s.id ? (
                         <div className="flex justify-center py-6">
-                          <div className="animate-spin rounded-full h-6 w-6 border-4 border-indigo-600 border-t-transparent" />
+                          <div className="animate-spin rounded-full h-6 w-6 border-4 border-amber-500 border-t-transparent" />
                         </div>
                       ) : (
                         <>
@@ -659,7 +659,7 @@ export default function AdminDailySet() {
                               const usedElsewhere = usage && (usage.times_used > 1 || (usage.times_used === 1 && usage.upcoming_date && usage.upcoming_date !== s.set_date?.toString()))
 
                               return (
-                                <div key={slot} className={`rounded-xl overflow-hidden ${q ? 'bg-gray-50' : 'bg-indigo-50 border border-dashed border-indigo-200'}`}>
+                                <div key={slot} className={`rounded-xl overflow-hidden ${q ? 'bg-gray-50' : 'bg-amber-500/100/10 border border-dashed border-amber-500/30'}`}>
                                   <div className="flex items-center gap-3 px-3 py-2.5">
                                     <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">{slot}</span>
                                     {q ? (
@@ -668,7 +668,7 @@ export default function AdminDailySet() {
                                           className="flex-1 min-w-0 text-left"
                                           onClick={() => toggleQDetail(q.question_id)}
                                         >
-                                          <p className="text-sm text-gray-900 font-medium leading-snug">{q.prompt}</p>
+                                          <p className="text-sm text-white font-medium leading-snug">{q.prompt}</p>
                                           <div className="flex items-center gap-2 mt-0.5">
                                             <span className="text-xs text-gray-400">{q.category}</span>
                                             {usedElsewhere && (
@@ -679,7 +679,7 @@ export default function AdminDailySet() {
                                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${diffBadge(q.difficulty)}`}>{q.difficulty}</span>
                                         <button
                                           onClick={() => toggleQDetail(q.question_id)}
-                                          className="text-gray-400 hover:text-indigo-600 flex-shrink-0 text-xs font-medium"
+                                          className="text-gray-400 hover:text-amber-400 flex-shrink-0 text-xs font-medium"
                                           title={expandedQ === q.question_id ? 'Collapse' : 'View answers'}
                                         >
                                           {expandedQ === q.question_id ? '▲' : '▼'}
@@ -696,7 +696,7 @@ export default function AdminDailySet() {
                                         <p className="flex-1 text-xs text-indigo-400 italic">Empty slot</p>
                                         <button
                                           onClick={() => openPicker(s.id, slot)}
-                                          className="text-xs bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700"
+                                          className="text-xs bg-amber-500/100 text-white px-3 py-1 rounded-lg hover:bg-amber-600"
                                         >+ Add</button>
                                       </>
                                     )}
@@ -704,10 +704,10 @@ export default function AdminDailySet() {
 
                                   {/* Expanded answer detail */}
                                   {q && expandedQ === q.question_id && (
-                                    <div className="border-t border-gray-200 px-3 pb-3 pt-2 bg-white">
+                                    <div className="border-t border-white/10 px-3 pb-3 pt-2 bg-[#0f0f1a]">
                                       {!qDetails[q.question_id] ? (
                                         <div className="flex justify-center py-3">
-                                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-500 border-t-transparent" />
+                                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-amber-500 border-t-transparent" />
                                         </div>
                                       ) : (
                                         <>
@@ -722,11 +722,11 @@ export default function AdminDailySet() {
                                                     key={opt.id}
                                                     className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-sm ${
                                                       isCorrect
-                                                        ? 'bg-green-50 border-green-300 text-green-800'
-                                                        : 'bg-gray-50 border-gray-200 text-gray-600'
+                                                        ? 'bg-green-500/10 border-green-300 text-green-800'
+                                                        : 'bg-gray-50 border-white/10 text-gray-300'
                                                     }`}
                                                   >
-                                                    <span className={`font-bold flex-shrink-0 ${isCorrect ? 'text-green-600' : 'text-gray-400'}`}>
+                                                    <span className={`font-bold flex-shrink-0 ${isCorrect ? 'text-green-400' : 'text-gray-400'}`}>
                                                       {letter}{isCorrect ? ' ✓' : ''}
                                                     </span>
                                                     <span>{opt.text}</span>
@@ -735,7 +735,7 @@ export default function AdminDailySet() {
                                               })}
                                           </div>
                                           {qDetails[q.question_id].explanation && (
-                                            <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-xs text-amber-800">
+                                            <div className="bg-amber-500/10 border border-amber-100 rounded-lg px-3 py-2 text-xs text-amber-800">
                                               💡 {qDetails[q.question_id].explanation}
                                             </div>
                                           )}
@@ -754,11 +754,11 @@ export default function AdminDailySet() {
                               <button
                                 onClick={() => handleSort(s.id)}
                                 disabled={sorting === s.id}
-                                className="text-sm font-semibold px-4 py-2 rounded-xl border border-indigo-200 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 flex items-center gap-1.5"
+                                className="text-sm font-semibold px-4 py-2 rounded-xl border border-amber-500/30 text-amber-400 hover:bg-amber-500/100/10 disabled:opacity-50 flex items-center gap-1.5"
                               >
                                 {sorting === s.id ? (
                                   <>
-                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-indigo-500 border-t-transparent" />
+                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-amber-500 border-t-transparent" />
                                     Sorting…
                                   </>
                                 ) : (
@@ -784,10 +784,10 @@ export default function AdminDailySet() {
 
         {/* Bulk delete upcoming drafts */}
         {sets.some(s => s.set_date > new Date().toISOString().slice(0, 10) && !s.is_published) && (
-          <div className="mt-6 border border-red-100 rounded-2xl px-5 py-4 bg-red-50">
+          <div className="mt-6 border border-red-100 rounded-2xl px-5 py-4 bg-red-500/10">
             {confirmDeleteAll ? (
               <div className="flex items-center gap-3 flex-wrap">
-                <p className="text-sm text-red-700 font-semibold flex-1">
+                <p className="text-sm text-red-400 font-semibold flex-1">
                   Delete all upcoming draft sets? This cannot be undone.
                 </p>
                 <button
@@ -799,19 +799,19 @@ export default function AdminDailySet() {
                 </button>
                 <button
                   onClick={() => setConfirmDeleteAll(false)}
-                  className="text-sm border border-red-200 text-red-500 px-4 py-2 rounded-xl hover:bg-white"
+                  className="text-sm border border-red-500/30 text-red-500 px-4 py-2 rounded-xl hover:bg-white"
                 >
                   Cancel
                 </button>
               </div>
             ) : (
               <div className="flex items-center justify-between gap-4">
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-red-400">
                   Remove all upcoming draft sets so you can regenerate them fresh.
                 </p>
                 <button
                   onClick={() => setConfirmDeleteAll(true)}
-                  className="text-sm border border-red-300 text-red-600 font-semibold px-4 py-2 rounded-xl hover:bg-white whitespace-nowrap"
+                  className="text-sm border border-red-300 text-red-400 font-semibold px-4 py-2 rounded-xl hover:bg-white whitespace-nowrap"
                 >
                   🗑 Delete all upcoming drafts
                 </button>
@@ -824,28 +824,28 @@ export default function AdminDailySet() {
       {/* Question picker modal */}
       {pickerFor && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl flex flex-col max-h-[85vh]">
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+          <div className="bg-white/5 rounded-2xl w-full max-w-lg shadow-xl flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-white/10">
               <div>
-                <h3 className="font-bold text-gray-900">Pick a question — Slot {pickerFor.slot}</h3>
+                <h3 className="font-bold text-white">Pick a question — Slot {pickerFor.slot}</h3>
                 <p className="text-xs text-gray-400 mt-0.5">
                   {pickerFor.slot <= 3 ? 'Slot 1–3: aim for easier questions (Initiate–Challenger)' :
                    pickerFor.slot <= 6 ? 'Slot 4–6: medium difficulty (Decoder–Theorist)' :
                                          'Slot 7–10: harder questions (Cryptic Mind–The Oracle)'}
                 </p>
               </div>
-              <button onClick={closePicker} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+              <button onClick={closePicker} className="text-gray-400 hover:text-gray-300 text-2xl leading-none">×</button>
             </div>
-            <div className="px-5 py-3 border-b border-gray-100 space-y-2">
+            <div className="px-5 py-3 border-b border-white/10 space-y-2">
               <input
                 type="text"
                 placeholder="Search questions…"
                 value={pickerSearch}
                 onChange={e => onPickerSearchChange(e.target.value)}
                 autoFocus
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
-              <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer select-none">
+              <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={hideUsed}
@@ -858,7 +858,7 @@ export default function AdminDailySet() {
             <div className="overflow-y-auto flex-1 px-2 py-2">
               {pickerLoading ? (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-4 border-indigo-600 border-t-transparent" />
+                  <div className="animate-spin rounded-full h-6 w-6 border-4 border-amber-500 border-t-transparent" />
                 </div>
               ) : (
                 (() => {
@@ -874,7 +874,7 @@ export default function AdminDailySet() {
                       <div className="text-center py-8">
                         <p className="text-gray-400 text-sm">No questions found.</p>
                         {hideUsed && (
-                          <button onClick={() => setHideUsed(false)} className="text-xs text-indigo-500 mt-2 hover:underline">
+                          <button onClick={() => setHideUsed(false)} className="text-xs text-amber-400 mt-2 hover:underline">
                             Show used questions
                           </button>
                         )}
@@ -892,9 +892,9 @@ export default function AdminDailySet() {
                         key={q.id}
                         onClick={() => handleAddQuestion(q)}
                         disabled={adding === q.id}
-                        className="w-full text-left px-3 py-3 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        className="w-full text-left px-3 py-3 rounded-xl hover:bg-white/5 transition-colors disabled:opacity-50"
                       >
-                        <p className="text-sm text-gray-900 font-medium line-clamp-2">{q.prompt}</p>
+                        <p className="text-sm text-white font-medium line-clamp-2">{q.prompt}</p>
                         <div className="flex items-center flex-wrap gap-1.5 mt-1.5">
                           {tier !== null && (
                             <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${tierInfo.color} ${tierInfo.textColor} ${tierInfo.borderColor}`}>
@@ -902,13 +902,13 @@ export default function AdminDailySet() {
                             </span>
                           )}
                           {tier === null && (
-                            <span className="text-xs px-2 py-0.5 rounded-full border bg-gray-100 text-gray-400 border-gray-200">
+                            <span className="text-xs px-2 py-0.5 rounded-full border bg-gray-100 text-gray-400 border-white/10">
                               Not yet on {EINSTEIN_SCALE_NAME}
                             </span>
                           )}
                           <span className="text-xs text-gray-400">{q.category_name}</span>
                           {usage && <UsageBadge usage={usage} />}
-                          {adding === q.id && <span className="text-xs text-indigo-500">Adding…</span>}
+                          {adding === q.id && <span className="text-xs text-amber-400">Adding…</span>}
                         </div>
                       </button>
                     )
