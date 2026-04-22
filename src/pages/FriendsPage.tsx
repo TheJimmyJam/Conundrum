@@ -453,7 +453,7 @@ export default function FriendsPage() {
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-sm font-semibold text-white">vs. {displayName(opponent)}</p>
                           <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                            tied ? 'bg-gray-100 text-gray-300' :
+                            tied ? 'bg-white/10 text-gray-300' :
                             won ? 'bg-green-100 text-green-700' :
                             'bg-red-100 text-red-600'
                           }`}>
