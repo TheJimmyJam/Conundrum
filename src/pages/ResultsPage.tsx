@@ -38,28 +38,28 @@ export default function ResultsPage() {
 
   if (loading || !session) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent" />
+      <div className="animate-spin rounded-full h-10 w-10 border-4 border-amber-500 border-t-transparent" />
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f1a]">
       <div className="max-w-2xl mx-auto px-6 py-12">
 
         {/* Score header */}
         <div className="text-center mb-10">
-          <p className="text-sm font-medium text-indigo-600 uppercase tracking-wider mb-2">Final Score</p>
-          <div className="text-7xl font-bold text-gray-900 mb-4">{session.score.toLocaleString()}</div>
-          <div className="flex gap-6 justify-center text-sm text-gray-500">
+          <p className="text-sm font-medium text-amber-400 uppercase tracking-wider mb-2">Final Score</p>
+          <div className="text-7xl font-bold text-white mb-4">{session.score.toLocaleString()}</div>
+          <div className="flex gap-6 justify-center text-sm text-gray-400">
             <span>{session.correct_count} / {session.question_count} correct</span>
             <span>{formatDuration(session.duration_ms)}</span>
           </div>
         </div>
 
         {/* Question breakdown */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-8">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">Question breakdown</h3>
+        <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden mb-8">
+          <div className="px-5 py-4 border-b border-white/10">
+            <h3 className="font-semibold text-white">Question breakdown</h3>
             <p className="text-xs text-gray-400 mt-0.5">Tap any question to see details</p>
           </div>
 
@@ -68,7 +68,7 @@ export default function ResultsPage() {
             const timedOut = !r.selected_option_id
 
             return (
-              <div key={r.question_id} className="border-b border-gray-50 last:border-0">
+              <div key={r.question_id} className="border-b border-white/5 last:border-0">
                 {/* Summary row — always visible */}
                 <button
                   onClick={() => setExpanded(isOpen ? null : r.question_id)}
@@ -79,10 +79,10 @@ export default function ResultsPage() {
                   }`}
                 >
                   <span className="text-base flex-shrink-0">{r.is_correct ? '✅' : '❌'}</span>
-                  <span className="flex-1 text-sm text-gray-800 font-medium line-clamp-1">
+                  <span className="flex-1 text-sm text-gray-100 font-medium line-clamp-1">
                     Q{i + 1}: {r.prompt}
                   </span>
-                  <span className="text-sm font-semibold text-gray-700 flex-shrink-0 mr-1">
+                  <span className="text-sm font-semibold text-gray-200 flex-shrink-0 mr-1">
                     +{r.points_awarded} pts
                   </span>
                   <svg
@@ -95,8 +95,8 @@ export default function ResultsPage() {
 
                 {/* Expanded detail */}
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-4 bg-white border-t border-gray-100">
-                    <p className="text-sm font-semibold text-gray-900 mb-4">{r.prompt}</p>
+                  <div className="px-5 pb-5 pt-4 bg-white border-t border-white/10">
+                    <p className="text-sm font-semibold text-white mb-4">{r.prompt}</p>
 
                     <div className="space-y-2 mb-4">
                       {r.options.map((opt) => {
@@ -104,17 +104,17 @@ export default function ResultsPage() {
                         const isSelected = opt.id === r.selected_option_id
                         const isWrongPick = isSelected && !isCorrect
 
-                        let cls = 'border-gray-200 bg-gray-50 text-gray-600'
+                        let cls = 'border-white/10 bg-gray-50 text-gray-300'
                         let badge: React.ReactNode = null
 
                         if (isCorrect && isSelected) {
-                          cls = 'border-green-400 bg-green-50 text-green-800'
+                          cls = 'border-green-500 bg-green-500/10 text-green-400'
                           badge = <span className="text-xs font-semibold text-green-700 ml-2 flex-shrink-0">✓ Correct</span>
                         } else if (isCorrect) {
-                          cls = 'border-green-400 bg-green-50 text-green-800'
+                          cls = 'border-green-500 bg-green-500/10 text-green-400'
                           badge = <span className="text-xs font-semibold text-green-700 ml-2 flex-shrink-0">✓ Correct answer</span>
                         } else if (isWrongPick) {
-                          cls = 'border-red-400 bg-red-50 text-red-800'
+                          cls = 'border-red-500 bg-red-500/10 text-red-400'
                           badge = <span className="text-xs font-semibold text-red-700 ml-2 flex-shrink-0">✗ Your pick</span>
                         }
 
@@ -128,13 +128,13 @@ export default function ResultsPage() {
                     </div>
 
                     {timedOut && (
-                      <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2 mb-3">
+                      <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 mb-3">
                         ⏱ Time ran out — no answer submitted.
                       </p>
                     )}
 
                     {r.explanation && (
-                      <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 leading-relaxed">
+                      <p className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 leading-relaxed">
                         💡 {r.explanation}
                       </p>
                     )}
@@ -147,10 +147,10 @@ export default function ResultsPage() {
 
         {/* Actions */}
         <div className="flex gap-3 flex-wrap">
-          <Link to="/leaderboard" className="flex-1 bg-indigo-600 text-white font-semibold py-3 rounded-xl text-center hover:bg-indigo-700">
+          <Link to="/leaderboard" className="flex-1 bg-amber-500 text-white font-semibold py-3 rounded-xl text-center hover:bg-amber-600">
             View Leaderboard
           </Link>
-          <Link to="/endless" className="flex-1 border border-indigo-600 text-indigo-600 font-semibold py-3 rounded-xl text-center hover:bg-indigo-50">
+          <Link to="/endless" className="flex-1 border border-amber-500 text-amber-400 font-semibold py-3 rounded-xl text-center hover:bg-amber-500/10">
             Play Endless Mode
           </Link>
         </div>
