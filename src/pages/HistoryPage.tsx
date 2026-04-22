@@ -16,16 +16,16 @@ export default function HistoryPage() {
   }, [user])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f1a]">
       <div className="max-w-2xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Game History</h1>
-          <Link to="/profile" className="text-sm text-indigo-600 hover:underline">← Profile</Link>
+          <h1 className="text-3xl font-bold text-white">Game History</h1>
+          <Link to="/profile" className="text-sm text-amber-400 hover:underline">← Profile</Link>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent" />
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-amber-500 border-t-transparent" />
           </div>
         ) : sessions.length === 0 ? (
           <p className="text-center text-gray-400 py-20">No games yet. Play your first round!</p>
@@ -35,15 +35,15 @@ export default function HistoryPage() {
               <button
                 key={s.id}
                 onClick={() => navigate(`/results/${s.id}`)}
-                className="w-full bg-white border border-gray-100 rounded-xl px-5 py-4 flex items-center justify-between hover:border-indigo-200 transition-colors text-left"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 flex items-center justify-between hover:border-amber-500/30 transition-colors text-left"
               >
                 <div>
-                  <p className="font-semibold text-gray-900 text-sm">
+                  <p className="font-semibold text-white text-sm">
                     {s.mode === 'endless' ? '♾ Endless' : '📅 Daily'} · {new Date(s.completed_at!).toLocaleDateString()}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">{s.correct_count}/{s.question_count} correct · {formatDuration(s.duration_ms)}</p>
                 </div>
-                <span className="font-bold text-gray-900 text-lg">{s.score}</span>
+                <span className="font-bold text-white text-lg">{s.score}</span>
               </button>
             ))}
           </div>
