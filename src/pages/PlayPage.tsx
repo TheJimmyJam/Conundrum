@@ -63,7 +63,7 @@ export default function PlayPage() {
         if (t <= 1) {
           // Auto-submit current question with no answer
           handleAnswer(null)
-          return 20
+          return 30
         }
         return t - 1
       })
