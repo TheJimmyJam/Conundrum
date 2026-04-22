@@ -277,9 +277,9 @@ export default function EndlessPlayPage() {
               <div className="mt-8 space-y-4">
                 <div className={`flex items-center gap-2 text-sm font-semibold ${feedback.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
                   {feedback.isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                  {feedback.pointsAwarded > 0 && (
-                    <span className="text-amber-400 font-bold">+{feedback.pointsAwarded} pts</span>
-                  )}
+                  <span className={`font-bold ${feedback.pointsAwarded >= 0 ? 'text-amber-400' : 'text-red-400'}`}>
+                    {feedback.pointsAwarded >= 0 ? '+' : ''}{feedback.pointsAwarded} pts
+                  </span>
                 </div>
 
                 {feedback.explanation && (
@@ -322,3 +322,4 @@ export default function EndlessPlayPage() {
     </div>
   )
 }
+
