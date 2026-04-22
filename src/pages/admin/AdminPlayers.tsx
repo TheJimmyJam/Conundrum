@@ -18,10 +18,10 @@ const DEMO_COUNT_OPTIONS = [50, 100, 150, 200]
 
 function StatusBadge({ status }: { status: AdminPlayer['status'] }) {
   if (status === 'banned') return (
-    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">🚫 Banned</span>
+    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-500/100/15 text-red-400 border border-red-500/30">🚫 Banned</span>
   )
   if (status === 'frozen') return (
-    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">🧊 Frozen</span>
+    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-500/100/15 text-blue-400 border border-blue-200">🧊 Frozen</span>
   )
   return null
 }
@@ -181,29 +181,29 @@ export default function AdminPlayers() {
   const demoShown = players.filter(p => p.is_demo).length
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f1a]">
       <div className="max-w-4xl mx-auto px-6 py-12">
-        <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-6">
+        <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-300 mb-6">
           ← Admin
         </Link>
 
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-3xl font-bold text-gray-900">Players</h1>
+          <h1 className="text-3xl font-bold text-white">Players</h1>
           <button
             onClick={openDemoPanel}
-            className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center gap-2"
+            className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-white/10 text-gray-300 hover:bg-white/10 flex items-center gap-2"
           >
             🎭 Demo Data
           </button>
         </div>
-        <p className="text-gray-500 mb-6">Search by name, username, or email. Expand a player to manage their account.</p>
+        <p className="text-gray-400 mb-6">Search by name, username, or email. Expand a player to manage their account.</p>
 
         {/* Demo Data Panel */}
         {showDemo && (
-          <div className="bg-white border border-purple-100 rounded-2xl p-5 mb-6 shadow-sm">
+          <div className="bg-white border border-purple-100 rounded-2xl p-5 mb-6 shadow-lg shadow-black/20">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-base font-bold text-gray-900">🎭 Demo Data</h2>
+                <h2 className="text-base font-bold text-white">🎭 Demo Data</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   Fake users · @demo.conundrum.test emails
                   {demoUserCount !== null && (
@@ -211,15 +211,15 @@ export default function AdminPlayers() {
                   )}
                 </p>
               </div>
-              <button onClick={() => setShowDemo(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+              <button onClick={() => setShowDemo(false)} className="text-gray-400 hover:text-gray-300 text-2xl leading-none">×</button>
             </div>
             <div className="flex flex-wrap items-end gap-4">
               <div>
-                <p className="text-xs font-semibold text-gray-500 mb-1.5">Count</p>
+                <p className="text-xs font-semibold text-gray-400 mb-1.5">Count</p>
                 <div className="flex gap-1.5">
                   {DEMO_COUNT_OPTIONS.map(n => (
                     <button key={n} onClick={() => setDemoCount(n)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${demoCount === n ? 'bg-purple-600 text-white border-purple-600' : 'border-gray-200 text-gray-600 hover:border-purple-400'}`}>
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${demoCount === n ? 'bg-purple-600 text-white border-purple-600' : 'border-white/10 text-gray-300 hover:border-purple-400'}`}>
                       {n}
                     </button>
                   ))}
@@ -231,7 +231,7 @@ export default function AdminPlayers() {
               </button>
               <div className="ml-auto">
                 <button onClick={handleRemoveDemo} disabled={removing || generating || demoUserCount === 0}
-                  className={`text-sm px-4 py-2.5 rounded-xl border font-medium transition-all disabled:opacity-40 ${removeArmed ? 'bg-red-600 text-white border-red-600 animate-pulse' : 'border-red-200 text-red-500 hover:bg-red-50'}`}>
+                  className={`text-sm px-4 py-2.5 rounded-xl border font-medium transition-all disabled:opacity-40 ${removeArmed ? 'bg-red-600 text-white border-red-600 animate-pulse' : 'border-red-500/30 text-red-500 hover:bg-red-500/10'}`}>
                   {removing ? 'Removing…' : removeArmed ? '⚠ Click again to confirm' : 'Remove All Demo Users'}
                 </button>
                 {removeArmed && <p className="text-xs text-gray-400 mt-1 text-right">Disarms in 4s.</p>}
@@ -248,14 +248,14 @@ export default function AdminPlayers() {
             </svg>
             <input type="text" placeholder="Search by name, username, or email…" value={query}
               onChange={e => setQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white" />
+              className="w-full pl-10 pr-4 py-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-[#0f0f1a]" />
             {loading && (
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-500 border-t-transparent" />
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-amber-500 border-t-transparent" />
               </div>
             )}
           </div>
-          <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer whitespace-nowrap select-none">
+          <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer whitespace-nowrap select-none">
             <input type="checkbox" checked={hideDemos} onChange={e => setHideDemos(e.target.checked)} className="accent-indigo-600" />
             Hide demo users
           </label>
@@ -263,7 +263,7 @@ export default function AdminPlayers() {
 
         {/* Player list */}
         {displayed.length === 0 && !loading ? (
-          <div className="bg-white border border-gray-100 rounded-2xl px-6 py-16 text-center">
+          <div className="bg-white/5 border border-white/10 rounded-2xl px-6 py-16 text-center">
             <div className="text-3xl mb-2">👤</div>
             <p className="text-gray-400 text-sm">No players found.</p>
           </div>
@@ -278,27 +278,27 @@ export default function AdminPlayers() {
               const isActing = acting?.endsWith(p.id) ?? false
               const isEditingThis = editingProfile === p.id
 
-              const statusBorderColor = p.status === 'banned' ? 'border-red-200' : p.status === 'frozen' ? 'border-blue-200' : 'border-gray-100'
+              const statusBorderColor = p.status === 'banned' ? 'border-red-500/30' : p.status === 'frozen' ? 'border-blue-200' : 'border-white/10'
 
               return (
                 <div key={p.id} className={`bg-white border ${statusBorderColor} rounded-2xl overflow-hidden`}>
                   {/* Row */}
                   <button
                     onClick={() => setExpanded(isOpen ? null : p.id)}
-                    className="w-full text-left px-5 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors"
+                    className="w-full text-left px-5 py-4 flex items-center gap-4 hover:bg-white/5 transition-colors"
                   >
                     <div className={`w-9 h-9 rounded-full font-bold text-sm flex items-center justify-center flex-shrink-0 ${
-                      p.status === 'banned' ? 'bg-red-100 text-red-700' :
-                      p.status === 'frozen' ? 'bg-blue-100 text-blue-700' :
-                      'bg-indigo-100 text-indigo-700'
+                      p.status === 'banned' ? 'bg-red-500/100/15 text-red-400' :
+                      p.status === 'frozen' ? 'bg-blue-500/100/15 text-blue-400' :
+                      'bg-amber-500/100/15 text-amber-400'
                     }`}>
                       {(p.display_name ?? p.username).charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-gray-900 text-sm">{p.display_name ?? p.username}</p>
+                        <p className="font-semibold text-white text-sm">{p.display_name ?? p.username}</p>
                         {p.role === 'admin' && (
-                          <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-1.5 py-0.5 rounded">admin</span>
+                          <span className="text-xs bg-amber-500/100/15 text-amber-400 font-semibold px-1.5 py-0.5 rounded">admin</span>
                         )}
                         {p.is_demo && (
                           <span className="text-xs bg-purple-100 text-purple-600 font-semibold px-1.5 py-0.5 rounded">demo</span>
@@ -308,7 +308,7 @@ export default function AdminPlayers() {
                       <p className="text-xs text-gray-400 truncate">@{p.username} · {p.email}</p>
                     </div>
                     <div className="text-right flex-shrink-0 hidden sm:block">
-                      <p className="text-sm font-semibold text-gray-700">{p.games_played} games</p>
+                      <p className="text-sm font-semibold text-gray-200">{p.games_played} games</p>
                       <p className="text-xs text-gray-400">best {p.best_score?.toLocaleString() ?? '—'}</p>
                     </div>
                     <svg className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -318,20 +318,20 @@ export default function AdminPlayers() {
 
                   {/* Expanded panel */}
                   {isOpen && (
-                    <div className="border-t border-gray-100 px-5 py-5 space-y-5">
+                    <div className="border-t border-white/10 px-5 py-5 space-y-5">
 
                       {/* Stats */}
                       <div className="grid grid-cols-3 gap-3 text-center">
                         <div className="bg-gray-50 rounded-xl py-3">
-                          <p className="text-xl font-bold text-gray-900">{p.games_played}</p>
+                          <p className="text-xl font-bold text-white">{p.games_played}</p>
                           <p className="text-xs text-gray-400 mt-0.5">Games</p>
                         </div>
                         <div className="bg-gray-50 rounded-xl py-3">
-                          <p className="text-xl font-bold text-gray-900">{p.best_score?.toLocaleString() ?? '—'}</p>
+                          <p className="text-xl font-bold text-white">{p.best_score?.toLocaleString() ?? '—'}</p>
                           <p className="text-xs text-gray-400 mt-0.5">Best Score</p>
                         </div>
                         <div className="bg-gray-50 rounded-xl py-3">
-                          <p className="text-xs font-medium text-gray-700 mt-1">{new Date(p.created_at).toLocaleDateString()}</p>
+                          <p className="text-xs font-medium text-gray-200 mt-1">{new Date(p.created_at).toLocaleDateString()}</p>
                           <p className="text-xs text-gray-400 mt-0.5">Joined</p>
                         </div>
                       </div>
@@ -343,38 +343,38 @@ export default function AdminPlayers() {
                           <div className="space-y-2">
                             <div className="grid grid-cols-2 gap-2">
                               <div>
-                                <label className="block text-xs text-gray-500 mb-1">Display name</label>
+                                <label className="block text-xs text-gray-400 mb-1">Display name</label>
                                 <input value={editDisplay} onChange={e => setEditDisplay(e.target.value)}
                                   placeholder="Display name"
-                                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                                  className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
                               </div>
                               <div>
-                                <label className="block text-xs text-gray-500 mb-1">Username</label>
+                                <label className="block text-xs text-gray-400 mb-1">Username</label>
                                 <input value={editUsername} onChange={e => setEditUsername(e.target.value)}
                                   placeholder="username"
-                                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                                  className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
                               </div>
                             </div>
                             <div className="flex gap-2">
                               <button onClick={() => handleSaveProfile(p.id)} disabled={savingProfile || !editUsername.trim()}
-                                className="text-xs bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-semibold">
+                                className="text-xs bg-amber-500/100 text-white px-4 py-2 rounded-lg hover:bg-amber-600 disabled:opacity-50 font-semibold">
                                 {savingProfile ? 'Saving…' : 'Save'}
                               </button>
                               <button onClick={() => setEditingProfile(null)}
-                                className="text-xs border border-gray-200 text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-50">
+                                className="text-xs border border-white/10 text-gray-400 px-4 py-2 rounded-lg hover:bg-white/5">
                                 Cancel
                               </button>
                             </div>
                           </div>
                         ) : (
                           <div className="flex items-center justify-between">
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-gray-300">
                               <span className="font-medium">{p.display_name ?? <span className="text-gray-400 italic">no display name</span>}</span>
                               <span className="text-gray-400 mx-2">·</span>
                               <span className="text-gray-400">@{p.username}</span>
                             </div>
                             <button onClick={() => startEditProfile(p)}
-                              className="text-xs border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                              className="text-xs border border-white/10 text-gray-400 px-3 py-1.5 rounded-lg hover:bg-white/5">
                               ✏ Edit
                             </button>
                           </div>
@@ -390,7 +390,7 @@ export default function AdminPlayers() {
                             {acting === dailyKey ? 'Resetting…' : armed === dailyKey ? '⚠ Confirm' : 'Reset Daily'}
                           </button>
                           <button onClick={() => handleReset(p.id, 'lifetime')} disabled={isActing}
-                            className={`text-sm px-4 py-2 rounded-lg border font-medium transition-all disabled:opacity-40 ${armed === lifetimeKey ? 'bg-red-600 text-white border-red-600 animate-pulse' : 'border-red-200 text-red-500 hover:bg-red-50'}`}>
+                            className={`text-sm px-4 py-2 rounded-lg border font-medium transition-all disabled:opacity-40 ${armed === lifetimeKey ? 'bg-red-600 text-white border-red-600 animate-pulse' : 'border-red-500/30 text-red-500 hover:bg-red-500/10'}`}>
                             {acting === lifetimeKey ? 'Resetting…' : armed === lifetimeKey ? '⚠ Confirm' : 'Reset Lifetime'}
                           </button>
                         </div>
@@ -403,19 +403,19 @@ export default function AdminPlayers() {
                           <div className="flex flex-wrap gap-2">
                             {p.status !== 'active' && (
                               <button onClick={() => handleSetStatus(p.id, 'active')} disabled={isActing}
-                                className="text-sm px-4 py-2 rounded-lg border font-medium border-green-200 text-green-700 hover:bg-green-50 disabled:opacity-40">
+                                className="text-sm px-4 py-2 rounded-lg border font-medium border-green-500/30 text-green-400 hover:bg-green-500/10 disabled:opacity-40">
                                 {acting === `ban-${p.id}` ? 'Updating…' : '✓ Reactivate'}
                               </button>
                             )}
                             {p.status !== 'frozen' && (
                               <button onClick={() => handleSetStatus(p.id, 'frozen')} disabled={isActing}
-                                className={`text-sm px-4 py-2 rounded-lg border font-medium transition-all disabled:opacity-40 ${armed === freezeKey ? 'bg-blue-600 text-white border-blue-600 animate-pulse' : 'border-blue-200 text-blue-600 hover:bg-blue-50'}`}>
+                                className={`text-sm px-4 py-2 rounded-lg border font-medium transition-all disabled:opacity-40 ${armed === freezeKey ? 'bg-blue-600 text-white border-blue-600 animate-pulse' : 'border-blue-200 text-blue-600 hover:bg-blue-500/10'}`}>
                                 {acting === `freeze-${p.id}` ? 'Freezing…' : armed === freezeKey ? '⚠ Confirm Freeze' : '🧊 Freeze'}
                               </button>
                             )}
                             {p.status !== 'banned' && (
                               <button onClick={() => handleSetStatus(p.id, 'banned')} disabled={isActing}
-                                className={`text-sm px-4 py-2 rounded-lg border font-medium transition-all disabled:opacity-40 ${armed === banKey ? 'bg-red-700 text-white border-red-700 animate-pulse' : 'border-red-200 text-red-600 hover:bg-red-50'}`}>
+                                className={`text-sm px-4 py-2 rounded-lg border font-medium transition-all disabled:opacity-40 ${armed === banKey ? 'bg-red-700 text-white border-red-700 animate-pulse' : 'border-red-500/30 text-red-400 hover:bg-red-500/10'}`}>
                                 {acting === `ban-${p.id}` ? 'Banning…' : armed === banKey ? '⚠ Confirm Ban' : '🚫 Ban'}
                               </button>
                             )}
