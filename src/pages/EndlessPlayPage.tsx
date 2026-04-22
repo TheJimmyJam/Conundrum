@@ -110,7 +110,7 @@ export default function EndlessPlayPage() {
   }
 
   if (phase === 'error') return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#0f0f1a] px-4">
       <div className="text-center max-w-sm">
         <div className="text-5xl mb-4">⚠️</div>
         <h2 className="text-xl font-bold text-white mb-2">Couldn't load a question</h2>
@@ -143,7 +143,7 @@ export default function EndlessPlayPage() {
   return (
     <div className="min-h-screen bg-[#0f0f1a] flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-white/10 px-6 py-4 flex items-center justify-between max-w-2xl mx-auto w-full">
+      <div className="bg-[#0f0f1a] border-b border-white/10 px-6 py-4 flex items-center justify-between max-w-2xl mx-auto w-full">
         <div className="flex gap-4 text-sm">
           <span className="font-semibold text-gray-200">Q {questionCount}</span>
           {streakCount >= 2 && <span className="text-orange-500 font-medium">🔥 {streakCount} streak</span>}
@@ -191,17 +191,17 @@ export default function EndlessPlayPage() {
               {question.options
                 .sort((a, b) => a.sort_order - b.sort_order)
                 .map((opt) => {
-                  let style = 'border border-white/10 bg-white hover:border-amber-400 hover:bg-amber-500/10'
+                  let style = 'border border-white/10 bg-white/5 hover:border-amber-400 hover:bg-amber-500/10'
 
                   if (feedback) {
                     // Server responded — show definitive correct/wrong
                     if (opt.id === feedback.correctOptionId) style = 'border-2 border-green-500 bg-green-500/10'
                     else if (opt.id === feedback.selectedOptionId && !feedback.isCorrect) style = 'border-2 border-red-400 bg-red-500/10'
-                    else style = 'border border-white/10 bg-white opacity-40'
+                    else style = 'border border-white/10 bg-white/5 opacity-40'
                   } else if (pendingOptionId !== null) {
                     // Waiting on server — show immediate selection highlight
-                    if (opt.id === pendingOptionId) style = 'border-2 border-indigo-500 bg-amber-500/10'
-                    else style = 'border border-white/10 bg-white opacity-40'
+                    if (opt.id === pendingOptionId) style = 'border-2 border-amber-500 bg-amber-500/10'
+                    else style = 'border border-white/10 bg-white/5 opacity-40'
                   }
 
                   return (
