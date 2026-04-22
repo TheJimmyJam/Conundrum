@@ -76,7 +76,7 @@ export function Navbar() {
     location.pathname === path || location.pathname.startsWith(path + '/')
 
   return (
-    <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <nav className="bg-[#0f0f1a] border-b border-amber-500/20 sticky top-0 z-50">
       <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
         {/* Logo + question count */}
         <div className="flex items-center gap-3">
@@ -84,7 +84,7 @@ export function Navbar() {
             <img src={logo} alt="Conundrum" className="h-10 w-auto" />
           </Link>
           {questionCount !== null && (
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full">
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-amber-400/80 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               {questionCount.toLocaleString()} questions in the vault
             </span>
@@ -93,23 +93,23 @@ export function Navbar() {
 
         {/* Center links */}
         <div className="hidden sm:flex items-center gap-1">
-          <Link to="/play" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/play') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+          <Link to="/play" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/play') ? 'bg-amber-500/10 text-amber-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
             Daily
           </Link>
-          <Link to="/endless" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/endless') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+          <Link to="/endless" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/endless') ? 'bg-amber-500/10 text-amber-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
             Endless
           </Link>
-          <Link to="/leaderboard" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/leaderboard') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+          <Link to="/leaderboard" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/leaderboard') ? 'bg-amber-500/10 text-amber-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
             Leaderboard
           </Link>
-          <Link to="/friends" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/friends') || isActive('/challenge') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+          <Link to="/friends" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/friends') || isActive('/challenge') ? 'bg-amber-500/10 text-amber-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
             Friends
           </Link>
-          <Link to="/submit" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/submit') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+          <Link to="/submit" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/submit') ? 'bg-amber-500/10 text-amber-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
             Submit
           </Link>
           {profile?.role === 'admin' && (
-            <Link to="/admin" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/admin') ? 'bg-red-50 text-red-700' : 'text-red-500 hover:text-red-700 hover:bg-red-50'}`}>
+            <Link to="/admin" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/admin') ? 'bg-red-500/10 text-red-400' : 'text-red-400 hover:text-red-300 hover:bg-red-500/10'}`}>
               Admin
             </Link>
           )}
@@ -123,10 +123,10 @@ export function Navbar() {
             <div className="relative">
               <button
                 onClick={() => { setNotifOpen(o => !o); setMenuOpen(false) }}
-                className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="relative p-2 rounded-lg hover:bg-white/5 transition-colors"
                 title="Notifications"
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
                 {notifications.length > 0 && (
@@ -137,33 +137,33 @@ export function Navbar() {
               {notifOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                  <div className="absolute right-0 mt-1 w-80 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                      <span className="text-sm font-semibold text-gray-900">Notifications</span>
+                  <div className="absolute right-0 mt-1 w-80 bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                      <span className="text-sm font-semibold text-white">Notifications</span>
                       {notifications.length > 0 && (
-                        <button onClick={handleMarkAllRead} className="text-xs text-indigo-600 hover:underline">
+                        <button onClick={handleMarkAllRead} className="text-xs text-amber-400 hover:underline">
                           Mark all read
                         </button>
                       )}
                     </div>
                     {notifications.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-8">You're all caught up!</p>
+                      <p className="text-sm text-gray-500 text-center py-8">You're all caught up!</p>
                     ) : (
                       <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
                         {notifications.map(n => {
                           const { icon, title, body, sub } = notificationContent(n)
                           return (
-                            <div key={n.id} className="px-4 py-3 hover:bg-gray-50">
+                            <div key={n.id} className="px-4 py-3 hover:bg-white/5">
                               <div className="flex items-start gap-3">
                                 <span className="text-xl flex-shrink-0 mt-0.5">{icon}</span>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-gray-900">{title}</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">{body}</p>
-                                  {sub && <p className="text-xs text-gray-400 mt-1 italic truncate">{sub}</p>}
+                                  <p className="text-sm font-semibold text-white">{title}</p>
+                                  <p className="text-xs text-gray-400 mt-0.5">{body}</p>
+                                  {sub && <p className="text-xs text-gray-500 mt-1 italic truncate">{sub}</p>}
                                 </div>
                                 <button
                                   onClick={() => handleMarkRead(n.id)}
-                                  className="text-gray-300 hover:text-gray-500 text-xl leading-none flex-shrink-0"
+                                  className="text-gray-600 hover:text-gray-300 text-xl leading-none flex-shrink-0"
                                   title="Dismiss"
                                 >×</button>
                               </div>
@@ -181,14 +181,14 @@ export function Navbar() {
             <div className="relative">
               <button
                 onClick={() => { setMenuOpen(o => !o); setNotifOpen(false) }}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
               >
                 {rank !== null && (
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                    rank === 1 ? 'bg-yellow-100 text-yellow-700' :
-                    rank === 2 ? 'bg-gray-100 text-gray-600' :
-                    rank === 3 ? 'bg-orange-100 text-orange-600' :
-                    'bg-indigo-50 text-indigo-600'
+                    rank === 1 ? 'bg-amber-500/20 text-amber-400' :
+                    rank === 2 ? 'bg-white/10 text-gray-300' :
+                    rank === 3 ? 'bg-orange-500/20 text-orange-400' :
+                    'bg-amber-500/10 text-amber-400'
                   }`}>
                     #{rank}
                   </span>
@@ -196,7 +196,7 @@ export function Navbar() {
                 <span className="text-sm font-semibold text-gray-900">
                   {profile?.username ?? user.email?.split('@')[0]}
                 </span>
-                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
@@ -204,19 +204,19 @@ export function Navbar() {
               {menuOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
-                    <Link to="/profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">Profile</Link>
-                    <Link to="/leaderboard" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">Leaderboard</Link>
-                    <Link to="/awards" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">🏅 Awards</Link>
-                    <Link to="/history" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">History</Link>
+                  <div className="absolute right-0 mt-1 w-44 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                    <Link to="/profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white">Profile</Link>
+                    <Link to="/leaderboard" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white">Leaderboard</Link>
+                    <Link to="/awards" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white">🏅 Awards</Link>
+                    <Link to="/history" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white">History</Link>
                     {profile?.role === 'admin' && (
                       <>
                         <div className="border-t border-gray-100" />
-                        <Link to="/admin" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-indigo-700 font-medium hover:bg-indigo-50">⚙️ Admin</Link>
+                        <Link to="/admin" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-amber-400 font-medium hover:bg-amber-500/10">⚙️ Admin</Link>
                       </>
                     )}
                     <div className="border-t border-gray-100" />
-                    <button onClick={() => { setMenuOpen(false); handleSignOut() }} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
+                    <button onClick={() => { setMenuOpen(false); handleSignOut() }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10">
                       Sign out
                     </button>
                   </div>
@@ -227,8 +227,8 @@ export function Navbar() {
           </div>
         ) : (
           <div className="flex gap-2">
-            <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5">Log in</Link>
-            <Link to="/signup" className="bg-indigo-600 text-white text-sm font-medium px-4 py-1.5 rounded-lg hover:bg-indigo-700">Sign up</Link>
+            <Link to="/login" className="text-sm text-gray-400 hover:text-white px-3 py-1.5">Log in</Link>
+            <Link to="/signup" className="bg-amber-500 text-black text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-amber-400">Sign up</Link>
           </div>
         )}
       </div>
