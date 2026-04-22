@@ -166,7 +166,7 @@ export default function SubmitQuestionPage() {
               placeholder="What is the capital of Australia?"
               rows={3}
               maxLength={300}
-              className="w-full border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+              className="w-full bg-white/5 text-white border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none placeholder-gray-500"
             />
             <p className="text-xs text-gray-400 mt-1 text-right">{prompt.length}/300</p>
           </div>
@@ -183,7 +183,7 @@ export default function SubmitQuestionPage() {
             <div className="space-y-3">
               {OPTION_LABELS.map(({ key, label }) => (
                 <div key={key} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                  correct === key ? 'border-green-400 bg-green-50' : 'border-white/10'
+                  correct === key ? 'border-green-400 bg-green-500/10' : 'border-white/10'
                 }`}>
                   <button
                     type="button"
@@ -191,7 +191,7 @@ export default function SubmitQuestionPage() {
                     className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                       correct === key
                         ? 'border-green-500 bg-green-500 text-white'
-                        : 'border-gray-300 hover:border-amber-400'
+                        : 'border-white/30 hover:border-amber-400'
                     }`}
                     title="Mark as correct"
                   >
@@ -209,7 +209,7 @@ export default function SubmitQuestionPage() {
                     onChange={(e) => setOption(key, e.target.value)}
                     placeholder={`Option ${label}`}
                     maxLength={150}
-                    className="flex-1 text-sm bg-transparent focus:outline-none placeholder-gray-300"
+                    className="flex-1 text-sm text-white bg-transparent focus:outline-none placeholder-gray-500"
                   />
                 </div>
               ))}
@@ -234,12 +234,12 @@ export default function SubmitQuestionPage() {
               placeholder="Canberra, not Sydney, is Australia's capital — a deliberate compromise between the two rival cities."
               rows={2}
               maxLength={300}
-              className="w-full border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+              className="w-full bg-white/5 text-white border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none placeholder-gray-500"
             />
           </div>
 
           {duplicateWarning && (
-            <div className="bg-amber-50 border border-amber-300 rounded-xl px-5 py-4">
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-4">
               <div className="flex items-start gap-3">
                 <span className="text-2xl flex-shrink-0">🚫</span>
                 <div>
@@ -258,7 +258,7 @@ export default function SubmitQuestionPage() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-xl">
               {error}
             </div>
           )}
