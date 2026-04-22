@@ -32,6 +32,8 @@ import AdminCategories from './pages/admin/AdminCategories'
 import AdminCategoryQuestions from './pages/admin/AdminCategoryQuestions'
 import AdminDailySubmission from './pages/admin/AdminDailySubmission'
 import AdminPlayers from './pages/admin/AdminPlayers'
+import TermsPage from './pages/TermsPage'
+import PrivacyPage from './pages/PrivacyPage'
 
 function App() {
   return (
@@ -45,6 +47,8 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/leaderboard" element={<><Navbar /><LeaderboardPage /></>} />
 
           {/* Authenticated — shared navbar via AuthLayout */}
