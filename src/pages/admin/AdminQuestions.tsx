@@ -682,7 +682,7 @@ export default function AdminQuestions() {
               onClick={() => setTab(t.key)}
               className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
                 tab === t.key
-                  ? 'bg-white text-white shadow-lg shadow-black/20'
+                  ? 'bg-amber-500 text-white shadow-lg shadow-black/20'
                   : 'text-gray-400 hover:text-gray-200'
               }`}
             >
