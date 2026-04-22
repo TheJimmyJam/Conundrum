@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore'
 import { useGameStore } from '../store/gameStore'
 import {
   getTodaysDailySet,
+  getMostRecentPublishedDailySet,
   getExistingDailySession,
   createGameSession,
   getDailySetQuestions,
@@ -31,7 +32,8 @@ export default function PlayPage() {
 
     async function init() {
       try {
-        const dailySet = await getTodaysDailySet()
+        let dailySet = await getTodaysDailySet()
+        if (!dailySet) dailySet = await getMostRecentPublishedDailySet()
         if (!dailySet) { setPhase('no_set'); return }
 
         const existing = await getExistingDailySession(userId!, dailySet.id)
@@ -240,9 +242,12 @@ function NoSetScreen() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="text-center">
         <div className="text-5xl mb-4">🕐</div>
-        <h2 className="text-2xl font-bold text-white mb-2">Today's round isn't live yet.</h2>
+        <h2 className="text-2xl font-bold text-white mb-2">No round available yet.</h2>
         <p className="text-gray-400 mb-1">New rounds unlock at <span className="font-semibold text-gray-200">6:00 AM ET</span></p>
-        <p className="text-3xl font-bold text-amber-400 font-mono tabular-nums">{countdown}</p>
+        <p className="text-3xl font-bold text-amber-400 font-mono tabular-nums mb-6">{countdown}</p>
+        <button onClick={() => window.location.href = '/endless'} className="border border-amber-500 text-amber-400 px-6 py-2.5 rounded-lg font-medium hover:bg-amber-500/10">
+          Play Endless Mode
+        </button>
       </div>
     </div>
   )
