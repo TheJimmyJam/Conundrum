@@ -399,7 +399,8 @@ export default function AdminDailySet() {
     setTimeout(() => setToast(null), 4000)
   }
 
-  const todayISO = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
+  // Use ET date so 'live' detection matches the DB function (which also uses ET)
+  const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date())
 
   const diffBadge = (d: string) =>
     d === 'easy'   ? 'bg-green-500/100/15 text-green-400' :
@@ -502,7 +503,11 @@ export default function AdminDailySet() {
               const isEditingTitle = s.id in editingTitle
 
               return (
-                <div key={s.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                <div key={s.id} className={`rounded-2xl overflow-hidden border ${
+                  s.is_published && s.set_date === todayISO
+                    ? 'bg-green-500/5 border-green-500/40 ring-1 ring-green-500/20'
+                    : 'bg-white/5 border-white/10'
+                }`}>
                   {/* Header row */}
                   <div className="flex items-center gap-4 px-5 py-4">
                     <button
@@ -619,9 +624,16 @@ export default function AdminDailySet() {
                             className={`relative inline-flex h-5 w-9 rounded-full transition-colors focus:outline-none disabled:opacity-40 ${s.is_published ? 'bg-amber-500/100' : 'bg-gray-200'}`}>
                             <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${s.is_published ? 'translate-x-4' : 'translate-x-0.5'}`} />
                           </button>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.is_published ? 'bg-green-500/100/15 text-green-400' : 'bg-white/10 text-gray-400'}`}>
-                            {s.is_published ? 'Live' : 'Draft'}
-                          </span>
+                          {s.is_published && s.set_date === todayISO ? (
+                            <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/40">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+                              LIVE NOW
+                            </span>
+                          ) : (
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.is_published ? 'bg-green-500/15 text-green-400' : 'bg-white/10 text-gray-400'}`}>
+                              {s.is_published ? 'Published' : 'Draft'}
+                            </span>
+                          )}
                           <button
                             onClick={() => { setConfirmGoLive(null); setConfirmDelete(s.id) }}
                             className="text-xs border border-red-500/30 text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-500/10 hover:text-red-400 hover:border-red-300 transition-colors"
@@ -633,7 +645,13 @@ export default function AdminDailySet() {
 
                   {/* Expanded: slots */}
                   {isOpen && (
-                    <div className="border-t border-white/10 px-5 py-4">
+                    <div className={`border-t px-5 py-4 ${s.is_published && s.set_date === todayISO ? 'border-green-500/20' : 'border-white/10'}`}>
+                      {s.is_published && s.set_date === todayISO && (
+                        <div className="mb-4 px-4 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-2 text-sm text-green-400 font-medium">
+                          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+                          This set is live on the homepage right now. Players who refresh will see these questions.
+                        </div>
+                      )}
                       {loadingQs === s.id ? (
                         <div className="flex justify-center py-6">
                           <div className="animate-spin rounded-full h-6 w-6 border-4 border-amber-500 border-t-transparent" />
