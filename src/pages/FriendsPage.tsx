@@ -265,12 +265,12 @@ export default function FriendsPage() {
 
                 {/* Copy link */}
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 min-w-0">
-                    <span className="text-gray-500 text-sm truncate flex-1 select-all">{GAME_URL}</span>
+                  <div className="flex-1 flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 min-w-0">
+                    <span className="text-gray-500 text-sm truncate select-all">{GAME_URL}</span>
                   </div>
                   <button
                     onClick={handleCopyLink}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex-shrink-0 ${
+                    className={`w-32 flex-shrink-0 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                       linkCopied
                         ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                         : 'bg-amber-500 hover:bg-amber-400 text-black border border-amber-500'
@@ -297,7 +297,7 @@ export default function FriendsPage() {
                 {/* Email invite */}
                 <div>
                   <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Or send a personal invite</p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <input
                       type="email"
                       value={inviteEmail}
@@ -309,7 +309,7 @@ export default function FriendsPage() {
                     <button
                       onClick={handleEmailInvite}
                       disabled={!inviteEmail.trim()}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-white/5 hover:bg-amber-500/10 border border-white/10 hover:border-amber-500/40 text-gray-300 hover:text-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                      className="w-32 flex-shrink-0 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-white/5 hover:bg-amber-500/10 border border-white/10 hover:border-amber-500/40 text-gray-300 hover:text-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
