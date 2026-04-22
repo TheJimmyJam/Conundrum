@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { Navbar } from '../components/Navbar'
 import { getFeaturedSubmission, recordCommunityAnswer, getCommunityCorrectCount, getMyTodayCommunityAnswer } from '../lib/api'
+import logo from '../assets/logo.png'
 
 type FeaturedQ = {
   id: string
@@ -98,6 +99,9 @@ export default function LandingPage() {
 
       {/* Hero */}
       <main className="max-w-4xl mx-auto px-6 py-20 text-center">
+        <div className="flex justify-center mb-8">
+          <img src={logo} alt="Conundrum" className="w-48 h-48 object-contain drop-shadow-xl" />
+        </div>
         <h1 className="text-5xl font-bold text-gray-900 mb-6 tracking-tight">
           One round. Ten questions.<br />Beat your friends.
         </h1>
