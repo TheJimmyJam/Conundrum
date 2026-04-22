@@ -5,6 +5,7 @@ import {
   adminUpdateSubmission,
   adminDeleteSubmission,
   adminFeatureSubmissionNow,
+  adminReviewSubmission,
   type QueuedSubmission,
 } from '../../lib/api'
 
@@ -40,6 +41,11 @@ export default function AdminDailySubmission() {
   const [editState, setEditState] = useState<EditState | null>(null)
   const [saving, setSaving] = useState(false)
   const [acting, setActing] = useState<string | null>(null)
+
+  // Drag-to-reorder state
+  const [dragFromIdx, setDragFromIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+  const [reordering, setReordering] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -106,6 +112,63 @@ export default function AdminDailySubmission() {
       alert(err?.message ?? 'Failed to feature')
     } finally {
       setActing(null)
+    }
+  }
+
+  // ── Drag-to-reorder queue ────────────────────────────────────────────────────
+
+  function handleDragStart(idx: number) {
+    setDragFromIdx(idx)
+  }
+
+  function handleDragOver(e: React.DragEvent, idx: number) {
+    e.preventDefault()
+    setDragOverIdx(idx)
+  }
+
+  function handleDragEnd() {
+    setDragFromIdx(null)
+    setDragOverIdx(null)
+  }
+
+  async function handleDrop(e: React.DragEvent, toIdx: number, currentQueue: QueuedSubmission[]) {
+    e.preventDefault()
+    if (dragFromIdx === null || dragFromIdx === toIdx) { handleDragEnd(); return }
+
+    // Shift-style reorder
+    const newQueue = [...currentQueue]
+    const [moved] = newQueue.splice(dragFromIdx, 1)
+    newQueue.splice(toIdx, 0, moved)
+
+    // Redistribute original featured_dates across new positions
+    const originalDates = currentQueue.map(item => item.featured_date)
+    const updatedQueue = newQueue.map((item, i) => ({ ...item, featured_date: originalDates[i] }))
+
+    // Optimistic update — splice updated queue back into items
+    setItems(prev => {
+      const featuredItem = prev.find(x => x.status === 'featured' && x.featured_date === todayISO)
+      return [...(featuredItem ? [featuredItem] : []), ...updatedQueue]
+    })
+    handleDragEnd()
+
+    // Persist date changes for items whose date shifted
+    setReordering(true)
+    try {
+      await Promise.all(
+        updatedQueue
+          .filter((item, i) => {
+            const orig = currentQueue.find(q => q.id === item.id)
+            return orig && orig.featured_date !== item.featured_date
+          })
+          .map(item =>
+            adminReviewSubmission(item.id, item.featured_date ? 'featured' : 'approved', item.featured_date ?? undefined)
+          )
+      )
+    } catch (err: any) {
+      // Rollback
+      await load()
+    } finally {
+      setReordering(false)
     }
   }
 
@@ -185,44 +248,71 @@ export default function AdminDailySubmission() {
               </div>
 
               {queue.length === 0 ? (
-                <div className="bg-white border border-dashed border-white/10 rounded-2xl px-6 py-10 text-center">
+                <div className="bg-white/5 border border-dashed border-white/10 rounded-2xl px-6 py-10 text-center">
                   <div className="text-3xl mb-2">🪣</div>
                   <p className="text-gray-400 text-sm">Queue is empty.</p>
                   <p className="text-gray-400 text-xs mt-1">Go to <strong>Question Submissions</strong>, approve a question, then hit <strong>Add to Queue</strong>.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {reordering && (
+                    <p className="text-xs text-amber-400 flex items-center gap-1.5">
+                      <span className="inline-block w-2.5 h-2.5 rounded-full border-2 border-amber-400 border-t-transparent animate-spin" />
+                      Saving new order…
+                    </p>
+                  )}
                   {queue.map((s, i) => {
                     const dateBadge = s.featured_date
                       ? new Date(s.featured_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
                       : null
+                    const isDraggingThis = dragFromIdx === i
+                    const isDragOver = dragOverIdx === i && dragFromIdx !== i
                     return (
-                      <SubmissionCard
+                      <div
                         key={s.id}
-                        s={s}
-                        badge={
-                          dateBadge ? (
-                            <span className="text-xs bg-amber-500/100/15 text-amber-400 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
-                              📅 {dateBadge}
-                            </span>
-                          ) : (
-                            <span className="text-xs bg-gray-100 text-gray-400 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
-                              #{i + 1} in queue
-                            </span>
-                          )
-                        }
-                        isEditing={editing === s.id}
-                        editState={editState}
-                        onEditChange={setEditState}
-                        onEdit={() => startEdit(s)}
-                        onCancelEdit={cancelEdit}
-                        onSave={() => saveEdit(s.id)}
-                        saving={saving}
-                        acting={acting === s.id}
-                        onDelete={() => handleDelete(s)}
-                        showFeatureNow
-                        onFeatureNow={() => handleFeatureNow(s)}
-                      />
+                        draggable
+                        onDragStart={() => handleDragStart(i)}
+                        onDragOver={(e) => handleDragOver(e, i)}
+                        onDragEnd={handleDragEnd}
+                        onDrop={(e) => handleDrop(e, i, queue)}
+                        className={`transition-all ${
+                          isDraggingThis ? 'opacity-40 scale-[0.98]' :
+                          isDragOver ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-[#0f0f1a] rounded-2xl' : ''
+                        }`}
+                      >
+                        <SubmissionCard
+                          s={s}
+                          badge={
+                            dateBadge ? (
+                              <span className="text-xs bg-amber-500/15 text-amber-400 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
+                                📅 {dateBadge}
+                              </span>
+                            ) : (
+                              <span className="text-xs bg-white/10 text-gray-400 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
+                                #{i + 1} in queue
+                              </span>
+                            )
+                          }
+                          dragHandle={
+                            <div className="flex flex-col gap-0.5 cursor-grab active:cursor-grabbing opacity-30 hover:opacity-70 flex-shrink-0 px-1 py-0.5" title="Drag to reorder">
+                              <span className="block w-3.5 h-0.5 bg-gray-400 rounded-full" />
+                              <span className="block w-3.5 h-0.5 bg-gray-400 rounded-full" />
+                              <span className="block w-3.5 h-0.5 bg-gray-400 rounded-full" />
+                            </div>
+                          }
+                          isEditing={editing === s.id}
+                          editState={editState}
+                          onEditChange={setEditState}
+                          onEdit={() => startEdit(s)}
+                          onCancelEdit={cancelEdit}
+                          onSave={() => saveEdit(s.id)}
+                          saving={saving}
+                          acting={acting === s.id}
+                          onDelete={() => handleDelete(s)}
+                          showFeatureNow
+                          onFeatureNow={() => handleFeatureNow(s)}
+                        />
+                      </div>
                     )
                   })}
                 </div>
@@ -240,6 +330,7 @@ export default function AdminDailySubmission() {
 type CardProps = {
   s: QueuedSubmission
   badge: React.ReactNode
+  dragHandle?: React.ReactNode
   isEditing: boolean
   editState: EditState | null
   onEditChange: (s: EditState) => void
@@ -254,7 +345,7 @@ type CardProps = {
 }
 
 function SubmissionCard({
-  s, badge, isEditing, editState, onEditChange,
+  s, badge, dragHandle, isEditing, editState, onEditChange,
   onEdit, onCancelEdit, onSave, saving, acting,
   onDelete, showFeatureNow, onFeatureNow,
 }: CardProps) {
@@ -262,6 +353,7 @@ function SubmissionCard({
     <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
       {/* Header row */}
       <div className="px-5 py-4 flex items-center gap-3">
+        {dragHandle}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white truncate">{s.prompt}</p>
           <p className="text-xs text-gray-400 mt-0.5">by @{s.username} · submitted {new Date(s.created_at).toLocaleDateString()}</p>
