@@ -98,16 +98,18 @@ export default function LandingPage() {
       <Navbar />
 
       {/* Hero */}
-      <main className="max-w-4xl mx-auto px-6 py-20 text-center">
-        <div className="flex justify-center mb-8">
-          <img src={logo} alt="Conundrum" className="w-48 h-48 object-contain drop-shadow-xl" />
+      <main className="max-w-4xl mx-auto px-6 py-20">
+        <div className="flex flex-col sm:flex-row items-center gap-8 mb-10">
+          <img src={logo} alt="Conundrum" className="w-36 h-36 object-contain drop-shadow-xl flex-shrink-0" />
+          <div className="text-center sm:text-left">
+            <h1 className="text-5xl font-bold text-gray-900 mb-4 tracking-tight">
+              One round. Ten questions.<br />Beat your friends.
+            </h1>
+            <p className="text-xl text-gray-500 max-w-xl">
+              A fresh trivia set drops every day. Answer fast, score high, and challenge anyone who thinks they can beat you.
+            </p>
+          </div>
         </div>
-        <h1 className="text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-          One round. Ten questions.<br />Beat your friends.
-        </h1>
-        <p className="text-xl text-gray-500 mb-10 max-w-xl mx-auto">
-          A fresh trivia set drops every day. Answer fast, score high, and challenge anyone who thinks they can beat you.
-        </p>
         <div className="flex gap-4 justify-center">
           <Link
             to={user ? '/play' : '/signup'}
