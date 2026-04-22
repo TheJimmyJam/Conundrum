@@ -5,6 +5,7 @@ import type { Category } from '../../types'
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([])
+  const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [newName, setNewName] = useState('')
   const [adding, setAdding] = useState(false)
@@ -13,12 +14,19 @@ export default function AdminCategories() {
   const [error, setError] = useState<string | null>(null)
 
   async function load() {
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('name')
-    if (error) setError(error.message)
-    else setCategories(data ?? [])
+    const [{ data: cats, error: catErr }, { data: qRows }] = await Promise.all([
+      supabase.from('categories').select('*').order('name'),
+      supabase.from('questions').select('category_id'),
+    ])
+    if (catErr) setError(catErr.message)
+    else setCategories(cats ?? [])
+
+    // Build count map from question rows
+    const counts: Record<string, number> = {}
+    for (const q of qRows ?? []) {
+      if (q.category_id) counts[q.category_id] = (counts[q.category_id] ?? 0) + 1
+    }
+    setQuestionCounts(counts)
     setLoading(false)
   }
 
@@ -138,10 +146,17 @@ export default function AdminCategories() {
                   ) : (
                     <Link to={`/admin/categories/${cat.id}/questions`} className="block group">
                       <p className={`font-medium text-sm group-hover:text-amber-400 transition-colors ${cat.is_active ? 'text-white' : 'text-gray-400'}`}>{cat.name}</p>
-                      <p className="text-xs text-gray-400">{cat.slug}</p>
+                      <p className="text-xs text-gray-500">{cat.slug}</p>
                     </Link>
                   )}
                 </div>
+
+                {/* Question count badge */}
+                {editingId !== cat.id && (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/10 text-gray-300 flex-shrink-0 tabular-nums">
+                    {(questionCounts[cat.id] ?? 0).toLocaleString()} {questionCounts[cat.id] === 1 ? 'question' : 'questions'}
+                  </span>
+                )}
 
                 {/* Actions */}
                 {editingId !== cat.id && (
