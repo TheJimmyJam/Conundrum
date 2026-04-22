@@ -196,9 +196,9 @@ export default function EndlessPlayPage() {
           )}
           <button
             onClick={() => setShowQuitConfirm(true)}
-            className="text-xs text-gray-400 hover:text-gray-200 border border-white/10 px-3 py-1 rounded-lg"
+            className="text-sm font-semibold text-red-400 hover:text-white hover:bg-red-500 border border-red-500/40 hover:border-red-500 px-4 py-1.5 rounded-lg transition-colors"
           >
-            Quit
+            End
           </button>
         </div>
       </div>
@@ -306,11 +306,11 @@ export default function EndlessPlayPage() {
       {showQuitConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-50">
           <div className="bg-white/5 rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="font-bold text-white mb-2">Quit this session?</h3>
-            <p className="text-gray-400 text-sm mb-6">Your progress will be saved and you can see your results.</p>
+            <h3 className="font-bold text-white mb-2">End this session?</h3>
+            <p className="text-gray-400 text-sm mb-6">Your progress will be saved and you'll see your results.</p>
             <div className="flex gap-3">
               <button onClick={handleQuit} className="flex-1 bg-red-500 text-white font-semibold py-2.5 rounded-lg hover:bg-red-600">
-                Yes, quit
+                End session
               </button>
               <button onClick={() => setShowQuitConfirm(false)} className="flex-1 border border-white/10 text-gray-200 font-semibold py-2.5 rounded-lg hover:bg-white/5">
                 Keep playing
