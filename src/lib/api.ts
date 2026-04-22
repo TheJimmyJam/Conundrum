@@ -330,6 +330,7 @@ export async function getDailyLeaderboard(dailySetId: string, limit = 50): Promi
     score: row.score,
     correct_count: row.correct_count,
     duration_ms: row.duration_ms,
+    anti_cheat_flag: row.anti_cheat_flag ?? false,
   }))
 }
 
