@@ -191,25 +191,25 @@ export default function FriendsPage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent" />
+      <div className="animate-spin rounded-full h-10 w-10 border-4 border-amber-500 border-t-transparent" />
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f1a]">
       <div className="max-w-2xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Friends</h1>
+        <h1 className="text-3xl font-bold text-white mb-6">Friends</h1>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-8">
+        <div className="flex border-b border-white/10 mb-8">
           {(['friends', 'challenges'] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize ${
                 tab === t
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-amber-500 text-amber-400'
+                  : 'border-transparent text-gray-400 hover:text-gray-200'
               }`}
             >
               {t}
@@ -228,14 +228,14 @@ export default function FriendsPage() {
 
             {/* Search */}
             <section>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Add a Friend</h2>
+              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Add a Friend</h2>
               <div className="relative">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Search by username or email…"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+                  className="w-full border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-[#0f0f1a]"
                 />
                 {searching && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -245,17 +245,17 @@ export default function FriendsPage() {
               </div>
 
               {searchResults.length > 0 && (
-                <div className="mt-2 bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                <div className="mt-2 bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-sm">
                   {searchResults.map((r) => (
-                    <div key={r.id} className="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0">
+                    <div key={r.id} className="flex items-center justify-between px-4 py-3 border-b border-white/5 last:border-0">
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{displayName(r)}</p>
+                        <p className="text-sm font-semibold text-white">{displayName(r)}</p>
                         <p className="text-xs text-gray-400">@{r.username}</p>
                       </div>
                       <button
                         onClick={() => handleSendRequest(r.id)}
                         disabled={pendingRequest === r.id}
-                        className="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                        className="text-sm bg-amber-500 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600 disabled:opacity-50"
                       >
                         {pendingRequest === r.id ? 'Sending…' : 'Add'}
                       </button>
@@ -272,24 +272,24 @@ export default function FriendsPage() {
             {/* Pending incoming requests */}
             {pendingIncoming.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Friend Requests</h2>
-                <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Friend Requests</h2>
+                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
                   {pendingIncoming.map((f) => (
-                    <div key={f.id} className="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0">
+                    <div key={f.id} className="flex items-center justify-between px-4 py-3 border-b border-white/5 last:border-0">
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{displayName(f.requester)}</p>
+                        <p className="text-sm font-semibold text-white">{displayName(f.requester)}</p>
                         <p className="text-xs text-gray-400">@{f.requester.username}</p>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleRespond(f.id, true)}
-                          className="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700"
+                          className="text-sm bg-amber-500 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600"
                         >
                           Accept
                         </button>
                         <button
                           onClick={() => handleRespond(f.id, false)}
-                          className="text-sm border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                          className="text-sm border border-white/10 text-gray-300 px-3 py-1.5 rounded-lg hover:bg-white/5"
                         >
                           Decline
                         </button>
@@ -303,22 +303,22 @@ export default function FriendsPage() {
             {/* Pending outgoing requests */}
             {pendingOutgoing.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
                   Sent Requests
                   <span className="ml-2 text-xs bg-amber-100 text-amber-600 font-semibold px-1.5 py-0.5 rounded-full normal-case">
                     {pendingOutgoing.length} pending
                   </span>
                 </h2>
-                <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
                   {pendingOutgoing.map((f) => (
-                    <div key={f.id} className="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0">
+                    <div key={f.id} className="flex items-center justify-between px-4 py-3 border-b border-white/5 last:border-0">
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{displayName(f.addressee)}</p>
+                        <p className="text-sm font-semibold text-white">{displayName(f.addressee)}</p>
                         <p className="text-xs text-gray-400">@{f.addressee.username} · waiting for them to accept</p>
                       </div>
                       <button
                         onClick={() => handleRemove(f.id)}
-                        className="text-xs border border-gray-200 text-gray-400 px-3 py-1.5 rounded-lg hover:bg-gray-50 hover:text-red-500 transition-colors"
+                        className="text-xs border border-white/10 text-gray-400 px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-red-500 transition-colors"
                       >
                         Cancel
                       </button>
@@ -330,35 +330,35 @@ export default function FriendsPage() {
 
             {/* Accepted friends */}
             <section>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
                 My Friends {acceptedFriends.length > 0 && `(${acceptedFriends.length})`}
               </h2>
               {acceptedFriends.length === 0 ? (
-                <div className="bg-white border border-gray-100 rounded-xl px-6 py-10 text-center">
+                <div className="bg-white/5 border border-white/10 rounded-xl px-6 py-10 text-center">
                   <div className="text-4xl mb-3">👋</div>
-                  <p className="text-gray-500 text-sm">No friends yet. Search above to add some!</p>
+                  <p className="text-gray-400 text-sm">No friends yet. Search above to add some!</p>
                 </div>
               ) : (
-                <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
                   {acceptedFriends.map((f) => {
                     const friend = f.requester.id === user?.id ? f.addressee : f.requester
                     return (
-                      <div key={f.id} className="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0">
+                      <div key={f.id} className="flex items-center justify-between px-4 py-3 border-b border-white/5 last:border-0">
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">{displayName(friend)}</p>
+                          <p className="text-sm font-semibold text-white">{displayName(friend)}</p>
                           <p className="text-xs text-gray-400">@{friend.username}</p>
                         </div>
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleChallenge(friend.id)}
                             disabled={challengingId === friend.id}
-                            className="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                            className="text-sm bg-amber-500 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600 disabled:opacity-50"
                           >
                             {challengingId === friend.id ? 'Starting…' : '⚔️ Challenge'}
                           </button>
                           <button
                             onClick={() => handleRemove(f.id)}
-                            className="text-sm border border-gray-200 text-gray-400 px-3 py-1.5 rounded-lg hover:bg-gray-50 hover:text-red-500"
+                            className="text-sm border border-white/10 text-gray-400 px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-red-500"
                           >
                             Remove
                           </button>
@@ -380,26 +380,26 @@ export default function FriendsPage() {
             {/* Incoming */}
             {pendingChallenges.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Waiting for You</h2>
-                <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Waiting for You</h2>
+                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
                   {pendingChallenges.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between px-4 py-4 border-b border-gray-50 last:border-0">
+                    <div key={c.id} className="flex items-center justify-between px-4 py-4 border-b border-white/5 last:border-0">
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          ⚔️ Challenge from <span className="text-indigo-600">{displayName(c.challenger)}</span>
+                        <p className="text-sm font-semibold text-white">
+                          ⚔️ Challenge from <span className="text-amber-400">{displayName(c.challenger)}</span>
                         </p>
                         <p className="text-xs text-gray-400 mt-0.5">10 questions · Ready to play</p>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleAcceptChallenge(c.id)}
-                          className="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700"
+                          className="text-sm bg-amber-500 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600"
                         >
                           Play
                         </button>
                         <button
                           onClick={() => handleDeclineChallenge(c.id)}
-                          className="text-sm border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                          className="text-sm border border-white/10 text-gray-300 px-3 py-1.5 rounded-lg hover:bg-white/5"
                         >
                           Decline
                         </button>
@@ -413,15 +413,15 @@ export default function FriendsPage() {
             {/* Awaiting opponent */}
             {activeChallenges.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Waiting on Them</h2>
-                <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Waiting on Them</h2>
+                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
                   {activeChallenges.map((c) => {
                     const iAmChallenger = c.challenger.id === user?.id
                     const opponent = iAmChallenger ? c.challenged : c.challenger
                     return (
-                      <div key={c.id} className="flex items-center justify-between px-4 py-4 border-b border-gray-50 last:border-0">
+                      <div key={c.id} className="flex items-center justify-between px-4 py-4 border-b border-white/5 last:border-0">
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">vs. {displayName(opponent)}</p>
+                          <p className="text-sm font-semibold text-white">vs. {displayName(opponent)}</p>
                           <p className="text-xs text-gray-400 mt-0.5">
                             {iAmChallenger
                               ? `Waiting for ${displayName(opponent)} to play…`
@@ -439,8 +439,8 @@ export default function FriendsPage() {
             {/* Completed */}
             {completedChallenges.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Completed</h2>
-                <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Completed</h2>
+                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
                   {completedChallenges.map((c) => {
                     const iAmChallenger = c.challenger.id === user?.id
                     const opponent = iAmChallenger ? c.challenged : c.challenger
@@ -449,11 +449,11 @@ export default function FriendsPage() {
                     const won = c.winner_id === user?.id
                     const tied = !c.winner_id
                     return (
-                      <div key={c.id} className="px-4 py-4 border-b border-gray-50 last:border-0">
+                      <div key={c.id} className="px-4 py-4 border-b border-white/5 last:border-0">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-semibold text-gray-900">vs. {displayName(opponent)}</p>
+                          <p className="text-sm font-semibold text-white">vs. {displayName(opponent)}</p>
                           <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                            tied ? 'bg-gray-100 text-gray-600' :
+                            tied ? 'bg-gray-100 text-gray-300' :
                             won ? 'bg-green-100 text-green-700' :
                             'bg-red-100 text-red-600'
                           }`}>
@@ -461,7 +461,7 @@ export default function FriendsPage() {
                           </span>
                         </div>
                         {mySession && opSession && (
-                          <div className="text-xs text-gray-500 flex gap-4">
+                          <div className="text-xs text-gray-400 flex gap-4">
                             <span>You: {mySession.correct_count}/10 · {formatMs(mySession.duration_ms)}</span>
                             <span>{displayName(opponent)}: {opSession.correct_count}/10 · {formatMs(opSession.duration_ms)}</span>
                           </div>
@@ -474,9 +474,9 @@ export default function FriendsPage() {
             )}
 
             {pendingChallenges.length === 0 && activeChallenges.length === 0 && completedChallenges.length === 0 && (
-              <div className="bg-white border border-gray-100 rounded-xl px-6 py-10 text-center">
+              <div className="bg-white/5 border border-white/10 rounded-xl px-6 py-10 text-center">
                 <div className="text-4xl mb-3">⚔️</div>
-                <p className="text-gray-500 text-sm">No challenges yet. Go challenge a friend from the Friends tab!</p>
+                <p className="text-gray-400 text-sm">No challenges yet. Go challenge a friend from the Friends tab!</p>
               </div>
             )}
 
