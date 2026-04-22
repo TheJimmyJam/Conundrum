@@ -34,6 +34,7 @@ import AdminDailySubmission from './pages/admin/AdminDailySubmission'
 import AdminPlayers from './pages/admin/AdminPlayers'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
   return (
@@ -83,6 +84,8 @@ function App() {
           <Route path="/admin/categories" element={<ProtectedRoute requireAdmin><AuthLayout><AdminCategories /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/categories/:categoryId/questions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminCategoryQuestions /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/players" element={<ProtectedRoute requireAdmin><AuthLayout><AdminPlayers /></AuthLayout></ProtectedRoute>} />
+          {/* 404 */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
