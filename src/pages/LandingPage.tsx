@@ -122,7 +122,7 @@ export default function LandingPage() {
         </div>
 
         {/* How it works */}
-        <div className="mt-24 grid grid-cols-3 gap-8 text-left">
+        <div className="mt-24 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 text-left">
           {[
             { step: '1', title: 'Play the daily set', desc: '10 timed questions, fresh every day. Faster correct answers score more.' },
             { step: '2', title: 'Check the leaderboard', desc: 'See where you rank globally or just among your friends.' },
