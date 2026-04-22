@@ -113,11 +113,11 @@ export default function EndlessPlayPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="text-center max-w-sm">
         <div className="text-5xl mb-4">⚠️</div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Couldn't load a question</h2>
-        <p className="text-gray-500 text-sm mb-6">Something went wrong fetching your next question. Try again.</p>
+        <h2 className="text-xl font-bold text-white mb-2">Couldn't load a question</h2>
+        <p className="text-gray-400 text-sm mb-6">Something went wrong fetching your next question. Try again.</p>
         <button
           onClick={() => loadNextQuestion()}
-          className="bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-indigo-700"
+          className="bg-amber-500 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-amber-600"
         >
           Try again
         </button>
@@ -127,13 +127,13 @@ export default function EndlessPlayPage() {
 
   if (phase === 'loading' || phase === 'done') return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent" />
+      <div className="animate-spin rounded-full h-10 w-10 border-4 border-amber-500 border-t-transparent" />
     </div>
   )
 
   if (phase === 'quitting') return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500">Saving your progress…</p>
+      <p className="text-gray-400">Saving your progress…</p>
     </div>
   )
 
@@ -141,19 +141,19 @@ export default function EndlessPlayPage() {
   const timerColor = timer > 8 ? 'bg-green-500' : timer > 4 ? 'bg-yellow-500' : 'bg-red-500'
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#0f0f1a] flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between max-w-2xl mx-auto w-full">
+      <div className="bg-white border-b border-white/10 px-6 py-4 flex items-center justify-between max-w-2xl mx-auto w-full">
         <div className="flex gap-4 text-sm">
-          <span className="font-semibold text-gray-700">Q {questionCount}</span>
+          <span className="font-semibold text-gray-200">Q {questionCount}</span>
           {streakCount >= 2 && <span className="text-orange-500 font-medium">🔥 {streakCount} streak</span>}
         </div>
-        <span className="font-bold text-indigo-700">{runningScore} pts</span>
+        <span className="font-bold text-amber-400">{runningScore} pts</span>
         <div className="flex items-center gap-3">
-          <span className={`text-lg font-bold ${timer <= 4 ? 'text-red-600' : 'text-gray-700'}`}>{timer}s</span>
+          <span className={`text-lg font-bold ${timer <= 4 ? 'text-red-600' : 'text-gray-200'}`}>{timer}s</span>
           <button
             onClick={() => setShowQuitConfirm(true)}
-            className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 px-3 py-1 rounded-lg"
+            className="text-xs text-gray-400 hover:text-gray-200 border border-white/10 px-3 py-1 rounded-lg"
           >
             Quit
           </button>
@@ -161,7 +161,7 @@ export default function EndlessPlayPage() {
       </div>
 
       {/* Timer bar */}
-      <div className="h-1.5 bg-gray-200 max-w-2xl mx-auto w-full">
+      <div className="h-1.5 bg-white/10 max-w-2xl mx-auto w-full">
         <div className={`h-full ${timerColor} transition-all duration-1000`} style={{ width: `${timerPct}%` }} />
       </div>
 
@@ -171,7 +171,7 @@ export default function EndlessPlayPage() {
             {/* Category + difficulty badge */}
             <div className="flex items-center gap-2 mb-4">
               {question.category_name && (
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400">
                   {question.category_name}
                 </span>
               )}
@@ -186,22 +186,22 @@ export default function EndlessPlayPage() {
               )}
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-900 mb-8 leading-snug">{question.prompt}</h2>
+            <h2 className="text-2xl font-bold text-white mb-8 leading-snug">{question.prompt}</h2>
             <div className="grid grid-cols-1 gap-3">
               {question.options
                 .sort((a, b) => a.sort_order - b.sort_order)
                 .map((opt) => {
-                  let style = 'border border-gray-200 bg-white hover:border-indigo-400 hover:bg-indigo-50'
+                  let style = 'border border-white/10 bg-white hover:border-amber-400 hover:bg-amber-500/10'
 
                   if (feedback) {
                     // Server responded — show definitive correct/wrong
-                    if (opt.id === feedback.correctOptionId) style = 'border-2 border-green-500 bg-green-50'
-                    else if (opt.id === feedback.selectedOptionId && !feedback.isCorrect) style = 'border-2 border-red-400 bg-red-50'
-                    else style = 'border border-gray-100 bg-white opacity-40'
+                    if (opt.id === feedback.correctOptionId) style = 'border-2 border-green-500 bg-green-500/10'
+                    else if (opt.id === feedback.selectedOptionId && !feedback.isCorrect) style = 'border-2 border-red-400 bg-red-500/10'
+                    else style = 'border border-white/10 bg-white opacity-40'
                   } else if (pendingOptionId !== null) {
                     // Waiting on server — show immediate selection highlight
-                    if (opt.id === pendingOptionId) style = 'border-2 border-indigo-500 bg-indigo-50'
-                    else style = 'border border-gray-100 bg-white opacity-40'
+                    if (opt.id === pendingOptionId) style = 'border-2 border-indigo-500 bg-amber-500/10'
+                    else style = 'border border-white/10 bg-white opacity-40'
                   }
 
                   return (
@@ -209,7 +209,7 @@ export default function EndlessPlayPage() {
                       key={opt.id}
                       onClick={() => phase === 'question' && handleAnswer(opt.id)}
                       disabled={phase !== 'question'}
-                      className={`w-full text-left px-5 py-4 rounded-xl transition-colors font-medium text-gray-800 ${style}`}
+                      className={`w-full text-left px-5 py-4 rounded-xl transition-colors font-medium text-gray-100 ${style}`}
                     >
                       {opt.option_text}
                     </button>
@@ -217,7 +217,7 @@ export default function EndlessPlayPage() {
                 })}
             </div>
             {feedback?.explanation && (
-              <p className="mt-4 text-sm text-gray-500 italic">{feedback.explanation}</p>
+              <p className="mt-4 text-sm text-gray-400 italic">{feedback.explanation}</p>
             )}
           </>
         )}
@@ -226,14 +226,14 @@ export default function EndlessPlayPage() {
       {/* Quit confirm */}
       {showQuitConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="font-bold text-gray-900 mb-2">Quit this session?</h3>
-            <p className="text-gray-500 text-sm mb-6">Your progress will be saved and you can see your results.</p>
+          <div className="bg-white/5 rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <h3 className="font-bold text-white mb-2">Quit this session?</h3>
+            <p className="text-gray-400 text-sm mb-6">Your progress will be saved and you can see your results.</p>
             <div className="flex gap-3">
               <button onClick={handleQuit} className="flex-1 bg-red-500 text-white font-semibold py-2.5 rounded-lg hover:bg-red-600">
                 Yes, quit
               </button>
-              <button onClick={() => setShowQuitConfirm(false)} className="flex-1 border border-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg hover:bg-gray-50">
+              <button onClick={() => setShowQuitConfirm(false)} className="flex-1 border border-white/10 text-gray-200 font-semibold py-2.5 rounded-lg hover:bg-white/5">
                 Keep playing
               </button>
             </div>
