@@ -631,17 +631,16 @@ export default function AdminQuestions() {
     setExpandedId(qId)
     if (detailCache[qId]) return
     setDetailLoading(qId)
-    const [optRes, ansRes, qRes] = await Promise.all([
-      supabase.from('question_options').select('id, option_text, sort_order').eq('question_id', qId).order('sort_order'),
-      supabase.from('question_answers').select('correct_option_id').eq('question_id', qId).single(),
-      supabase.from('questions').select('explanation').eq('id', qId).single(),
-    ])
-    const correctId = ansRes.data?.correct_option_id
-    const options: OptionDetail[] = (optRes.data ?? []).map((o: any) => ({
-      ...o,
-      is_correct: o.id === correctId,
-    }))
-    setDetailCache(prev => ({ ...prev, [qId]: { options, explanation: qRes.data?.explanation ?? null } }))
+    const { data, error } = await supabase.rpc('admin_get_question_detail', { p_question_id: qId })
+    if (!error && data) {
+      setDetailCache(prev => ({
+        ...prev,
+        [qId]: {
+          options: (data.options ?? []) as OptionDetail[],
+          explanation: data.explanation ?? null,
+        },
+      }))
+    }
     setDetailLoading(null)
   }
 
