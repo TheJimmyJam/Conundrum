@@ -1,30 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useAuthStore } from '../store/authStore'
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
-  const [sessionReady, setSessionReady] = useState(false)
 
-  // Supabase delivers the recovery token via the URL hash.
-  // Depending on client version, it fires either PASSWORD_RECOVERY or SIGNED_IN.
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
-        setSessionReady(true)
-      }
-    })
-    // Also catch a session that already exists (e.g. page refresh after token exchange)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setSessionReady(true)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
+  // sessionReady = AuthProvider has exchanged the recovery token and set user
+  const sessionReady = !!user
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -37,9 +26,8 @@ export default function ResetPasswordPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password })
       if (error) {
-        // Supabase throws a specific error when you try to reuse your current password
-        if (error.message.toLowerCase().includes('same password') ||
-            error.message.toLowerCase().includes('different from')) {
+        if (error.message.toLowerCase().includes('same') ||
+            error.message.toLowerCase().includes('different')) {
           setError('New password must be different from your current one.')
         } else {
           setError(error.message)
