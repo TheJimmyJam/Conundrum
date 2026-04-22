@@ -156,7 +156,7 @@ export default function AdminDailySubmission() {
     try {
       await Promise.all(
         updatedQueue
-          .filter((item, i) => {
+          .filter((item) => {
             const orig = currentQueue.find(q => q.id === item.id)
             return orig && orig.featured_date !== item.featured_date
           })
