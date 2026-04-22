@@ -14,6 +14,7 @@ import {
   adminDeleteDailySet,
   adminDeleteUpcomingSets,
   adminGoLiveNow,
+  adminReorderSetQuestions,
   type AdminDailySet,
   type AdminSetQuestion,
   type DailyQuestionUsage,
@@ -107,6 +108,10 @@ export default function AdminDailySet() {
 
   // Toast
   const [toast, setToast] = useState<string | null>(null)
+
+  // Drag-to-reorder
+  const [dragFromSlot, setDragFromSlot] = useState<{ setId: string; slot: number } | null>(null)
+  const [dragOverSlot, setDragOverSlot] = useState<number | null>(null)
 
   useEffect(() => {
     load()
@@ -394,6 +399,59 @@ export default function AdminDailySet() {
     }
   }
 
+  // ── Drag-to-reorder ──────────────────────────────────────────────────────────
+
+  function handleDragStart(setId: string, slot: number) {
+    setDragFromSlot({ setId, slot })
+  }
+
+  function handleDragOver(e: React.DragEvent, slot: number) {
+    e.preventDefault()
+    setDragOverSlot(slot)
+  }
+
+  function handleDragEnd() {
+    setDragFromSlot(null)
+    setDragOverSlot(null)
+  }
+
+  async function handleDrop(e: React.DragEvent, toSlot: number, setId: string) {
+    e.preventDefault()
+    if (!dragFromSlot || dragFromSlot.setId !== setId || dragFromSlot.slot === toSlot) {
+      handleDragEnd()
+      return
+    }
+
+    const fromSlot = dragFromSlot.slot
+    const qs = setQuestions[setId] ?? []
+
+    // Build full 10-slot array (null = empty)
+    const slotArray: (AdminSetQuestion | null)[] = Array(SLOT_COUNT).fill(null)
+    for (const q of qs) slotArray[q.slot - 1] = q
+
+    // Remove from source, insert at destination (shift-style)
+    const [item] = slotArray.splice(fromSlot - 1, 1)
+    slotArray.splice(toSlot - 1, 0, item)
+
+    // Reassign slot numbers
+    const newQs = slotArray
+      .map((q, i) => q ? { ...q, slot: i + 1 } : null)
+      .filter(Boolean) as AdminSetQuestion[]
+
+    // Optimistic update
+    setSetQuestions(prev => ({ ...prev, [setId]: newQs }))
+    handleDragEnd()
+
+    // Persist
+    try {
+      await adminReorderSetQuestions(setId, newQs.map(q => q.dsq_id))
+    } catch (err: any) {
+      // Rollback on failure
+      setSetQuestions(prev => ({ ...prev, [setId]: qs }))
+      showToast(`✗ Failed to save new order`)
+    }
+  }
+
   function showToast(msg: string) {
     setToast(msg)
     setTimeout(() => setToast(null), 4000)
@@ -671,12 +729,36 @@ export default function AdminDailySet() {
                             {Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map(slot => {
                               const q = slots[slot]
                               const usage = q ? usageMap[q.question_id] : undefined
-                              // For filled slots: check if the question appears in OTHER sets
                               const usedElsewhere = usage && (usage.times_used > 1 || (usage.times_used === 1 && usage.upcoming_date && usage.upcoming_date !== s.set_date?.toString()))
+                              const isDraggingThis = dragFromSlot?.setId === s.id && dragFromSlot?.slot === slot
+                              const isDragOver = dragFromSlot?.setId === s.id && dragOverSlot === slot && !isDraggingThis
 
                               return (
-                                <div key={slot} className={`rounded-xl overflow-hidden ${q ? 'bg-white/5' : 'bg-amber-500/100/10 border border-dashed border-amber-500/30'}`}>
+                                <div
+                                  key={slot}
+                                  draggable={!!q}
+                                  onDragStart={() => q && handleDragStart(s.id, slot)}
+                                  onDragOver={(e) => handleDragOver(e, slot)}
+                                  onDragEnd={handleDragEnd}
+                                  onDrop={(e) => handleDrop(e, slot, s.id)}
+                                  className={`rounded-xl overflow-hidden transition-all ${
+                                    isDraggingThis
+                                      ? 'opacity-40 scale-[0.98]'
+                                      : isDragOver
+                                      ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-[#0f0f1a]'
+                                      : q ? 'bg-white/5' : 'bg-amber-500/10 border border-dashed border-amber-500/30'
+                                  }`}
+                                >
                                   <div className="flex items-center gap-3 px-3 py-2.5">
+                                    {/* Drag handle */}
+                                    <div
+                                      className={`flex-shrink-0 flex flex-col gap-0.5 cursor-grab active:cursor-grabbing ${q ? 'opacity-30 hover:opacity-70' : 'opacity-0'}`}
+                                      title="Drag to reorder"
+                                    >
+                                      <span className="block w-3.5 h-0.5 bg-gray-400 rounded-full" />
+                                      <span className="block w-3.5 h-0.5 bg-gray-400 rounded-full" />
+                                      <span className="block w-3.5 h-0.5 bg-gray-400 rounded-full" />
+                                    </div>
                                     <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">{slot}</span>
                                     {q ? (
                                       <>
