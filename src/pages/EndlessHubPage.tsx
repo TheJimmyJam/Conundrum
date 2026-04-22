@@ -61,7 +61,6 @@ export default function EndlessHubPage() {
   }
 
   const allSelected = selectedDiffs.size === 3
-  const noneSelected = selectedDiffs.size === 0
 
   return (
     <div className="min-h-screen bg-[#0f0f1a]">
