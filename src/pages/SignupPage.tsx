@@ -12,14 +12,25 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  function validateUsernameFormat(value: string): string {
+    if (value.length < 6) return 'Username must be at least 6 characters.'
+    if (value.length > 18) return 'Username must be 18 characters or fewer.'
+    if (!/^[a-zA-Z0-9]+$/.test(value)) return 'Letters and numbers only — no spaces or special characters.'
+    return ''
+  }
+
   async function handleUsernameBlur() {
     if (!username) return
+    const formatErr = validateUsernameFormat(username)
+    if (formatErr) { setUsernameError(formatErr); return }
     const available = await checkUsernameAvailable(username.toLowerCase())
-    setUsernameError(available ? '' : 'Username is taken.')
+    setUsernameError(available ? '' : 'Username is already taken.')
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const formatErr = validateUsernameFormat(username)
+    if (formatErr) { setUsernameError(formatErr); return }
     if (usernameError) return
     setLoading(true)
     setError('')
@@ -60,7 +71,10 @@ export default function SignupPage() {
               required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
-            {usernameError && <p className="text-red-500 text-xs mt-1">{usernameError}</p>}
+            {usernameError
+              ? <p className="text-red-400 text-xs mt-1">{usernameError}</p>
+              : <p className="text-gray-500 text-xs mt-1">6–18 characters, letters and numbers only.</p>
+            }
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-200 mb-1">Email</label>
