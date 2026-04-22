@@ -17,6 +17,7 @@ export default function EndlessPlayPage() {
   const [question, setQuestion] = useState<QuestionWithOptions | null>(null)
   const [questionCount, setQuestionCount] = useState(0)
   const [timer, setTimer] = useState(15)
+  const [nextTimer, setNextTimer] = useState(0)
   const [feedback, setFeedback] = useState<{
     isCorrect: boolean
     correctOptionId: string
@@ -30,6 +31,8 @@ export default function EndlessPlayPage() {
   const loadNextQuestion = useCallback(async () => {
     setPhase('loading')
     setPendingOptionId(null)
+    setFeedback(null)
+    setNextTimer(0)
     try {
       const result = await getNextEndlessQuestion(sessionId)
       if (result.done) {
@@ -52,7 +55,7 @@ export default function EndlessPlayPage() {
     return () => reset()
   }, [sessionId])
 
-  // Timer
+  // Question countdown timer
   useEffect(() => {
     if (phase !== 'question') return
     const interval = setInterval(() => {
@@ -64,10 +67,29 @@ export default function EndlessPlayPage() {
     return () => clearInterval(interval)
   }, [phase, question])
 
+  // Next-question countdown timer (runs during feedback phase)
+  useEffect(() => {
+    if (phase !== 'feedback' || nextTimer <= 0) return
+    const timeout = setTimeout(() => {
+      setNextTimer((n) => {
+        if (n <= 1) {
+          loadNextQuestion()
+          return 0
+        }
+        return n - 1
+      })
+    }, 1000)
+    return () => clearTimeout(timeout)
+  }, [phase, nextTimer])
+
+  function handleNext() {
+    setNextTimer(0)
+    loadNextQuestion()
+  }
+
   async function handleAnswer(optionId: string | null) {
     if (!question || phase !== 'question') return
 
-    // Immediately lock input and show which option was tapped
     setPhase('feedback')
     setPendingOptionId(optionId)
 
@@ -79,7 +101,6 @@ export default function EndlessPlayPage() {
       response_time_ms: responseTimeMs,
     })
 
-    // Server responded — swap from pending highlight to correct/wrong colors
     setPendingOptionId(null)
     setFeedback({
       isCorrect: result.is_correct,
@@ -89,12 +110,7 @@ export default function EndlessPlayPage() {
       explanation: result.explanation,
     })
     updateRunningScore(result.points_awarded, result.is_correct)
-
-    // Auto-advance after 2s
-    setTimeout(() => {
-      setFeedback(null)
-      loadNextQuestion()
-    }, 2000)
+    setNextTimer(10)
   }
 
   async function finishSession() {
@@ -139,6 +155,7 @@ export default function EndlessPlayPage() {
 
   const timerPct = (timer / 15) * 100
   const timerColor = timer > 8 ? 'bg-green-500' : timer > 4 ? 'bg-yellow-500' : 'bg-red-500'
+  const nextPct = (nextTimer / 10) * 100
 
   return (
     <div className="min-h-screen bg-[#0f0f1a] flex flex-col">
@@ -150,7 +167,9 @@ export default function EndlessPlayPage() {
         </div>
         <span className="font-bold text-amber-400">{runningScore} pts</span>
         <div className="flex items-center gap-3">
-          <span className={`text-lg font-bold ${timer <= 4 ? 'text-red-600' : 'text-gray-200'}`}>{timer}s</span>
+          {phase === 'question' && (
+            <span className={`text-lg font-bold ${timer <= 4 ? 'text-red-400' : 'text-gray-200'}`}>{timer}s</span>
+          )}
           <button
             onClick={() => setShowQuitConfirm(true)}
             className="text-xs text-gray-400 hover:text-gray-200 border border-white/10 px-3 py-1 rounded-lg"
@@ -160,15 +179,20 @@ export default function EndlessPlayPage() {
         </div>
       </div>
 
-      {/* Timer bar */}
+      {/* Timer bar — question countdown or next-question countdown */}
       <div className="h-1.5 bg-white/10 max-w-2xl mx-auto w-full">
-        <div className={`h-full ${timerColor} transition-all duration-1000`} style={{ width: `${timerPct}%` }} />
+        {phase === 'question' && (
+          <div className={`h-full ${timerColor} transition-all duration-1000`} style={{ width: `${timerPct}%` }} />
+        )}
+        {phase === 'feedback' && (
+          <div className="h-full bg-amber-500/40 transition-all duration-1000" style={{ width: `${nextPct}%` }} />
+        )}
       </div>
 
       <div className="flex-1 max-w-2xl mx-auto w-full px-6 py-8">
         {question && (
           <>
-            {/* Category + difficulty badge */}
+            {/* Category + difficulty badges */}
             <div className="flex items-center gap-2 mb-4">
               {question.category_name && (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400">
@@ -177,9 +201,9 @@ export default function EndlessPlayPage() {
               )}
               {question.difficulty && (
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  question.difficulty === 'easy'   ? 'bg-green-100 text-green-700' :
-                  question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                                     'bg-red-100 text-red-700'
+                  question.difficulty === 'easy'   ? 'bg-green-500/15 text-green-400' :
+                  question.difficulty === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
+                                                     'bg-red-500/15 text-red-400'
                 }`}>
                   {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
                 </span>
@@ -187,6 +211,7 @@ export default function EndlessPlayPage() {
             </div>
 
             <h2 className="text-2xl font-bold text-white mb-8 leading-snug">{question.prompt}</h2>
+
             <div className="grid grid-cols-1 gap-3">
               {question.options
                 .sort((a, b) => a.sort_order - b.sort_order)
@@ -194,12 +219,10 @@ export default function EndlessPlayPage() {
                   let style = 'border border-white/10 bg-white/5 hover:border-amber-400 hover:bg-amber-500/10'
 
                   if (feedback) {
-                    // Server responded — show definitive correct/wrong
                     if (opt.id === feedback.correctOptionId) style = 'border-2 border-green-500 bg-green-500/10'
                     else if (opt.id === feedback.selectedOptionId && !feedback.isCorrect) style = 'border-2 border-red-400 bg-red-500/10'
                     else style = 'border border-white/10 bg-white/5 opacity-40'
                   } else if (pendingOptionId !== null) {
-                    // Waiting on server — show immediate selection highlight
                     if (opt.id === pendingOptionId) style = 'border-2 border-amber-500 bg-amber-500/10'
                     else style = 'border border-white/10 bg-white/5 opacity-40'
                   }
@@ -216,8 +239,35 @@ export default function EndlessPlayPage() {
                   )
                 })}
             </div>
-            {feedback?.explanation && (
-              <p className="mt-4 text-sm text-gray-400 italic">{feedback.explanation}</p>
+
+            {/* Feedback panel */}
+            {feedback && (
+              <div className="mt-6 space-y-4">
+                {/* Result + points */}
+                <div className={`flex items-center gap-2 text-sm font-semibold ${feedback.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                  {feedback.isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                  {feedback.pointsAwarded > 0 && (
+                    <span className="text-amber-400 font-bold">+{feedback.pointsAwarded} pts</span>
+                  )}
+                </div>
+
+                {/* Explanation */}
+                {feedback.explanation && (
+                  <p className="text-sm text-gray-300 leading-relaxed">{feedback.explanation}</p>
+                )}
+
+                {/* Next button with countdown */}
+                <button
+                  onClick={handleNext}
+                  className="w-full flex items-center justify-between bg-white/5 hover:bg-amber-500/10 border border-white/10 hover:border-amber-500/40 text-white font-semibold px-5 py-3 rounded-xl transition-colors"
+                >
+                  <span>Next question</span>
+                  <span className="flex items-center gap-2 text-gray-400">
+                    <span className="text-sm tabular-nums">{nextTimer}s</span>
+                    <span className="text-amber-400">›</span>
+                  </span>
+                </button>
+              </div>
             )}
           </>
         )}
