@@ -27,13 +27,18 @@ export default function ProfilePage() {
     if (newPw !== confirmPw) { setPwError('Passwords don\'t match.'); return }
     if (newPw.length < 8) { setPwError('Password must be at least 8 characters.'); return }
     setPwLoading(true)
-    const { error } = await supabase.auth.updateUser({ password: newPw })
-    setPwLoading(false)
-    if (error) { setPwError(error.message); return }
-    setPwSuccess(true)
-    setNewPw('')
-    setConfirmPw('')
-    setTimeout(() => { setPwSuccess(false); setPwOpen(false) }, 2500)
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPw })
+      if (error) { setPwError(error.message); return }
+      setPwSuccess(true)
+      setNewPw('')
+      setConfirmPw('')
+      setTimeout(() => { setPwSuccess(false); setPwOpen(false) }, 2500)
+    } catch (err: any) {
+      setPwError(err?.message ?? 'Something went wrong. Please try again.')
+    } finally {
+      setPwLoading(false)
+    }
   }
 
   useEffect(() => {
