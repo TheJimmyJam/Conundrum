@@ -557,6 +557,8 @@ export default function AdminQuestions() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [addToDailyQ, setAddToDailyQ] = useState<Question | null>(null)
+  const [deleteQ, setDeleteQ] = useState<Question | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
@@ -595,6 +597,27 @@ export default function AdminQuestions() {
     await supabase.from('questions').update({ is_active: !q.is_active }).eq('id', q.id)
     setQuestions(prev => prev.map(x => x.id === q.id ? { ...x, is_active: !x.is_active } : x))
     setToggling(null)
+  }
+
+  async function handleDelete() {
+    if (!deleteQ) return
+    setDeleting(true)
+    try {
+      await supabase.from('responses').delete().eq('question_id', deleteQ.id)
+      await supabase.from('question_answers').delete().eq('question_id', deleteQ.id)
+      await supabase.from('question_options').delete().eq('question_id', deleteQ.id)
+      await supabase.from('daily_set_questions').delete().eq('question_id', deleteQ.id)
+      await supabase.from('question_stats').delete().eq('question_id', deleteQ.id)
+      const { error } = await supabase.from('questions').delete().eq('id', deleteQ.id)
+      if (error) throw error
+      setQuestions(prev => prev.filter(x => x.id !== deleteQ.id))
+      setTotal(t => t - 1)
+      showToast('✓ Question deleted.')
+    } catch (err: any) {
+      showToast('Delete failed: ' + (err?.message ?? 'unknown error'))
+    }
+    setDeleteQ(null)
+    setDeleting(false)
   }
 
   async function handleAdd() {
@@ -867,6 +890,33 @@ export default function AdminQuestions() {
           onClose={() => setAddToDailyQ(null)}
           onScheduled={msg => { showToast(msg) }}
         />
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteQ && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center px-4 z-50">
+          <div className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <h3 className="font-bold text-white mb-2">Delete question?</h3>
+            <p className="text-sm text-gray-400 mb-3">This permanently removes the question and all associated data from the database. This cannot be undone.</p>
+            <p className="text-sm text-gray-200 bg-white/5 border border-white/10 rounded-xl px-4 py-3 mb-5 line-clamp-3">{deleteQ.prompt}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl disabled:opacity-50 transition-colors"
+              >
+                {deleting ? 'Deleting…' : 'Yes, delete it'}
+              </button>
+              <button
+                onClick={() => setDeleteQ(null)}
+                disabled={deleting}
+                className="flex-1 border border-white/10 text-gray-300 font-semibold py-2.5 rounded-xl hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toast */}
