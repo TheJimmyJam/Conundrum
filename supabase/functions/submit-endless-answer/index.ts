@@ -6,17 +6,34 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const BASE = 100
-const MAX_SPEED = 50
-const SPEED_WINDOW = 20000
+// ─── Scoring constants ────────────────────────────────────────────────────────
+const BASE_POINTS = 100          // minimum pts for a correct answer
+const MAX_SPEED_BONUS = 100      // bonus on top of BASE for instant answer
+const SPEED_WINDOW_MS = 30000    // matches the 30-second question timer
+
+// Penalty for wrong answer OR timeout, weighted by difficulty
+const WRONG_PENALTY: Record<string, number> = {
+  easy:   -350,
+  medium: -275,
+  hard:   -200,
+}
+const DEFAULT_PENALTY = -275     // fallback if difficulty is unknown
+
 const STREAK_BONUS = 10
 const STREAK_THRESHOLD = 3
 
-function calcPoints(isCorrect: boolean, timeMs: number, streak: number): number {
-  if (!isCorrect) return 0
-  const speed = Math.max(0, Math.round(MAX_SPEED * (1 - timeMs / SPEED_WINDOW)))
-  const streakBonus = streak >= STREAK_THRESHOLD ? STREAK_BONUS : 0
-  return BASE + speed + streakBonus
+function calcPoints(
+  isCorrect: boolean,
+  timeMs: number,
+  streak: number,
+  difficulty: string,
+): number {
+  if (isCorrect) {
+    const speed = Math.max(0, Math.round(MAX_SPEED_BONUS * (1 - timeMs / SPEED_WINDOW_MS)))
+    const sb = streak >= STREAK_THRESHOLD ? STREAK_BONUS : 0
+    return BASE_POINTS + speed + sb
+  }
+  return WRONG_PENALTY[difficulty] ?? DEFAULT_PENALTY
 }
 
 serve(async (req) => {
@@ -49,15 +66,25 @@ serve(async (req) => {
 
     if (!session) return new Response(JSON.stringify({ error: 'Session not found' }), { status: 404, headers: CORS })
 
-    const { data: answerRow } = await supabase
-      .from('question_answers')
-      .select('correct_option_id')
-      .eq('question_id', question_id)
-      .single()
+    // Fetch correct answer AND question metadata (difficulty + explanation) in parallel
+    const [{ data: answerRow }, { data: questionRow }] = await Promise.all([
+      supabase
+        .from('question_answers')
+        .select('correct_option_id')
+        .eq('question_id', question_id)
+        .single(),
+      supabase
+        .from('questions')
+        .select('difficulty, explanation')
+        .eq('id', question_id)
+        .single(),
+    ])
 
     const correctOptionId = answerRow?.correct_option_id
-    const isCorrect = selected_option_id === correctOptionId
+    const isCorrect = !!selected_option_id && selected_option_id === correctOptionId
+    const difficulty: string = questionRow?.difficulty ?? 'medium'
 
+    // Compute current streak from recent responses
     const { data: prevResponses } = await supabase
       .from('responses')
       .select('is_correct')
@@ -71,13 +98,7 @@ serve(async (req) => {
       else break
     }
 
-    const points = calcPoints(isCorrect, response_time_ms, streak)
-
-    const { data: question } = await supabase
-      .from('questions')
-      .select('explanation')
-      .eq('id', question_id)
-      .single()
+    const points = calcPoints(isCorrect, response_time_ms, streak, difficulty)
 
     await supabase.from('responses').insert({
       game_session_id: session_id,
@@ -99,7 +120,7 @@ serve(async (req) => {
       is_correct: isCorrect,
       correct_option_id: correctOptionId,
       points_awarded: points,
-      explanation: question?.explanation ?? null,
+      explanation: questionRow?.explanation ?? null,
       running_score: session.score + points,
     }), { headers: { ...CORS, 'Content-Type': 'application/json' } })
 
