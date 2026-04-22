@@ -213,10 +213,10 @@ export default function ProfilePage() {
 
         {/* Actions */}
         <div className="flex gap-3 flex-wrap">
-          <Link to="/awards" className="flex-1 bg-white border border-white/10 text-gray-200 font-medium py-3 rounded-xl text-center hover:bg-white/5 text-sm">
+          <Link to="/awards" className="flex-1 bg-white/5 border border-white/10 text-gray-200 font-medium py-3 rounded-xl text-center hover:bg-white/5 text-sm">
             🏅 Awards
           </Link>
-          <Link to="/history" className="flex-1 bg-white border border-white/10 text-gray-200 font-medium py-3 rounded-xl text-center hover:bg-white/5 text-sm">
+          <Link to="/history" className="flex-1 bg-white/5 border border-white/10 text-gray-200 font-medium py-3 rounded-xl text-center hover:bg-white/5 text-sm">
             History
           </Link>
           <Link to="/play" className="flex-1 bg-amber-500 text-white font-medium py-3 rounded-xl text-center hover:bg-amber-600 text-sm">
