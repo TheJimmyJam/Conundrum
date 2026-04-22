@@ -109,6 +109,18 @@ export async function getTodaysDailySet(): Promise<DailySet | null> {
   return data
 }
 
+export async function getMostRecentPublishedDailySet(): Promise<DailySet | null> {
+  const { data, error } = await supabase
+    .from('daily_sets')
+    .select('*')
+    .eq('is_published', true)
+    .order('set_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
 // ─── Game Sessions ───────────────────────────────────────────────────────────
 
 export async function getExistingDailySession(userId: string, dailySetId: string): Promise<GameSession | null> {
