@@ -609,14 +609,10 @@ export default function AdminQuestions() {
     if (!deleteQ) return
     setDeleting(true)
     try {
-      await supabase.from('responses').delete().eq('question_id', deleteQ.id)
-      await supabase.from('question_answers').delete().eq('question_id', deleteQ.id)
-      await supabase.from('question_options').delete().eq('question_id', deleteQ.id)
-      await supabase.from('daily_set_questions').delete().eq('question_id', deleteQ.id)
-      await supabase.from('question_stats').delete().eq('question_id', deleteQ.id)
-      const { error } = await supabase.from('questions').delete().eq('id', deleteQ.id)
+      const { error } = await supabase.rpc('admin_delete_question', { p_question_id: deleteQ.id })
       if (error) throw error
       setQuestions(prev => prev.filter(x => x.id !== deleteQ.id))
+      setDetailCache(prev => { const next = { ...prev }; delete next[deleteQ.id]; return next })
       setTotal(t => t - 1)
       showToast('✓ Question deleted.')
     } catch (err: any) {
