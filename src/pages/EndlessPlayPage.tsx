@@ -184,7 +184,7 @@ export default function EndlessPlayPage() {
   return (
     <div className="min-h-screen bg-[#0f0f1a] flex flex-col">
       {/* Header */}
-      <div className="bg-[#0f0f1a] border-b border-white/10 px-6 py-4 flex items-center justify-between max-w-2xl mx-auto w-full">
+      <div className="bg-[#0f0f1a] border-b border-white/10 px-6 py-4 flex items-center justify-between max-w-5xl mx-auto w-full">
         <div className="flex gap-4 text-sm">
           <span className="font-semibold text-gray-200">Q {questionCount}</span>
           {streakCount >= 2 && <span className="text-orange-500 font-medium">🔥 {streakCount} streak</span>}
@@ -203,8 +203,8 @@ export default function EndlessPlayPage() {
         </div>
       </div>
 
-      {/* Timer bar — question countdown or next-question countdown */}
-      <div className="h-1.5 bg-white/10 max-w-2xl mx-auto w-full">
+      {/* Timer bar */}
+      <div className="h-1.5 bg-white/10 max-w-5xl mx-auto w-full">
         {phase === 'question' && (
           <div className={`h-full ${timerColor} transition-all duration-1000`} style={{ width: `${timerPct}%` }} />
         )}
@@ -213,11 +213,11 @@ export default function EndlessPlayPage() {
         )}
       </div>
 
-      <div className="flex-1 max-w-2xl mx-auto w-full px-6 py-8">
+      <div className="flex-1 max-w-5xl mx-auto w-full px-6 py-8">
         {question && (
           <>
             {/* Category + difficulty badges */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-5">
               {question.category_name && (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400">
                   {question.category_name}
@@ -234,40 +234,47 @@ export default function EndlessPlayPage() {
               )}
             </div>
 
-            <h2 className="text-2xl font-bold text-white mb-8 leading-snug">{question.prompt}</h2>
+            {/* Desktop: question left, answers right. Mobile: stacked */}
+            <div className="md:flex md:gap-10 md:items-start">
 
-            <div className="grid grid-cols-1 gap-3">
-              {question.options
-                .sort((a, b) => a.sort_order - b.sort_order)
-                .map((opt) => {
-                  let style = 'border border-white/10 bg-white/5 hover:border-amber-400 hover:bg-amber-500/10'
+              {/* Question */}
+              <div className="md:flex-1 mb-6 md:mb-0">
+                <h2 className="text-2xl font-bold text-white leading-snug">{question.prompt}</h2>
+              </div>
 
-                  if (feedback) {
-                    if (opt.id === feedback.correctOptionId) style = 'border-2 border-green-500 bg-green-500/10'
-                    else if (opt.id === feedback.selectedOptionId && !feedback.isCorrect) style = 'border-2 border-red-400 bg-red-500/10'
-                    else style = 'border border-white/10 bg-white/5 opacity-40'
-                  } else if (pendingOptionId !== null) {
-                    if (opt.id === pendingOptionId) style = 'border-2 border-amber-500 bg-amber-500/10'
-                    else style = 'border border-white/10 bg-white/5 opacity-40'
-                  }
+              {/* Answer grid — 1 col mobile, 2×2 desktop */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:w-[420px] md:shrink-0">
+                {question.options
+                  .sort((a, b) => a.sort_order - b.sort_order)
+                  .map((opt) => {
+                    let style = 'border border-white/10 bg-white/5 hover:border-amber-400 hover:bg-amber-500/10'
 
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => phase === 'question' && handleAnswer(opt.id)}
-                      disabled={phase !== 'question'}
-                      className={`w-full text-left px-5 py-4 rounded-xl transition-colors font-medium text-gray-100 ${style}`}
-                    >
-                      {opt.option_text}
-                    </button>
-                  )
-                })}
+                    if (feedback) {
+                      if (opt.id === feedback.correctOptionId) style = 'border-2 border-green-500 bg-green-500/10'
+                      else if (opt.id === feedback.selectedOptionId && !feedback.isCorrect) style = 'border-2 border-red-400 bg-red-500/10'
+                      else style = 'border border-white/10 bg-white/5 opacity-40'
+                    } else if (pendingOptionId !== null) {
+                      if (opt.id === pendingOptionId) style = 'border-2 border-amber-500 bg-amber-500/10'
+                      else style = 'border border-white/10 bg-white/5 opacity-40'
+                    }
+
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => phase === 'question' && handleAnswer(opt.id)}
+                        disabled={phase !== 'question'}
+                        className={`w-full text-left px-4 py-4 md:min-h-[90px] md:flex md:items-center rounded-xl transition-colors font-medium text-gray-100 text-sm md:text-base ${style}`}
+                      >
+                        {opt.option_text}
+                      </button>
+                    )
+                  })}
+              </div>
             </div>
 
-            {/* Feedback panel */}
+            {/* Feedback panel — full width below the question+answer row */}
             {feedback && (
-              <div className="mt-6 space-y-4">
-                {/* Result + points */}
+              <div className="mt-8 space-y-4">
                 <div className={`flex items-center gap-2 text-sm font-semibold ${feedback.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
                   {feedback.isCorrect ? '✓ Correct' : '✗ Incorrect'}
                   {feedback.pointsAwarded > 0 && (
@@ -275,12 +282,10 @@ export default function EndlessPlayPage() {
                   )}
                 </div>
 
-                {/* Explanation */}
                 {feedback.explanation && (
                   <p className="text-sm text-gray-300 leading-relaxed">{feedback.explanation}</p>
                 )}
 
-                {/* Next button with countdown */}
                 <button
                   onClick={handleNext}
                   className="w-full flex items-center justify-between bg-white/5 hover:bg-amber-500/10 border border-white/10 hover:border-amber-500/40 text-white font-semibold px-5 py-3 rounded-xl transition-colors"
