@@ -304,17 +304,15 @@ export default function AdminDailySet() {
     setExpandedQ(questionId)
     if (qDetails[questionId]) return  // already cached
     try {
-      const [{ data: opts }, { data: ans }, { data: q }] = await Promise.all([
-        supabase.from('question_options').select('id, option_text, sort_order').eq('question_id', questionId).order('sort_order'),
-        supabase.from('question_answers').select('correct_option_id').eq('question_id', questionId).single(),
-        supabase.from('questions').select('explanation').eq('id', questionId).single(),
-      ])
+      const { data, error } = await supabase.rpc('admin_get_question_detail', { p_question_id: questionId })
+      if (error) throw error
+      const correctOpt = (data?.options ?? []).find((o: any) => o.is_correct)
       setQDetails(prev => ({
         ...prev,
         [questionId]: {
-          options: (opts ?? []).map((o: any) => ({ id: o.id, text: o.option_text, sort_order: o.sort_order })),
-          correct_option_id: ans?.correct_option_id ?? '',
-          explanation: q?.explanation ?? null,
+          options: (data?.options ?? []).map((o: any) => ({ id: o.id, text: o.option_text, sort_order: o.sort_order })),
+          correct_option_id: correctOpt?.id ?? '',
+          explanation: data?.explanation ?? null,
         },
       }))
     } catch (err: any) {
@@ -722,7 +720,7 @@ export default function AdminDailySet() {
                                                     key={opt.id}
                                                     className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-sm ${
                                                       isCorrect
-                                                        ? 'bg-green-500/10 border-green-300 text-green-800'
+                                                        ? 'bg-green-500/10 border-green-500/50 text-green-400'
                                                         : 'bg-white/5 border-white/10 text-gray-300'
                                                     }`}
                                                   >
@@ -735,7 +733,7 @@ export default function AdminDailySet() {
                                               })}
                                           </div>
                                           {qDetails[q.question_id].explanation && (
-                                            <div className="bg-amber-500/10 border border-amber-100 rounded-lg px-3 py-2 text-xs text-amber-800">
+                                            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 text-xs text-amber-300">
                                               💡 {qDetails[q.question_id].explanation}
                                             </div>
                                           )}
