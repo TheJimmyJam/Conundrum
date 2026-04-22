@@ -21,7 +21,7 @@ function StatusBadge({ status }: { status: AdminPlayer['status'] }) {
     <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-500/100/15 text-red-400 border border-red-500/30">🚫 Banned</span>
   )
   if (status === 'frozen') return (
-    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-500/100/15 text-blue-400 border border-blue-200">🧊 Frozen</span>
+    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-500/100/15 text-blue-400 border border-blue-400/40">🧊 Frozen</span>
   )
   return null
 }
@@ -200,14 +200,14 @@ export default function AdminPlayers() {
 
         {/* Demo Data Panel */}
         {showDemo && (
-          <div className="bg-white border border-purple-100 rounded-2xl p-5 mb-6 shadow-lg shadow-black/20">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6 shadow-lg shadow-black/20">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-base font-bold text-white">🎭 Demo Data</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   Fake users · @demo.conundrum.test emails
                   {demoUserCount !== null && (
-                    <span className="ml-2 font-semibold text-purple-600">{demoUserCount} active</span>
+                    <span className="ml-2 font-semibold text-purple-400">{demoUserCount} active</span>
                   )}
                 </p>
               </div>
@@ -278,10 +278,10 @@ export default function AdminPlayers() {
               const isActing = acting?.endsWith(p.id) ?? false
               const isEditingThis = editingProfile === p.id
 
-              const statusBorderColor = p.status === 'banned' ? 'border-red-500/30' : p.status === 'frozen' ? 'border-blue-200' : 'border-white/10'
+              const statusBorderColor = p.status === 'banned' ? 'border-red-500/30' : p.status === 'frozen' ? 'border-blue-400/30' : 'border-white/10'
 
               return (
-                <div key={p.id} className={`bg-white border ${statusBorderColor} rounded-2xl overflow-hidden`}>
+                <div key={p.id} className={`bg-white/5 border ${statusBorderColor} rounded-2xl overflow-hidden`}>
                   {/* Row */}
                   <button
                     onClick={() => setExpanded(isOpen ? null : p.id)}
@@ -301,7 +301,7 @@ export default function AdminPlayers() {
                           <span className="text-xs bg-amber-500/100/15 text-amber-400 font-semibold px-1.5 py-0.5 rounded">admin</span>
                         )}
                         {p.is_demo && (
-                          <span className="text-xs bg-purple-100 text-purple-600 font-semibold px-1.5 py-0.5 rounded">demo</span>
+                          <span className="text-xs bg-purple-500/15 text-purple-400 font-semibold px-1.5 py-0.5 rounded">demo</span>
                         )}
                         <StatusBadge status={p.status} />
                       </div>
@@ -322,15 +322,15 @@ export default function AdminPlayers() {
 
                       {/* Stats */}
                       <div className="grid grid-cols-3 gap-3 text-center">
-                        <div className="bg-gray-50 rounded-xl py-3">
+                        <div className="bg-white/5 rounded-xl py-3">
                           <p className="text-xl font-bold text-white">{p.games_played}</p>
                           <p className="text-xs text-gray-400 mt-0.5">Games</p>
                         </div>
-                        <div className="bg-gray-50 rounded-xl py-3">
+                        <div className="bg-white/5 rounded-xl py-3">
                           <p className="text-xl font-bold text-white">{p.best_score?.toLocaleString() ?? '—'}</p>
                           <p className="text-xs text-gray-400 mt-0.5">Best Score</p>
                         </div>
-                        <div className="bg-gray-50 rounded-xl py-3">
+                        <div className="bg-white/5 rounded-xl py-3">
                           <p className="text-xs font-medium text-gray-200 mt-1">{new Date(p.created_at).toLocaleDateString()}</p>
                           <p className="text-xs text-gray-400 mt-0.5">Joined</p>
                         </div>
@@ -346,13 +346,13 @@ export default function AdminPlayers() {
                                 <label className="block text-xs text-gray-400 mb-1">Display name</label>
                                 <input value={editDisplay} onChange={e => setEditDisplay(e.target.value)}
                                   placeholder="Display name"
-                                  className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
                               </div>
                               <div>
                                 <label className="block text-xs text-gray-400 mb-1">Username</label>
                                 <input value={editUsername} onChange={e => setEditUsername(e.target.value)}
                                   placeholder="username"
-                                  className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
                               </div>
                             </div>
                             <div className="flex gap-2">
@@ -386,7 +386,7 @@ export default function AdminPlayers() {
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Score Management</p>
                         <div className="flex flex-wrap gap-2">
                           <button onClick={() => handleReset(p.id, 'daily')} disabled={isActing}
-                            className={`text-sm px-4 py-2 rounded-lg border font-medium transition-all disabled:opacity-40 ${armed === dailyKey ? 'bg-orange-500 text-white border-orange-500 animate-pulse' : 'border-orange-200 text-orange-600 hover:bg-orange-50'}`}>
+                            className={`text-sm px-4 py-2 rounded-lg border font-medium transition-all disabled:opacity-40 ${armed === dailyKey ? 'bg-orange-500 text-white border-orange-500 animate-pulse' : 'border-orange-400/40 text-orange-400 hover:bg-orange-500/10'}`}>
                             {acting === dailyKey ? 'Resetting…' : armed === dailyKey ? '⚠ Confirm' : 'Reset Daily'}
                           </button>
                           <button onClick={() => handleReset(p.id, 'lifetime')} disabled={isActing}
@@ -409,7 +409,7 @@ export default function AdminPlayers() {
                             )}
                             {p.status !== 'frozen' && (
                               <button onClick={() => handleSetStatus(p.id, 'frozen')} disabled={isActing}
-                                className={`text-sm px-4 py-2 rounded-lg border font-medium transition-all disabled:opacity-40 ${armed === freezeKey ? 'bg-blue-600 text-white border-blue-600 animate-pulse' : 'border-blue-200 text-blue-600 hover:bg-blue-500/10'}`}>
+                                className={`text-sm px-4 py-2 rounded-lg border font-medium transition-all disabled:opacity-40 ${armed === freezeKey ? 'bg-blue-500 text-white border-blue-500 animate-pulse' : 'border-blue-400/40 text-blue-400 hover:bg-blue-500/10'}`}>
                                 {acting === `freeze-${p.id}` ? 'Freezing…' : armed === freezeKey ? '⚠ Confirm Freeze' : '🧊 Freeze'}
                               </button>
                             )}
