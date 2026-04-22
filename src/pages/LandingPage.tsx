@@ -158,7 +158,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-amber-500/20 rounded-2xl p-6 overflow-hidden">
+            <div className="bg-white/5 border border-amber-500/20 rounded-2xl p-6 overflow-hidden">
 
               {/* Tally view — slides in after answering */}
               {showTally ? (
@@ -224,10 +224,10 @@ export default function LandingPage() {
                       const isWrong = isSelected && !isCorrect
                       const revealed = answerState !== 'unanswered'
 
-                      let cls = 'border-white/10 bg-white text-gray-200 hover:border-amber-400 hover:bg-amber-500/10 cursor-pointer'
+                      let cls = 'border-white/10 bg-white/5 text-gray-200 hover:border-amber-400 hover:bg-amber-500/10 cursor-pointer'
                       if (revealed && isCorrect) cls = 'border-green-500 bg-green-500/10 text-green-400'
                       else if (revealed && isWrong) cls = 'border-red-500 bg-red-500/10 text-red-400'
-                      else if (revealed) cls = 'border-white/10 bg-white text-gray-400 cursor-default'
+                      else if (revealed) cls = 'border-white/10 bg-white/10 text-gray-400 cursor-default'
 
                       return (
                         <button
@@ -238,7 +238,7 @@ export default function LandingPage() {
                           <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                             revealed && isCorrect ? 'bg-green-500 text-white' :
                             revealed && isWrong ? 'bg-red-500 text-white' :
-                            'bg-gray-100 text-gray-400'
+                            'bg-white/10 text-gray-400'
                           }`}>
                             {opt.key.toUpperCase()}
                           </span>
@@ -250,7 +250,7 @@ export default function LandingPage() {
                   </div>
 
                   {answerState !== 'unanswered' && featured.explanation && (
-                    <div className="bg-white bg-opacity-70 rounded-xl px-4 py-3 text-xs text-gray-400 leading-relaxed">
+                    <div className="bg-white/5 rounded-xl px-4 py-3 text-xs text-gray-400 leading-relaxed">
                       💡 {featured.explanation}
                     </div>
                   )}
@@ -295,7 +295,7 @@ export default function LandingPage() {
 
         {/* Submit CTA (when no featured question) */}
         {!featured && (
-          <div className="mt-20 bg-gray-50 border border-white/10 rounded-2xl p-8 text-center">
+          <div className="mt-20 bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
             <div className="text-3xl mb-3">💡</div>
             <h3 className="font-bold text-white mb-2">Got a great trivia question?</h3>
             <p className="text-sm text-gray-400 mb-4">
