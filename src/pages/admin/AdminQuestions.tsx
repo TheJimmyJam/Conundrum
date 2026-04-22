@@ -55,6 +55,7 @@ type NewQ = {
 
 type OptionDetail = { id: string; option_text: string; sort_order: number; is_correct: boolean }
 type QuestionDetail = { options: OptionDetail[]; explanation: string | null }
+type EditDraft = { prompt: string; options: { id: string; text: string }[]; correctIdx: number; explanation: string }
 
 const emptyNew = (): NewQ => ({
   prompt: '',
@@ -565,6 +566,9 @@ export default function AdminQuestions() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [detailCache, setDetailCache] = useState<Record<string, QuestionDetail>>({})
   const [detailLoading, setDetailLoading] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editDraft, setEditDraft] = useState<EditDraft | null>(null)
+  const [savingEdit, setSavingEdit] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
@@ -639,6 +643,54 @@ export default function AdminQuestions() {
     }))
     setDetailCache(prev => ({ ...prev, [qId]: { options, explanation: qRes.data?.explanation ?? null } }))
     setDetailLoading(null)
+  }
+
+  function startEdit(q: Question) {
+    const detail = detailCache[q.id]
+    if (!detail) return
+    const sorted = [...detail.options].sort((a, b) => a.sort_order - b.sort_order)
+    setEditDraft({
+      prompt: q.prompt,
+      options: sorted.map(o => ({ id: o.id, text: o.option_text })),
+      correctIdx: sorted.findIndex(o => o.is_correct),
+      explanation: detail.explanation ?? '',
+    })
+    setEditingId(q.id)
+  }
+
+  async function saveEdit(q: Question) {
+    if (!editDraft) return
+    setSavingEdit(true)
+    try {
+      const { error } = await supabase.rpc('admin_update_question', {
+        p_question_id:      q.id,
+        p_prompt:           editDraft.prompt.trim(),
+        p_explanation:      editDraft.explanation.trim() || null,
+        p_options:          editDraft.options.map(o => ({ id: o.id, text: o.text.trim() })),
+        p_correct_option_id: editDraft.options[editDraft.correctIdx].id,
+      })
+      if (error) throw error
+      // Update local state
+      setQuestions(prev => prev.map(x => x.id === q.id ? { ...x, prompt: editDraft.prompt.trim() } : x))
+      setDetailCache(prev => ({
+        ...prev,
+        [q.id]: {
+          explanation: editDraft.explanation.trim() || null,
+          options: editDraft.options.map((o, i) => ({
+            id: o.id,
+            option_text: o.text.trim(),
+            sort_order: i,
+            is_correct: i === editDraft.correctIdx,
+          })),
+        },
+      }))
+      setEditingId(null)
+      setEditDraft(null)
+      showToast('✓ Question updated.')
+    } catch (err: any) {
+      showToast('Save failed: ' + (err?.message ?? 'unknown error'))
+    }
+    setSavingEdit(false)
   }
 
   async function handleAdd() {
@@ -913,24 +965,105 @@ export default function AdminQuestions() {
                                 <div className="animate-spin w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full" />
                                 Loading answers…
                               </div>
+                            ) : editingId === q.id && editDraft ? (
+                              /* ── Edit mode ── */
+                              <div>
+                                <div className="mb-3">
+                                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5 block">Question</label>
+                                  <textarea
+                                    value={editDraft.prompt}
+                                    onChange={e => setEditDraft(d => d ? { ...d, prompt: e.target.value } : d)}
+                                    rows={3}
+                                    style={{colorScheme:'dark'}}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white resize-none focus:outline-none focus:border-amber-500/50 placeholder-gray-600"
+                                  />
+                                </div>
+                                <div className="mb-3">
+                                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5 block">Answer choices — click radio to mark correct</label>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {editDraft.options.map((opt, idx) => (
+                                      <div
+                                        key={opt.id}
+                                        onClick={() => setEditDraft(d => d ? { ...d, correctIdx: idx } : d)}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${editDraft.correctIdx === idx ? 'border-amber-500/60 bg-amber-500/10' : 'border-white/10 bg-white/5 hover:border-white/20'}`}
+                                      >
+                                        <input
+                                          type="radio"
+                                          name={`correct-${q.id}`}
+                                          checked={editDraft.correctIdx === idx}
+                                          onChange={() => setEditDraft(d => d ? { ...d, correctIdx: idx } : d)}
+                                          onClick={e => e.stopPropagation()}
+                                          className="accent-amber-500 flex-shrink-0"
+                                        />
+                                        <span className="text-xs font-bold text-gray-500 w-4 flex-shrink-0">{String.fromCharCode(65 + idx)}.</span>
+                                        <input
+                                          type="text"
+                                          value={opt.text}
+                                          onClick={e => e.stopPropagation()}
+                                          onChange={e => {
+                                            const newOpts = editDraft.options.map((o, i) => i === idx ? { ...o, text: e.target.value } : o)
+                                            setEditDraft(d => d ? { ...d, options: newOpts } : d)
+                                          }}
+                                          style={{colorScheme:'dark'}}
+                                          className={`flex-1 bg-transparent text-sm focus:outline-none min-w-0 ${editDraft.correctIdx === idx ? 'text-amber-300' : 'text-white'}`}
+                                        />
+                                        {editDraft.correctIdx === idx && <span className="text-xs font-semibold text-amber-400 flex-shrink-0">✓</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="mb-4">
+                                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5 block">Explanation (optional)</label>
+                                  <textarea
+                                    value={editDraft.explanation}
+                                    onChange={e => setEditDraft(d => d ? { ...d, explanation: e.target.value } : d)}
+                                    rows={2}
+                                    placeholder="Add a fun fact or explanation…"
+                                    style={{colorScheme:'dark'}}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white resize-none focus:outline-none focus:border-amber-500/50 placeholder-gray-600"
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => saveEdit(q)}
+                                    disabled={savingEdit}
+                                    className="bg-amber-500 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-amber-600 disabled:opacity-50 transition-colors"
+                                  >
+                                    {savingEdit ? 'Saving…' : 'Save changes'}
+                                  </button>
+                                  <button
+                                    onClick={() => { setEditingId(null); setEditDraft(null) }}
+                                    className="border border-white/10 text-gray-400 text-xs px-4 py-2 rounded-lg hover:bg-white/5 transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
                             ) : detailCache[q.id] ? (
+                              /* ── View mode ── */
                               <div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                                   {detailCache[q.id].options.map((opt, idx) => (
                                     <div key={opt.id} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm ${opt.is_correct ? 'border-amber-500/60 bg-amber-500/10 text-amber-300' : 'border-white/10 bg-white/5 text-gray-300'}`}>
                                       <span className="text-xs font-bold text-gray-500 w-4 flex-shrink-0">{String.fromCharCode(65 + idx)}.</span>
                                       <span className="flex-1">{opt.option_text}</span>
-                                      {opt.is_correct && <span className="text-xs font-semibold text-amber-400 flex-shrink-0">✓</span>}
+                                      {opt.is_correct && <span className="text-xs font-semibold text-amber-400 flex-shrink-0">✓ Correct</span>}
                                     </div>
                                   ))}
                                 </div>
                                 {detailCache[q.id].explanation ? (
-                                  <p className="text-xs text-gray-400 bg-white/5 rounded-lg px-3 py-2 leading-relaxed border border-white/5">
+                                  <p className="text-xs text-gray-400 bg-white/5 rounded-lg px-3 py-2 leading-relaxed border border-white/5 mb-3">
                                     💡 {detailCache[q.id].explanation}
                                   </p>
                                 ) : (
-                                  <p className="text-xs text-gray-600 italic">No explanation available.</p>
+                                  <p className="text-xs text-gray-600 italic mb-3">No explanation.</p>
                                 )}
+                                <button
+                                  onClick={e => { e.stopPropagation(); startEdit(q) }}
+                                  className="text-xs border border-amber-500/40 text-amber-400 font-semibold px-3 py-1.5 rounded-lg hover:bg-amber-500/10 transition-colors"
+                                >
+                                  ✏️ Edit question
+                                </button>
                               </div>
                             ) : null}
                           </td>
