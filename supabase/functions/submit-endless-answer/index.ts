@@ -100,21 +100,29 @@ serve(async (req) => {
 
     const points = calcPoints(isCorrect, response_time_ms, streak, difficulty)
 
-    await supabase.from('responses').insert({
-      game_session_id: session_id,
-      question_id,
-      selected_option_id: selected_option_id || null,
-      response_time_ms,
-      is_correct: isCorrect,
-      points_awarded: points,
-    })
+    // ── Persist to DB — wrapped separately so a constraint error doesn't
+    //    swallow the response. The UI still shows correct answer + score delta
+    //    even if the DB write is blocked (e.g. before constraint migration runs).
+    try {
+      await supabase.from('responses').insert({
+        game_session_id: session_id,
+        question_id,
+        selected_option_id: selected_option_id || null,
+        response_time_ms,
+        is_correct: isCorrect,
+        points_awarded: points,
+      })
 
-    await supabase.from('game_sessions').update({
-      score: session.score + points,
-      correct_count: session.correct_count + (isCorrect ? 1 : 0),
-      question_count: session.question_count + 1,
-      longest_streak: Math.max(session.longest_streak, isCorrect ? streak + 1 : 0),
-    }).eq('id', session_id)
+      await supabase.from('game_sessions').update({
+        score: session.score + points,
+        correct_count: session.correct_count + (isCorrect ? 1 : 0),
+        question_count: session.question_count + 1,
+        longest_streak: Math.max(session.longest_streak, isCorrect ? streak + 1 : 0),
+      }).eq('id', session_id)
+    } catch (dbErr) {
+      // Log but don't fail — player still sees the correct answer and score delta
+      console.error('DB write failed (check constraints?):', dbErr)
+    }
 
     return new Response(JSON.stringify({
       is_correct: isCorrect,
