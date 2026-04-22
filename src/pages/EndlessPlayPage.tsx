@@ -108,23 +108,38 @@ export default function EndlessPlayPage() {
     setPendingOptionId(optionId)
 
     const responseTimeMs = Math.max(0, (30 - timer) * 1000)
-    const result = await submitEndlessAnswer({
-      session_id: sessionId,
-      question_id: question.id,
-      selected_option_id: optionId ?? '',
-      response_time_ms: responseTimeMs,
-    })
 
-    setPendingOptionId(null)
-    setFeedback({
-      isCorrect: result.is_correct,
-      correctOptionId: result.correct_option_id,
-      selectedOptionId: optionId ?? '',
-      pointsAwarded: result.points_awarded,
-      explanation: result.explanation,
-    })
-    updateRunningScore(result.points_awarded, result.is_correct)
-    setNextTimer(10)
+    try {
+      const result = await submitEndlessAnswer({
+        session_id: sessionId,
+        question_id: question.id,
+        selected_option_id: optionId ?? '',
+        response_time_ms: responseTimeMs,
+      })
+
+      setPendingOptionId(null)
+      setFeedback({
+        isCorrect: result.is_correct,
+        correctOptionId: result.correct_option_id,
+        selectedOptionId: optionId ?? '',
+        pointsAwarded: result.points_awarded,
+        explanation: result.explanation,
+      })
+      updateRunningScore(result.points_awarded, result.is_correct)
+    } catch (err) {
+      console.error('submitEndlessAnswer failed:', err)
+      // Still show feedback so the player isn't stuck
+      setPendingOptionId(null)
+      setFeedback({
+        isCorrect: false,
+        correctOptionId: '',
+        selectedOptionId: optionId ?? '',
+        pointsAwarded: 0,
+        explanation: null,
+      })
+    } finally {
+      setNextTimer(10)
+    }
   }
 
   async function finishSession() {
