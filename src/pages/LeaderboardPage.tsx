@@ -81,13 +81,13 @@ export default function LeaderboardPage() {
         <p className="text-gray-400 text-sm mb-8">See how you stack up.</p>
 
         {/* Main tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6">
+        <div className="flex gap-1 bg-white/5 p-1 rounded-xl mb-6">
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`flex-1 text-xs font-medium py-2 px-2 rounded-lg transition-colors ${
-                tab === t.id ? 'bg-white text-white shadow-sm' : 'text-gray-400 hover:text-gray-200'
+                tab === t.id ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-gray-200'
               }`}
             >
               {t.label}
