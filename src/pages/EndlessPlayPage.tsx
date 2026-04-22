@@ -16,7 +16,7 @@ export default function EndlessPlayPage() {
   const [phase, setPhase] = useState<Phase>('loading')
   const [question, setQuestion] = useState<QuestionWithOptions | null>(null)
   const [questionCount, setQuestionCount] = useState(0)
-  const [timer, setTimer] = useState(15)
+  const [timer, setTimer] = useState(30)
   const [nextTimer, setNextTimer] = useState(0)
   const [consecutiveTimeouts, setConsecutiveTimeouts] = useState(0)
   const [feedback, setFeedback] = useState<{
@@ -41,7 +41,7 @@ export default function EndlessPlayPage() {
       } else {
         setQuestion(result.question!)
         setQuestionCount((c) => c + 1)
-        setTimer(15)
+        setTimer(30)
         setPhase('question')
       }
     } catch (err) {
@@ -61,7 +61,7 @@ export default function EndlessPlayPage() {
     if (phase !== 'question') return
     const interval = setInterval(() => {
       setTimer((t) => {
-        if (t <= 1) { handleAnswer(null); return 15 }
+        if (t <= 1) { handleAnswer(null); return 30 }
         return t - 1
       })
     }, 1000)
@@ -107,7 +107,7 @@ export default function EndlessPlayPage() {
     setPhase('feedback')
     setPendingOptionId(optionId)
 
-    const responseTimeMs = Math.max(0, (15 - timer) * 1000)
+    const responseTimeMs = Math.max(0, (30 - timer) * 1000)
     const result = await submitEndlessAnswer({
       session_id: sessionId,
       question_id: question.id,
@@ -177,8 +177,8 @@ export default function EndlessPlayPage() {
     </div>
   )
 
-  const timerPct = (timer / 15) * 100
-  const timerColor = timer > 8 ? 'bg-green-500' : timer > 4 ? 'bg-yellow-500' : 'bg-red-500'
+  const timerPct = (timer / 30) * 100
+  const timerColor = timer > 15 ? 'bg-green-500' : timer > 8 ? 'bg-yellow-500' : 'bg-red-500'
   const nextPct = (nextTimer / 10) * 100
 
   return (
@@ -192,7 +192,7 @@ export default function EndlessPlayPage() {
         <span className="font-bold text-amber-400">{runningScore} pts</span>
         <div className="flex items-center gap-3">
           {phase === 'question' && (
-            <span className={`text-lg font-bold ${timer <= 4 ? 'text-red-400' : 'text-gray-200'}`}>{timer}s</span>
+            <span className={`text-lg font-bold ${timer <= 8 ? 'text-red-400' : 'text-gray-200'}`}>{timer}s</span>
           )}
           <button
             onClick={() => setShowQuitConfirm(true)}
