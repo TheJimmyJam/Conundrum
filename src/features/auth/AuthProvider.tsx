@@ -15,11 +15,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // PASSWORD_RECOVERY: don't loadProfile — let ResetPasswordPage call updateUser
+    //   without competing for the auth lock.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
-      if (session?.user) await loadProfile()
-      else setLoading(false)
+      if (session?.user && event !== 'PASSWORD_RECOVERY') {
+        await loadProfile()
+      } else if (!session?.user) {
+        setLoading(false)
+      }
     })
 
     return () => subscription.unsubscribe()
