@@ -70,15 +70,15 @@ export default function EndlessHubPage() {
   const allSelected = selectedDiffs.size === 3
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f1a]">
       <div className="max-w-3xl mx-auto px-6 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Endless Mode</h1>
-        <p className="text-gray-500 mb-8">Play any time. Pick a category or go random.</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Endless Mode</h1>
+        <p className="text-gray-400 mb-8">Play any time. Pick a category or go random.</p>
 
         {/* Difficulty selector */}
-        <div className="bg-white border border-gray-100 rounded-2xl px-5 py-4 mb-8">
+        <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 mb-8">
           <div className="flex items-center gap-4 flex-wrap">
-            <span className="text-sm font-semibold text-gray-600 shrink-0">Difficulty:</span>
+            <span className="text-sm font-semibold text-gray-300 shrink-0">Difficulty:</span>
             <div className="flex gap-2">
               {DIFFICULTIES.map(({ key, label, color, active }) => {
                 const isOn = selectedDiffs.has(key)
@@ -96,7 +96,7 @@ export default function EndlessHubPage() {
             {!allSelected && (
               <button
                 onClick={() => setSelectedDiffs(new Set(['easy', 'medium', 'hard']))}
-                className="text-xs text-gray-400 hover:text-gray-600 underline ml-auto"
+                className="text-xs text-gray-400 hover:text-gray-300 underline ml-auto"
               >
                 Reset to all
               </button>
@@ -114,19 +114,19 @@ export default function EndlessHubPage() {
           <button
             onClick={() => startSession(null)}
             disabled={!!starting}
-            className="col-span-2 md:col-span-1 bg-indigo-600 text-white rounded-2xl p-6 text-left hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-sm flex flex-col"
+            className="col-span-2 md:col-span-1 bg-amber-500 text-white rounded-2xl p-6 text-left hover:bg-amber-600 transition-colors disabled:opacity-50 shadow-sm flex flex-col"
           >
             <div className="text-3xl mb-3">🎲</div>
             <h3 className="font-bold text-lg mb-1">Random</h3>
-            <p className="text-indigo-200 text-sm mb-auto">Questions from all categories mixed together</p>
+            <p className="text-amber-200 text-sm mb-auto">Questions from all categories mixed together</p>
             <PersonalBestBadge best={bests['random']} light />
-            {starting === 'random' && <p className="text-indigo-200 text-xs mt-2">Starting…</p>}
+            {starting === 'random' && <p className="text-amber-200 text-xs mt-2">Starting…</p>}
           </button>
 
           {/* Category cards */}
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100 animate-pulse h-36" />
+              <div key={i} className="bg-white/5 rounded-2xl p-6 border border-white/10 animate-pulse h-36 bg-white/5" />
             ))
           ) : (
             categories.map((cat) => (
@@ -134,12 +134,12 @@ export default function EndlessHubPage() {
                 key={cat.id}
                 onClick={() => startSession(cat.id)}
                 disabled={!!starting}
-                className="bg-white rounded-2xl p-6 border border-gray-100 text-left hover:border-indigo-300 hover:shadow-sm transition-all disabled:opacity-50 flex flex-col"
+                className="bg-white/5 rounded-2xl p-6 border border-white/10 text-left hover:border-amber-500/40 hover:shadow-sm transition-all disabled:opacity-50 flex flex-col"
               >
-                <h3 className="font-bold text-gray-900 mb-1">{cat.name}</h3>
+                <h3 className="font-bold text-white mb-1">{cat.name}</h3>
                 <p className="text-xs text-gray-400 mb-auto">{cat.slug}</p>
                 <PersonalBestBadge best={bests[cat.id]} />
-                {starting === cat.id && <p className="text-indigo-600 text-xs mt-2">Starting…</p>}
+                {starting === cat.id && <p className="text-amber-400 text-xs mt-2">Starting…</p>}
               </button>
             ))
           )}
@@ -154,11 +154,11 @@ export default function EndlessHubPage() {
 function PersonalBestBadge({ best, light }: { best?: EndlessPersonalBest; light?: boolean }) {
   if (!best) return null
 
-  const streakColor = light ? 'text-indigo-200' : 'text-indigo-500'
-  const labelColor  = light ? 'text-indigo-300' : 'text-gray-400'
+  const streakColor = light ? 'text-amber-200' : 'text-amber-400'
+  const labelColor  = light ? 'text-amber-300' : 'text-gray-400'
 
   return (
-    <div className={`mt-3 pt-3 border-t ${light ? 'border-indigo-500' : 'border-gray-100'} flex items-center gap-3`}>
+    <div className={`mt-3 pt-3 border-t ${light ? 'border-indigo-500' : 'border-white/10'} flex items-center gap-3`}>
       <div>
         <p className={`text-xs font-medium ${labelColor}`}>Best streak</p>
         <p className={`text-lg font-bold leading-tight ${streakColor}`}>🔥 {best.best_streak}</p>
