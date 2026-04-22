@@ -1,19 +1,28 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { useAuthStore } from '../store/authStore'
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+  const [sessionReady, setSessionReady] = useState(false)
 
-  // sessionReady = AuthProvider has exchanged the recovery token and set user
-  const sessionReady = !!user
+  // Supabase delivers the recovery token via the URL hash.
+  // Listening for the PASSWORD_RECOVERY event exchanges it for a session.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setSessionReady(true)
+    })
+    // Also check if already in a valid session (page refresh after token exchange)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setSessionReady(true)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -23,24 +32,13 @@ export default function ResetPasswordPage() {
     setLoading(true)
     setError('')
 
-    try {
-      const { error } = await supabase.auth.updateUser({ password })
-      if (error) {
-        if (error.message.toLowerCase().includes('same') ||
-            error.message.toLowerCase().includes('different')) {
-          setError('New password must be different from your current one.')
-        } else {
-          setError(error.message)
-        }
-        return
-      }
-      setDone(true)
-      setTimeout(() => navigate('/play'), 2500)
-    } catch (err: any) {
-      setError(err?.message ?? 'Something went wrong. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    const { error } = await supabase.auth.updateUser({ password })
+    setLoading(false)
+
+    if (error) { setError(error.message); return }
+
+    setDone(true)
+    setTimeout(() => navigate('/play'), 2500)
   }
 
   if (!sessionReady) {
