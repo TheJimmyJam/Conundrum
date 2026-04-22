@@ -74,8 +74,8 @@ export default function ResultsPage() {
                   onClick={() => setExpanded(isOpen ? null : r.question_id)}
                   className={`w-full text-left px-5 py-4 flex items-center gap-3 transition-colors ${
                     r.is_correct
-                      ? 'bg-green-50 hover:bg-green-100'
-                      : 'bg-red-50 hover:bg-red-100'
+                      ? 'bg-green-500/10 hover:bg-green-500/15'
+                      : 'bg-red-500/10 hover:bg-red-500/15'
                   }`}
                 >
                   <span className="text-base flex-shrink-0">{r.is_correct ? '✅' : '❌'}</span>
@@ -109,13 +109,13 @@ export default function ResultsPage() {
 
                         if (isCorrect && isSelected) {
                           cls = 'border-green-500 bg-green-500/10 text-green-400'
-                          badge = <span className="text-xs font-semibold text-green-700 ml-2 flex-shrink-0">✓ Correct</span>
+                          badge = <span className="text-xs font-semibold text-green-400 ml-2 flex-shrink-0">✓ Correct</span>
                         } else if (isCorrect) {
                           cls = 'border-green-500 bg-green-500/10 text-green-400'
-                          badge = <span className="text-xs font-semibold text-green-700 ml-2 flex-shrink-0">✓ Correct answer</span>
+                          badge = <span className="text-xs font-semibold text-green-400 ml-2 flex-shrink-0">✓ Correct answer</span>
                         } else if (isWrongPick) {
                           cls = 'border-red-500 bg-red-500/10 text-red-400'
-                          badge = <span className="text-xs font-semibold text-red-700 ml-2 flex-shrink-0">✗ Your pick</span>
+                          badge = <span className="text-xs font-semibold text-red-400 ml-2 flex-shrink-0">✗ Your pick</span>
                         }
 
                         return (
