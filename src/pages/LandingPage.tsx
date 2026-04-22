@@ -311,6 +311,17 @@ export default function LandingPage() {
         )}
 
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-white/5 mt-8 py-8">
+        <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-600">
+          <p>© {new Date().getFullYear()} Conundrum. All rights reserved.</p>
+          <div className="flex gap-6">
+            <Link to="/terms" className="hover:text-amber-400 transition-colors">Terms of Service</Link>
+            <Link to="/privacy" className="hover:text-amber-400 transition-colors">Privacy Policy</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
