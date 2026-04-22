@@ -21,7 +21,7 @@ export default function PlayPage() {
   const { sessionId, questions, currentIndex, answers, setSession, setQuestions, startQuestion, recordAnswer, nextQuestion, reset } = useGameStore()
 
   const [phase, setPhase] = useState<Phase>('loading')
-  const [timer, setTimer] = useState(15)
+  const [timer, setTimer] = useState(30)
   const [existingSessionId, setExistingSessionId] = useState<string | null>(null)
   const initialized = useRef(false)
 
@@ -57,7 +57,7 @@ export default function PlayPage() {
   // Timer
   useEffect(() => {
     if (phase !== 'playing') return
-    setTimer(20)
+    setTimer(30)
     const interval = setInterval(() => {
       setTimer((t) => {
         if (t <= 1) {
@@ -88,7 +88,7 @@ export default function PlayPage() {
           answers: [...answers, {
             question_id: question.id,
             selected_option_id: optionId ?? '',
-            response_time_ms: Math.max(0, (20 - timer) * 1000),
+            response_time_ms: Math.max(0, (30 - timer) * 1000),
           }],
         })
         navigate(`/results/${sessionId}`, { state: { result } })
@@ -121,15 +121,15 @@ export default function PlayPage() {
   const question = questions[currentIndex]
   if (!question || phase === 'submitting') return <LoadingScreen label="Calculating score…" />
 
-  const timerPct = (timer / 20) * 100
-  const timerColor = timer > 10 ? 'bg-green-500' : timer > 5 ? 'bg-yellow-500' : 'bg-red-500'
+  const timerPct = (timer / 30) * 100
+  const timerColor = timer > 15 ? 'bg-green-500' : timer > 8 ? 'bg-yellow-500' : 'bg-red-500'
 
   return (
     <div className="min-h-screen bg-[#0f0f1a] flex flex-col">
       {/* Header */}
       <div className="bg-[#0f0f1a] border-b border-white/10 px-6 py-4 flex items-center justify-between max-w-2xl mx-auto w-full">
         <span className="text-sm font-medium text-gray-400">Question {currentIndex + 1} of {questions.length}</span>
-        <span className={`text-lg font-bold ${timer <= 5 ? 'text-red-600' : 'text-gray-200'}`}>{timer}s</span>
+        <span className={`text-lg font-bold ${timer <= 8 ? 'text-red-600' : 'text-gray-200'}`}>{timer}s</span>
       </div>
 
       {/* Timer bar */}
