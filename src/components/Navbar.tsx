@@ -107,6 +107,11 @@ export function Navbar() {
           <Link to="/submit" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/submit') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
             Submit
           </Link>
+          {profile?.role === 'admin' && (
+            <Link to="/admin" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/admin') ? 'bg-red-50 text-red-700' : 'text-red-500 hover:text-red-700 hover:bg-red-50'}`}>
+              Admin
+            </Link>
+          )}
         </div>
 
         {/* Right: notifications + user menu */}
