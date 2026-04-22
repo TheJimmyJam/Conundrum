@@ -75,37 +75,37 @@ export default function AdminSubmissions() {
 
   const statusBadge = (s: string) => {
     const cls =
-      s === 'pending' ? 'bg-amber-100 text-amber-700' :
-      s === 'approved' ? 'bg-blue-100 text-blue-700' :
-      s === 'featured' ? 'bg-green-100 text-green-700' :
-      'bg-gray-100 text-gray-500'
+      s === 'pending' ? 'bg-amber-500/100/15 text-amber-400' :
+      s === 'approved' ? 'bg-blue-500/100/15 text-blue-400' :
+      s === 'featured' ? 'bg-green-500/100/15 text-green-400' :
+      'bg-gray-100 text-gray-400'
     return <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cls}`}>{s}</span>
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f1a]">
       <div className="max-w-4xl mx-auto px-6 py-12">
-        <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-6">
+        <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-300 mb-6">
           ← Admin
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Question Submissions</h1>
-        <p className="text-gray-500 mb-4">Review and approve community-submitted trivia questions. Use <strong className="font-semibold text-gray-700">Add to Queue</strong> to schedule an approved question as the next available daily community question.</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Question Submissions</h1>
+        <p className="text-gray-400 mb-4">Review and approve community-submitted trivia questions. Use <strong className="font-semibold text-gray-200">Add to Queue</strong> to schedule an approved question as the next available daily community question.</p>
 
         {queuedMsg && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-800 text-sm font-medium px-4 py-3 rounded-xl flex items-center justify-between">
+          <div className="mb-6 bg-green-500/10 border border-green-500/30 text-green-800 text-sm font-medium px-4 py-3 rounded-xl flex items-center justify-between">
             {queuedMsg}
-            <button onClick={() => setQueuedMsg(null)} className="text-green-500 hover:text-green-700 text-lg leading-none ml-4">×</button>
+            <button onClick={() => setQueuedMsg(null)} className="text-green-500 hover:text-green-400 text-lg leading-none ml-4">×</button>
           </div>
         )}
 
         {/* Filter tabs */}
-        <div className="flex border-b border-gray-200 mb-6">
+        <div className="flex border-b border-white/10 mb-6">
           {STATUS_FILTERS.map((s) => (
             <button
               key={s}
               onClick={() => setFilter(s)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize ${
-                filter === s ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                filter === s ? 'border-amber-500 text-amber-400' : 'border-transparent text-gray-400 hover:text-gray-200'
               }`}
             >
               {s}
@@ -115,12 +115,12 @@ export default function AdminSubmissions() {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent" />
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent" />
           </div>
         ) : submissions.length === 0 ? (
-          <div className="bg-white border border-gray-100 rounded-2xl px-6 py-16 text-center">
+          <div className="bg-white/5 border border-white/10 rounded-2xl px-6 py-16 text-center">
             <div className="text-4xl mb-3">📭</div>
-            <p className="text-gray-500">No {filter} submissions.</p>
+            <p className="text-gray-400">No {filter} submissions.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -133,14 +133,14 @@ export default function AdminSubmissions() {
                 { label: 'D', text: s.option_d },
               ]
               return (
-                <div key={s.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+                <div key={s.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
                   {/* Summary row */}
                   <button
                     onClick={() => setExpanded(isOpen ? null : s.id)}
                     className="w-full text-left px-5 py-4 flex items-center gap-3"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{s.prompt}</p>
+                      <p className="text-sm font-semibold text-white truncate">{s.prompt}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         by @{s.username} · {new Date(s.created_at).toLocaleDateString()}
                         {s.featured_date && ` · Featured: ${s.featured_date}`}
@@ -154,8 +154,8 @@ export default function AdminSubmissions() {
 
                   {/* Expanded detail */}
                   {isOpen && (
-                    <div className="border-t border-gray-100 px-5 pb-5 pt-4">
-                      <p className="text-sm font-semibold text-gray-900 mb-4">{s.prompt}</p>
+                    <div className="border-t border-white/10 px-5 pb-5 pt-4">
+                      <p className="text-sm font-semibold text-white mb-4">{s.prompt}</p>
 
                       {/* Options */}
                       <div className="space-y-2 mb-4">
@@ -163,18 +163,18 @@ export default function AdminSubmissions() {
                           const isCorrect = o.label.toLowerCase() === s.correct_option
                           return (
                             <div key={o.label} className={`flex items-center gap-3 px-3 py-2 rounded-lg border text-sm ${
-                              isCorrect ? 'border-green-400 bg-green-50 text-green-800' : 'border-gray-200 text-gray-600'
+                              isCorrect ? 'border-green-400 bg-green-500/10 text-green-800' : 'border-white/10 text-gray-300'
                             }`}>
                               <span className="font-bold w-4">{o.label}</span>
                               <span className="flex-1">{o.text}</span>
-                              {isCorrect && <span className="text-xs font-semibold text-green-700">✓ Correct</span>}
+                              {isCorrect && <span className="text-xs font-semibold text-green-400">✓ Correct</span>}
                             </div>
                           )
                         })}
                       </div>
 
                       {s.explanation && (
-                        <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 mb-4">
+                        <p className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 mb-4">
                           💡 {s.explanation}
                         </p>
                       )}
@@ -227,7 +227,7 @@ export default function AdminSubmissions() {
                           <button
                             onClick={() => { if (confirm('Reject this submission?')) handleReview(s.id, 'rejected') }}
                             disabled={processing === s.id}
-                            className="text-sm border border-red-200 text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                            className="text-sm border border-red-500/30 text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-500/10 disabled:opacity-50"
                           >
                             Reject
                           </button>
