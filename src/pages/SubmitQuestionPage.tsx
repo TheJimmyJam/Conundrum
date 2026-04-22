@@ -86,12 +86,12 @@ export default function SubmitQuestionPage() {
   }
 
   if (done) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#0f0f1a] flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <div className="text-6xl mb-5">🎉</div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-3">Question submitted!</h1>
-        <p className="text-gray-500 mb-2">
-          Thanks, <span className="font-semibold text-indigo-600">@{profile?.username}</span>!
+        <h1 className="text-3xl font-bold text-white mb-3">Question submitted!</h1>
+        <p className="text-gray-400 mb-2">
+          Thanks, <span className="font-semibold text-amber-400">@{profile?.username}</span>!
         </p>
         <p className="text-gray-400 text-sm mb-8">
           Our team reviews every submission. If yours is selected as the daily community pick,
@@ -100,13 +100,13 @@ export default function SubmitQuestionPage() {
         <div className="flex gap-3 justify-center">
           <button
             onClick={() => { setDone(false); setCategoryId(''); setPrompt(''); setOptions({ a:'',b:'',c:'',d:'' }); setCorrect(null); setExplanation('') }}
-            className="border border-indigo-600 text-indigo-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-50"
+            className="border border-amber-500 text-amber-400 font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-500/10"
           >
             Submit another
           </button>
           <button
             onClick={() => navigate('/play')}
-            className="bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700"
+            className="bg-amber-500 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-600"
           >
             Play today's round
           </button>
@@ -116,13 +116,13 @@ export default function SubmitQuestionPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f1a]">
       <div className="max-w-2xl mx-auto px-6 py-12">
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Submit a Question</h1>
-          <p className="text-gray-500">
+          <h1 className="text-3xl font-bold text-white mb-2">Submit a Question</h1>
+          <p className="text-gray-400">
             Think you've got a great trivia question? Submit it — if it gets picked as the daily
             community question, you'll be featured on the home page.
           </p>
@@ -131,8 +131,8 @@ export default function SubmitQuestionPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* Category */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <label className="block text-sm font-semibold text-gray-200 mb-2">
               Category <span className="text-red-500">*</span>
             </label>
             <p className="text-xs text-gray-400 mb-3">Pick the category your question best fits into.</p>
@@ -144,8 +144,8 @@ export default function SubmitQuestionPage() {
                   onClick={() => setCategoryId(cat.id)}
                   className={`px-3 py-2.5 rounded-xl border text-sm font-medium text-left transition-colors ${
                     categoryId === cat.id
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-200 text-gray-600 hover:border-indigo-300 hover:bg-gray-50'
+                      ? 'border-indigo-500 bg-amber-500/10 text-amber-400'
+                      : 'border-white/10 text-gray-300 hover:border-amber-500/40 hover:bg-white/5'
                   }`}
                 >
                   {categoryId === cat.id && <span className="mr-1">✓</span>}
@@ -156,8 +156,8 @@ export default function SubmitQuestionPage() {
           </div>
 
           {/* Question */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <label className="block text-sm font-semibold text-gray-200 mb-2">
               Your question <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -166,15 +166,15 @@ export default function SubmitQuestionPage() {
               placeholder="What is the capital of Australia?"
               rows={3}
               maxLength={300}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+              className="w-full border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
             />
             <p className="text-xs text-gray-400 mt-1 text-right">{prompt.length}/300</p>
           </div>
 
           {/* Options */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <label className="text-sm font-semibold text-gray-700">
+              <label className="text-sm font-semibold text-gray-200">
                 Answer options <span className="text-red-500">*</span>
               </label>
               <span className="text-xs text-gray-400">Click the circle to mark the correct answer</span>
@@ -183,7 +183,7 @@ export default function SubmitQuestionPage() {
             <div className="space-y-3">
               {OPTION_LABELS.map(({ key, label }) => (
                 <div key={key} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                  correct === key ? 'border-green-400 bg-green-50' : 'border-gray-200'
+                  correct === key ? 'border-green-400 bg-green-50' : 'border-white/10'
                 }`}>
                   <button
                     type="button"
@@ -191,7 +191,7 @@ export default function SubmitQuestionPage() {
                     className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                       correct === key
                         ? 'border-green-500 bg-green-500 text-white'
-                        : 'border-gray-300 hover:border-indigo-400'
+                        : 'border-gray-300 hover:border-amber-400'
                     }`}
                     title="Mark as correct"
                   >
@@ -223,8 +223,8 @@ export default function SubmitQuestionPage() {
           </div>
 
           {/* Explanation (optional) */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <label className="block text-sm font-semibold text-gray-200 mb-1">
               Explanation <span className="text-gray-400 font-normal">(optional but appreciated)</span>
             </label>
             <p className="text-xs text-gray-400 mb-3">A quick note on why the answer is correct. Helps players learn.</p>
@@ -234,7 +234,7 @@ export default function SubmitQuestionPage() {
               placeholder="Canberra, not Sydney, is Australia's capital — a deliberate compromise between the two rival cities."
               rows={2}
               maxLength={300}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+              className="w-full border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
             />
           </div>
 
@@ -266,7 +266,7 @@ export default function SubmitQuestionPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-indigo-600 text-white font-semibold py-3.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="w-full bg-amber-500 text-white font-semibold py-3.5 rounded-xl hover:bg-amber-600 disabled:opacity-50 transition-colors"
           >
             {submitting ? 'Submitting…' : 'Submit Question'}
           </button>
