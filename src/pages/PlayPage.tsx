@@ -105,7 +105,7 @@ export default function PlayPage() {
   if (phase === 'loading') return <LoadingScreen />
   if (phase === 'no_set') return <NoSetScreen />
   if (phase === 'error') return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#0f0f1a] px-4">
       <div className="text-center">
         <div className="text-5xl mb-4">⚠️</div>
         <h2 className="text-2xl font-bold text-white mb-3">Something went wrong</h2>
@@ -127,7 +127,7 @@ export default function PlayPage() {
   return (
     <div className="min-h-screen bg-[#0f0f1a] flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-white/10 px-6 py-4 flex items-center justify-between max-w-2xl mx-auto w-full">
+      <div className="bg-[#0f0f1a] border-b border-white/10 px-6 py-4 flex items-center justify-between max-w-2xl mx-auto w-full">
         <span className="text-sm font-medium text-gray-400">Question {currentIndex + 1} of {questions.length}</span>
         <span className={`text-lg font-bold ${timer <= 5 ? 'text-red-600' : 'text-gray-200'}`}>{timer}s</span>
       </div>
@@ -141,7 +141,7 @@ export default function PlayPage() {
         {/* Progress dots */}
         <div className="flex gap-2 mb-8">
           {questions.map((_, i) => (
-            <div key={i} className={`h-1.5 flex-1 rounded-full ${i < currentIndex ? 'bg-amber-500' : i === currentIndex ? 'bg-indigo-300' : 'bg-gray-200'}`} />
+            <div key={i} className={`h-1.5 flex-1 rounded-full ${i < currentIndex ? 'bg-amber-500' : i === currentIndex ? 'bg-amber-400' : 'bg-white/10'}`} />
           ))}
         </div>
 
@@ -173,7 +173,7 @@ export default function PlayPage() {
               <button
                 key={opt.id}
                 onClick={() => handleAnswer(opt.id)}
-                className="w-full text-left px-5 py-4 rounded-xl border border-white/10 bg-white hover:border-amber-400 hover:bg-amber-500/10 transition-colors font-medium text-gray-100"
+                className="w-full text-left px-5 py-4 rounded-xl border border-white/10 bg-white/5 hover:border-amber-400 hover:bg-amber-500/10 transition-colors font-medium text-gray-100"
               >
                 {opt.option_text}
               </button>
@@ -207,7 +207,7 @@ function AlreadyPlayedScreen({ sessionId }: { sessionId: string | null }) {
   }, [])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#0f0f1a] px-4">
       <div className="text-center">
         <div className="text-5xl mb-4">✅</div>
         <h2 className="text-2xl font-bold text-white mb-2">You've already played today!</h2>
@@ -239,7 +239,7 @@ function NoSetScreen() {
   }, [])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#0f0f1a] px-4">
       <div className="text-center">
         <div className="text-5xl mb-4">🕐</div>
         <h2 className="text-2xl font-bold text-white mb-2">No round available yet.</h2>
