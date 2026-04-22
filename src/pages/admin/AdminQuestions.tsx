@@ -53,6 +53,9 @@ type NewQ = {
   correct_index: number
 }
 
+type OptionDetail = { id: string; option_text: string; sort_order: number; is_correct: boolean }
+type QuestionDetail = { options: OptionDetail[]; explanation: string | null }
+
 const emptyNew = (): NewQ => ({
   prompt: '',
   category_id: '',
@@ -559,6 +562,9 @@ export default function AdminQuestions() {
   const [addToDailyQ, setAddToDailyQ] = useState<Question | null>(null)
   const [deleteQ, setDeleteQ] = useState<Question | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [detailCache, setDetailCache] = useState<Record<string, QuestionDetail>>({})
+  const [detailLoading, setDetailLoading] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
@@ -618,6 +624,25 @@ export default function AdminQuestions() {
     }
     setDeleteQ(null)
     setDeleting(false)
+  }
+
+  async function fetchDetail(qId: string) {
+    if (expandedId === qId) { setExpandedId(null); return }
+    setExpandedId(qId)
+    if (detailCache[qId]) return
+    setDetailLoading(qId)
+    const [optRes, ansRes, qRes] = await Promise.all([
+      supabase.from('question_options').select('id, option_text, sort_order').eq('question_id', qId).order('sort_order'),
+      supabase.from('question_answers').select('correct_option_id').eq('question_id', qId).single(),
+      supabase.from('questions').select('explanation').eq('id', qId).single(),
+    ])
+    const correctId = ansRes.data?.correct_option_id
+    const options: OptionDetail[] = (optRes.data ?? []).map((o: any) => ({
+      ...o,
+      is_correct: o.id === correctId,
+    }))
+    setDetailCache(prev => ({ ...prev, [qId]: { options, explanation: qRes.data?.explanation ?? null } }))
+    setDetailLoading(null)
   }
 
   async function handleAdd() {
@@ -839,22 +864,31 @@ export default function AdminQuestions() {
                   </thead>
                   <tbody>
                     {questions.map(q => (
-                      <tr key={q.id} className="border-b border-white/5 hover:bg-white/5">
+                      <tr
+                        key={q.id}
+                        onClick={() => fetchDetail(q.id)}
+                        className={`border-b border-white/5 cursor-pointer transition-colors ${expandedId === q.id ? 'bg-white/8' : 'hover:bg-white/5'}`}
+                      >
                         <td className="px-5 py-3.5 max-w-xs">
-                          <p className="text-white font-medium truncate" title={q.prompt}>{q.prompt}</p>
+                          <div className="flex items-center gap-2">
+                            <svg className={`w-3.5 h-3.5 text-gray-500 flex-shrink-0 transition-transform ${expandedId === q.id ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                            <p className="text-white font-medium truncate" title={q.prompt}>{q.prompt}</p>
+                          </div>
                         </td>
                         <td className="px-4 py-3.5 text-gray-400 text-xs hidden md:table-cell">{q.category_name}</td>
                         <td className="px-4 py-3.5 hidden sm:table-cell">
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${diffBadge(q.difficulty)}`}>{q.difficulty}</span>
                         </td>
-                        <td className="px-4 py-3.5 text-center">
+                        <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
                           <button onClick={() => toggleActive(q)} disabled={toggling === q.id}
                             title={q.is_active ? 'Disable' : 'Enable'}
                             className={`relative inline-flex h-5 w-9 rounded-full transition-colors focus:outline-none disabled:opacity-40 ${q.is_active ? 'bg-amber-500/100' : 'bg-gray-200'}`}>
                             <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${q.is_active ? 'translate-x-4' : 'translate-x-0.5'}`} />
                           </button>
                         </td>
-                        <td className="px-4 py-3.5 text-center">
+                        <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
                           <button
                             onClick={() => setAddToDailyQ(q)}
                             title="Queue as community question of the day"
@@ -863,7 +897,7 @@ export default function AdminQuestions() {
                             📰 Queue
                           </button>
                         </td>
-                        <td className="px-4 py-3.5 text-center">
+                        <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
                           <button
                             onClick={() => setDeleteQ(q)}
                             title="Delete question"
@@ -875,6 +909,37 @@ export default function AdminQuestions() {
                           </button>
                         </td>
                       </tr>
+                      {expandedId === q.id && (
+                        <tr className="border-b border-white/10 bg-[#0f0f1a]">
+                          <td colSpan={6} className="px-6 pt-4 pb-5">
+                            {detailLoading === q.id ? (
+                              <div className="flex items-center gap-2 text-gray-400 text-sm py-2">
+                                <div className="animate-spin w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full" />
+                                Loading answers…
+                              </div>
+                            ) : detailCache[q.id] ? (
+                              <div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                                  {detailCache[q.id].options.map((opt, idx) => (
+                                    <div key={opt.id} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm ${opt.is_correct ? 'border-amber-500/60 bg-amber-500/10 text-amber-300' : 'border-white/10 bg-white/5 text-gray-300'}`}>
+                                      <span className="text-xs font-bold text-gray-500 w-4 flex-shrink-0">{String.fromCharCode(65 + idx)}.</span>
+                                      <span className="flex-1">{opt.option_text}</span>
+                                      {opt.is_correct && <span className="text-xs font-semibold text-amber-400 flex-shrink-0">✓</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                                {detailCache[q.id].explanation ? (
+                                  <p className="text-xs text-gray-400 bg-white/5 rounded-lg px-3 py-2 leading-relaxed border border-white/5">
+                                    💡 {detailCache[q.id].explanation}
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-gray-600 italic">No explanation available.</p>
+                                )}
+                              </div>
+                            ) : null}
+                          </td>
+                        </tr>
+                      )}
                     ))}
                   </tbody>
                 </table>
