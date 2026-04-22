@@ -63,17 +63,17 @@ export default function AdminCategories() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f1a]">
       <div className="max-w-3xl mx-auto px-6 py-12">
         <div className="flex items-center gap-3 mb-8">
-          <Link to="/admin" className="text-gray-400 hover:text-gray-600 text-sm">← Admin</Link>
+          <Link to="/admin" className="text-gray-400 hover:text-gray-300 text-sm">← Admin</Link>
           <span className="text-gray-300">/</span>
-          <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+          <h1 className="text-2xl font-bold text-white">Categories</h1>
         </div>
 
         {/* Add new */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Add Category</h2>
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6">
+          <h2 className="text-sm font-semibold text-gray-200 mb-3">Add Category</h2>
           <div className="flex gap-3">
             <input
               type="text"
@@ -81,12 +81,12 @@ export default function AdminCategories() {
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
               placeholder="e.g. Science & Nature"
-              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="flex-1 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
             <button
               onClick={handleAdd}
               disabled={adding || !newName.trim()}
-              className="bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-indigo-700 disabled:opacity-50"
+              className="bg-amber-500/100 text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-amber-600 disabled:opacity-50"
             >
               {adding ? 'Adding…' : 'Add'}
             </button>
@@ -97,17 +97,17 @@ export default function AdminCategories() {
         {/* List */}
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent" />
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-amber-500 border-t-transparent" />
           </div>
         ) : (
-          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+          <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
             {categories.length === 0 && (
               <p className="text-center text-gray-400 py-12 text-sm">No categories yet.</p>
             )}
             {categories.map((cat, i) => (
               <div
                 key={cat.id}
-                className={`flex items-center gap-4 px-5 py-4 ${i < categories.length - 1 ? 'border-b border-gray-50' : ''}`}
+                className={`flex items-center gap-4 px-5 py-4 ${i < categories.length - 1 ? 'border-b border-white/5' : ''}`}
               >
                 {/* Active toggle */}
                 <button
@@ -130,14 +130,14 @@ export default function AdminCategories() {
                           if (e.key === 'Enter') handleSaveEdit(cat.id)
                           if (e.key === 'Escape') setEditingId(null)
                         }}
-                        className="flex-1 border border-indigo-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        className="flex-1 border border-amber-500/40 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                       />
-                      <button onClick={() => handleSaveEdit(cat.id)} className="text-xs text-indigo-600 font-semibold">Save</button>
+                      <button onClick={() => handleSaveEdit(cat.id)} className="text-xs text-amber-400 font-semibold">Save</button>
                       <button onClick={() => setEditingId(null)} className="text-xs text-gray-400">Cancel</button>
                     </div>
                   ) : (
                     <Link to={`/admin/categories/${cat.id}/questions`} className="block group">
-                      <p className={`font-medium text-sm group-hover:text-indigo-600 transition-colors ${cat.is_active ? 'text-gray-900' : 'text-gray-400'}`}>{cat.name}</p>
+                      <p className={`font-medium text-sm group-hover:text-amber-400 transition-colors ${cat.is_active ? 'text-white' : 'text-gray-400'}`}>{cat.name}</p>
                       <p className="text-xs text-gray-400">{cat.slug}</p>
                     </Link>
                   )}
@@ -148,13 +148,13 @@ export default function AdminCategories() {
                   <div className="flex gap-2 flex-shrink-0">
                     <button
                       onClick={() => { setEditingId(cat.id); setEditName(cat.name) }}
-                      className="text-xs text-gray-500 hover:text-indigo-600 px-2 py-1 rounded hover:bg-indigo-50"
+                      className="text-xs text-gray-400 hover:text-amber-400 px-2 py-1 rounded hover:bg-amber-500/100/10"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(cat.id)}
-                      className="text-xs text-gray-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50"
+                      className="text-xs text-gray-400 hover:text-red-400 px-2 py-1 rounded hover:bg-red-500/10"
                     >
                       Delete
                     </button>
