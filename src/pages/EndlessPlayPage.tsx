@@ -4,7 +4,7 @@ import { getNextEndlessQuestion, submitEndlessAnswer, endEndlessSession } from '
 import { useGameStore } from '../store/gameStore'
 import type { QuestionWithOptions } from '../types'
 
-type Phase = 'loading' | 'question' | 'feedback' | 'done' | 'quitting' | 'error'
+type Phase = 'loading' | 'question' | 'feedback' | 'done' | 'quitting' | 'error' | 'afk'
 
 export default function EndlessPlayPage() {
   const navigate = useNavigate()
@@ -18,6 +18,7 @@ export default function EndlessPlayPage() {
   const [questionCount, setQuestionCount] = useState(0)
   const [timer, setTimer] = useState(15)
   const [nextTimer, setNextTimer] = useState(0)
+  const [consecutiveTimeouts, setConsecutiveTimeouts] = useState(0)
   const [feedback, setFeedback] = useState<{
     isCorrect: boolean
     correctOptionId: string
@@ -90,6 +91,19 @@ export default function EndlessPlayPage() {
   async function handleAnswer(optionId: string | null) {
     if (!question || phase !== 'question') return
 
+    // AFK detection — 5 consecutive timeouts ends the session
+    if (optionId === null) {
+      const newCount = consecutiveTimeouts + 1
+      setConsecutiveTimeouts(newCount)
+      if (newCount >= 5) {
+        setPhase('afk')
+        setTimeout(() => finishSession(), 3000)
+        return
+      }
+    } else {
+      setConsecutiveTimeouts(0)
+    }
+
     setPhase('feedback')
     setPendingOptionId(optionId)
 
@@ -150,6 +164,16 @@ export default function EndlessPlayPage() {
   if (phase === 'quitting') return (
     <div className="min-h-screen flex items-center justify-center">
       <p className="text-gray-400">Saving your progress…</p>
+    </div>
+  )
+
+  if (phase === 'afk') return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0f0f1a] px-4">
+      <div className="text-center max-w-sm">
+        <div className="text-5xl mb-4">💤</div>
+        <h2 className="text-xl font-bold text-white mb-2">You fell asleep?</h2>
+        <p className="text-gray-400 text-sm">No answers for 5 questions in a row — wrapping up your session.</p>
+      </div>
     </div>
   )
 
