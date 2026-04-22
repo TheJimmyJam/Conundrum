@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import logo from '../assets/logo.png'
 import {
   getTodaysDailySet,
   getMyDailyRank,
@@ -79,8 +80,8 @@ export function Navbar() {
       <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
         {/* Logo + question count */}
         <div className="flex items-center gap-3">
-          <Link to="/" className="text-xl font-bold text-indigo-700 tracking-tight">
-            Cnndrm
+          <Link to="/" className="flex items-center">
+            <img src={logo} alt="Conundrum" className="h-10 w-auto" />
           </Link>
           {questionCount !== null && (
             <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full">
