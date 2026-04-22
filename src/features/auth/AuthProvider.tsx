@@ -6,23 +6,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setUser, setSession, setLoading, loadProfile } = useAuthStore()
 
   useEffect(() => {
-    // onAuthStateChange fires immediately with INITIAL_SESSION on mount —
-    // calling getSession() in parallel creates a second lock request that races
-    // against the listener, causing "lock was stolen" errors on recovery flows.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Get initial session — wait for profile before clearing loading
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
+      if (session?.user) await loadProfile()
+      setLoading(false)
+    })
 
-      if (event === 'PASSWORD_RECOVERY') {
-        // Recovery flow: session is set so ResetPasswordPage can call updateUser.
-        // Don't loadProfile here — that DB round-trip holds the lock and blocks updateUser.
-        setLoading(false)
-      } else if (session?.user) {
-        await loadProfile()
-        setLoading(false)
-      } else {
-        setLoading(false)
-      }
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      if (session?.user) await loadProfile()
+      else setLoading(false)
     })
 
     return () => subscription.unsubscribe()
