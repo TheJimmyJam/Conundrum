@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   DndContext,
@@ -860,8 +860,8 @@ export default function AdminQuestions() {
                   </thead>
                   <tbody>
                     {questions.map(q => (
+                      <React.Fragment key={q.id}>
                       <tr
-                        key={q.id}
                         onClick={() => fetchDetail(q.id)}
                         className={`border-b border-white/5 cursor-pointer transition-colors ${expandedId === q.id ? 'bg-white/8' : 'hover:bg-white/5'}`}
                       >
@@ -936,6 +936,7 @@ export default function AdminQuestions() {
                           </td>
                         </tr>
                       )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
