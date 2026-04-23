@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conundrum Style Previews</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  body { font-family: 'Inter', sans-serif; background: #111; }
+
+  /* Gold shimmer animation */
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  .gold-shimmer {
+    background: linear-gradient(90deg, #F59E0B, #FCD34D, #F59E0B, #D97706);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(245,158,11,0.4); }
+    50% { box-shadow: 0 0 40px rgba(245,158,11,0.7); }
+  }
+  .gold-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .animated-gradient {
+    background: linear-gradient(-45deg, #6366f1, #8b5cf6, #ec4899, #f59e0b);
+    background-size: 400% 400%;
+    animation: gradient-shift 6s ease infinite;
+  }
+
+  .tab { cursor: pointer; transition: all 0.2s; }
+  .tab.active { border-bottom: 3px solid #6366f1; color: #6366f1; font-weight: 700; }
+  .preview { display: none; }
+  .preview.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Tab switcher -->
+<div style="background:#1a1a2e;" class="sticky top-0 z-50 px-6 py-4 flex gap-2 justify-center">
+  <button onclick="show('dark')" id="tab-dark" class="tab active px-6 py-2 rounded-full text-white text-sm font-semibold bg-white/10 hover:bg-white/20">🌙 Dark &amp; Premium</button>
+  <button onclick="show('bold')" id="tab-bold" class="tab px-6 py-2 rounded-full text-white text-sm font-semibold bg-white/10 hover:bg-white/20">⚡ Bold &amp; Energetic</button>
+  <button onclick="show('clean')" id="tab-clean" class="tab px-6 py-2 rounded-full text-white text-sm font-semibold bg-white/10 hover:bg-white/20">✨ Clean but Elevated</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- OPTION 1: DARK & PREMIUM                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="preview-dark" class="preview active">
+
+  <!-- Navbar -->
+  <nav style="background:#0f0f1a; border-bottom:1px solid rgba(245,158,11,0.2);" class="px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="text-xl font-black gold-shimmer">CNNDRM</span>
+      <span style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:#F59E0B;" class="hidden sm:flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+        1,247 questions in the vault
+      </span>
+    </div>
+    <div class="flex items-center gap-1">
+      <a href="#" style="color:#9ca3af;" class="text-sm px-3 py-1.5 rounded-lg font-medium hover:text-white hover:bg-white/5 transition-colors">Daily</a>
+      <a href="#" style="color:#9ca3af;" class="text-sm px-3 py-1.5 rounded-lg font-medium hover:text-white hover:bg-white/5 transition-colors">Endless</a>
+      <a href="#" style="color:#9ca3af;" class="text-sm px-3 py-1.5 rounded-lg font-medium hover:text-white hover:bg-white/5 transition-colors">Leaderboard</a>
+      <a href="#" style="color:#9ca3af;" class="text-sm px-3 py-1.5 rounded-lg font-medium hover:text-white hover:bg-white/5 transition-colors">Friends</a>
+    </div>
+    <div class="flex gap-2">
+      <a href="#" style="color:#9ca3af;" class="text-sm px-3 py-1.5 hover:text-white">Log in</a>
+      <a href="#" style="background:linear-gradient(135deg,#F59E0B,#D97706); color:#000;" class="text-sm font-bold px-4 py-1.5 rounded-lg hover:opacity-90">Sign up</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <div style="background: radial-gradient(ellipse at top, #1a1040 0%, #0f0f1a 60%); min-height:90vh;" class="flex flex-col">
+    <!-- Star field effect -->
+    <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">
+      <div style="position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;top:15%;left:20%;opacity:0.4;"></div>
+      <div style="position:absolute;width:1px;height:1px;background:#fff;border-radius:50%;top:30%;left:60%;opacity:0.3;"></div>
+      <div style="position:absolute;width:2px;height:2px;background:#F59E0B;border-radius:50%;top:20%;left:80%;opacity:0.5;"></div>
+      <div style="position:absolute;width:1px;height:1px;background:#fff;border-radius:50%;top:60%;left:10%;opacity:0.2;"></div>
+      <div style="position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;top:45%;left:90%;opacity:0.3;"></div>
+    </div>
+
+    <main class="max-w-4xl mx-auto px-6 py-20 flex-1 w-full relative">
+      <!-- Hero row -->
+      <div class="flex flex-col sm:flex-row items-center gap-10 mb-12">
+        <div style="background:rgba(245,158,11,0.05); border:2px solid rgba(245,158,11,0.3); border-radius:24px; padding:12px;" class="gold-glow flex-shrink-0">
+          <div style="width:120px;height:120px;background:linear-gradient(135deg,#1e1b4b,#312e81);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:48px;">🎯</div>
+        </div>
+        <div>
+          <div style="color:#F59E0B; font-size:12px; font-weight:700; letter-spacing:3px; text-transform:uppercase; margin-bottom:12px;">Daily Trivia · New Round Every Day</div>
+          <h1 style="font-size:clamp(2.5rem,5vw,4rem); font-weight:900; line-height:1.1; color:white; margin-bottom:16px;">
+            One round.<br/>
+            <span class="gold-shimmer">Ten questions.</span><br/>
+            Beat your friends.
+          </h1>
+          <p style="color:#9ca3af; font-size:1.1rem; line-height:1.6; max-width:480px;">
+            A fresh trivia set drops every day. Answer fast, score high, and challenge anyone who thinks they can beat you.
+          </p>
+        </div>
+      </div>
+
+      <!-- CTAs -->
+      <div class="flex gap-4 mb-20">
+        <a href="#" style="background:linear-gradient(135deg,#F59E0B,#D97706); color:#000; font-weight:800; padding:14px 32px; border-radius:12px; font-size:1rem;" class="hover:opacity-90 transition-opacity">Play Today's Round →</a>
+        <a href="#" style="border:1px solid rgba(245,158,11,0.4); color:#F59E0B; font-weight:700; padding:14px 32px; border-radius:12px; font-size:1rem;" class="hover:bg-amber-500/10 transition-colors">Endless Mode</a>
+      </div>
+
+      <!-- How it works -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:24px;">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#F59E0B,#D97706);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000;margin-bottom:12px;">1</div>
+          <h3 style="color:white; font-weight:700; margin-bottom:8px;">Play the daily set</h3>
+          <p style="color:#6b7280; font-size:14px; line-height:1.6;">10 timed questions, fresh every day. Faster correct answers score more.</p>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:24px;">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#F59E0B,#D97706);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000;margin-bottom:12px;">2</div>
+          <h3 style="color:white; font-weight:700; margin-bottom:8px;">Check the leaderboard</h3>
+          <p style="color:#6b7280; font-size:14px; line-height:1.6;">See where you rank globally or just among your friends.</p>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:24px;">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#F59E0B,#D97706);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000;margin-bottom:12px;">3</div>
+          <h3 style="color:white; font-weight:700; margin-bottom:8px;">Challenge a friend</h3>
+          <p style="color:#6b7280; font-size:14px; line-height:1.6;">Send a direct challenge link. Beat their score to claim bragging rights.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- OPTION 2: BOLD & ENERGETIC                                 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="preview-bold" class="preview">
+
+  <!-- Navbar -->
+  <nav style="background:white; border-bottom:3px solid #6366f1;" class="px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span style="background:linear-gradient(135deg,#6366f1,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-size:1.3rem; font-weight:900;">CNNDRM</span>
+      <span style="background:#f0fdf4; border:1px solid #86efac; color:#16a34a;" class="hidden sm:flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+        1,247 questions
+      </span>
+    </div>
+    <div class="flex items-center gap-1">
+      <a href="#" class="text-sm px-3 py-1.5 rounded-lg font-semibold text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">Daily</a>
+      <a href="#" class="text-sm px-3 py-1.5 rounded-lg font-semibold text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">Endless</a>
+      <a href="#" class="text-sm px-3 py-1.5 rounded-lg font-semibold text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">Leaderboard</a>
+    </div>
+    <div class="flex gap-2">
+      <a href="#" class="text-sm text-gray-600 px-3 py-1.5 font-semibold hover:text-indigo-600">Log in</a>
+      <a href="#" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);" class="text-sm font-bold text-white px-4 py-1.5 rounded-lg shadow-lg hover:opacity-90">Sign up free</a>
+    </div>
+  </nav>
+
+  <!-- Hero with animated gradient bg -->
+  <div style="background:linear-gradient(135deg, #eef2ff 0%, #fdf4ff 50%, #fff7ed 100%); min-height:90vh;" class="relative overflow-hidden">
+    <!-- Decorative blobs -->
+    <div style="position:absolute;top:-100px;right:-100px;width:400px;height:400px;background:radial-gradient(circle,rgba(99,102,241,0.15),transparent 70%);border-radius:50%;"></div>
+    <div style="position:absolute;bottom:-80px;left:-80px;width:350px;height:350px;background:radial-gradient(circle,rgba(236,72,153,0.12),transparent 70%);border-radius:50%;"></div>
+
+    <main class="max-w-4xl mx-auto px-6 py-20 relative">
+      <!-- Badge -->
+      <div class="flex justify-center mb-6">
+        <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6); color:white; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:6px 16px; border-radius:999px;">🔥 New round drops daily at 6AM ET</span>
+      </div>
+
+      <!-- Hero row -->
+      <div class="flex flex-col items-center text-center mb-10">
+        <h1 style="font-size:clamp(3rem,6vw,5rem); font-weight:900; line-height:1.05; margin-bottom:20px;">
+          <span style="color:#111827;">One round.</span><br/>
+          <span style="background:linear-gradient(135deg,#6366f1,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Ten questions.</span><br/>
+          <span style="color:#111827;">Beat your friends.</span>
+        </h1>
+        <p style="color:#6b7280; font-size:1.2rem; max-width:520px; line-height:1.7; margin-bottom:32px;">
+          A fresh trivia set drops every day. Answer fast, score high, and challenge anyone who thinks they can beat you.
+        </p>
+        <div class="flex gap-4">
+          <a href="#" style="background:linear-gradient(135deg,#6366f1,#8b5cf6); color:white; font-weight:800; padding:16px 36px; border-radius:14px; font-size:1.05rem; box-shadow:0 8px 30px rgba(99,102,241,0.4);" class="hover:opacity-90 transition-opacity">Play Today's Round →</a>
+          <a href="#" style="background:white; color:#6366f1; font-weight:700; padding:16px 36px; border-radius:14px; font-size:1.05rem; border:2px solid #c7d2fe; box-shadow:0 4px 15px rgba(0,0,0,0.06);" class="hover:border-indigo-400 transition-colors">Endless Mode</a>
+        </div>
+      </div>
+
+      <!-- Stats strip -->
+      <div style="background:white; border-radius:20px; padding:20px 32px; box-shadow:0 4px 30px rgba(0,0,0,0.08); margin-bottom:48px;" class="flex gap-8 justify-center flex-wrap">
+        <div class="text-center">
+          <p style="font-size:2rem; font-weight:900; background:linear-gradient(135deg,#6366f1,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">1,247</p>
+          <p style="color:#9ca3af; font-size:13px; font-weight:600;">Questions</p>
+        </div>
+        <div style="width:1px; background:#f3f4f6;"></div>
+        <div class="text-center">
+          <p style="font-size:2rem; font-weight:900; background:linear-gradient(135deg,#ec4899,#f43f5e); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Daily</p>
+          <p style="color:#9ca3af; font-size:13px; font-weight:600;">Fresh rounds</p>
+        </div>
+        <div style="width:1px; background:#f3f4f6;"></div>
+        <div class="text-center">
+          <p style="font-size:2rem; font-weight:900; background:linear-gradient(135deg,#f59e0b,#f97316); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Free</p>
+          <p style="color:#9ca3af; font-size:13px; font-weight:600;">Always</p>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div style="background:white; border-radius:20px; padding:28px; box-shadow:0 4px 20px rgba(99,102,241,0.1); border-top:4px solid #6366f1;">
+          <div style="width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:white;margin-bottom:14px;">1</div>
+          <h3 style="color:#111; font-weight:800; font-size:1rem; margin-bottom:8px;">Play the daily set</h3>
+          <p style="color:#9ca3af; font-size:14px; line-height:1.6;">10 timed questions, fresh every day.</p>
+        </div>
+        <div style="background:white; border-radius:20px; padding:28px; box-shadow:0 4px 20px rgba(236,72,153,0.1); border-top:4px solid #ec4899;">
+          <div style="width:40px;height:40px;background:linear-gradient(135deg,#ec4899,#f43f5e);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:white;margin-bottom:14px;">2</div>
+          <h3 style="color:#111; font-weight:800; font-size:1rem; margin-bottom:8px;">Check the leaderboard</h3>
+          <p style="color:#9ca3af; font-size:14px; line-height:1.6;">See where you rank globally or with friends.</p>
+        </div>
+        <div style="background:white; border-radius:20px; padding:28px; box-shadow:0 4px 20px rgba(245,158,11,0.1); border-top:4px solid #f59e0b;">
+          <div style="width:40px;height:40px;background:linear-gradient(135deg,#f59e0b,#f97316);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:white;margin-bottom:14px;">3</div>
+          <h3 style="color:#111; font-weight:800; font-size:1rem; margin-bottom:8px;">Challenge a friend</h3>
+          <p style="color:#9ca3af; font-size:14px; line-height:1.6;">Send a link. Beat their score. Claim glory.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- OPTION 3: CLEAN BUT ELEVATED                               -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="preview-clean" class="preview">
+
+  <!-- Navbar -->
+  <nav style="background:rgba(255,255,255,0.8); backdrop-filter:blur(12px); border-bottom:1px solid #e5e7eb; box-shadow:0 1px 20px rgba(0,0,0,0.06);" class="px-6 py-3 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <span style="background:linear-gradient(135deg,#4338ca,#6366f1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-size:1.25rem; font-weight:900; letter-spacing:-0.5px;">Cnndrm</span>
+      <span style="background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d;" class="hidden sm:flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+        1,247 in the vault
+      </span>
+    </div>
+    <div class="flex items-center gap-1">
+      <a href="#" style="color:#4b5563; background:transparent;" class="text-sm px-3 py-1.5 rounded-lg font-medium hover:text-indigo-700 hover:bg-indigo-50 transition-colors">Daily</a>
+      <a href="#" style="color:#4b5563;" class="text-sm px-3 py-1.5 rounded-lg font-medium hover:text-indigo-700 hover:bg-indigo-50 transition-colors">Endless</a>
+      <a href="#" style="color:#4b5563;" class="text-sm px-3 py-1.5 rounded-lg font-medium hover:text-indigo-700 hover:bg-indigo-50 transition-colors">Leaderboard</a>
+      <a href="#" style="color:#4b5563;" class="text-sm px-3 py-1.5 rounded-lg font-medium hover:text-indigo-700 hover:bg-indigo-50 transition-colors">Friends</a>
+    </div>
+    <div class="flex gap-2">
+      <a href="#" style="color:#6b7280;" class="text-sm px-3 py-1.5 font-medium hover:text-gray-900">Log in</a>
+      <a href="#" style="background:linear-gradient(135deg,#4338ca,#6366f1); color:white; box-shadow:0 2px 12px rgba(99,102,241,0.35);" class="text-sm font-semibold px-4 py-1.5 rounded-lg hover:shadow-lg transition-shadow">Sign up</a>
+    </div>
+  </nav>
+
+  <div style="background:linear-gradient(180deg, #fafafa 0%, #ffffff 100%); min-height:90vh;">
+    <main class="max-w-4xl mx-auto px-6 py-20">
+
+      <!-- Hero row -->
+      <div class="flex flex-col sm:flex-row items-center gap-10 mb-12">
+        <div style="flex-shrink:0; width:140px; height:140px; background:linear-gradient(135deg,#eef2ff,#e0e7ff); border-radius:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 40px rgba(99,102,241,0.2); border:1px solid #c7d2fe;">
+          <span style="font-size:56px;">🎯</span>
+        </div>
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:6px; background:#eef2ff; color:#4338ca; font-size:12px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:5px 12px; border-radius:999px; margin-bottom:16px; border:1px solid #c7d2fe;">
+            ✦ Fresh round drops daily
+          </div>
+          <h1 style="font-size:clamp(2.5rem,5vw,3.75rem); font-weight:900; line-height:1.1; letter-spacing:-1px; color:#111827; margin-bottom:16px;">
+            One round.<br/>Ten questions.<br/>
+            <span style="background:linear-gradient(135deg,#4338ca,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Beat your friends.</span>
+          </h1>
+          <p style="color:#6b7280; font-size:1.1rem; line-height:1.7; max-width:460px;">
+            A fresh trivia set drops every day. Answer fast, score high, and challenge anyone who thinks they can beat you.
+          </p>
+        </div>
+      </div>
+
+      <!-- CTAs -->
+      <div class="flex gap-3 mb-20 flex-wrap">
+        <a href="#" style="background:linear-gradient(135deg,#4338ca,#6366f1); color:white; font-weight:700; padding:14px 32px; border-radius:12px; font-size:1rem; box-shadow:0 4px 20px rgba(99,102,241,0.3);" class="hover:shadow-xl transition-shadow">Play Today's Round</a>
+        <a href="#" style="background:white; color:#4338ca; font-weight:600; padding:14px 32px; border-radius:12px; font-size:1rem; border:1.5px solid #c7d2fe; box-shadow:0 2px 8px rgba(0,0,0,0.06);" class="hover:border-indigo-400 hover:shadow-md transition-all">Endless Mode</a>
+      </div>
+
+      <!-- How it works -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div style="background:white; border-radius:20px; padding:28px; box-shadow:0 2px 20px rgba(0,0,0,0.07); border:1px solid #f1f5f9;">
+          <div style="width:36px;height:36px;background:linear-gradient(135deg,#eef2ff,#c7d2fe);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#4338ca;margin-bottom:14px;border:1px solid #c7d2fe;">1</div>
+          <h3 style="color:#111827; font-weight:700; font-size:0.95rem; margin-bottom:8px;">Play the daily set</h3>
+          <p style="color:#9ca3af; font-size:13px; line-height:1.6;">10 timed questions, fresh every day. Faster correct answers score more.</p>
+        </div>
+        <div style="background:white; border-radius:20px; padding:28px; box-shadow:0 2px 20px rgba(0,0,0,0.07); border:1px solid #f1f5f9;">
+          <div style="width:36px;height:36px;background:linear-gradient(135deg,#eef2ff,#c7d2fe);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#4338ca;margin-bottom:14px;border:1px solid #c7d2fe;">2</div>
+          <h3 style="color:#111827; font-weight:700; font-size:0.95rem; margin-bottom:8px;">Check the leaderboard</h3>
+          <p style="color:#9ca3af; font-size:13px; line-height:1.6;">See where you rank globally or just among your friends.</p>
+        </div>
+        <div style="background:white; border-radius:20px; padding:28px; box-shadow:0 2px 20px rgba(0,0,0,0.07); border:1px solid #f1f5f9;">
+          <div style="width:36px;height:36px;background:linear-gradient(135deg,#eef2ff,#c7d2fe);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#4338ca;margin-bottom:14px;border:1px solid #c7d2fe;">3</div>
+          <h3 style="color:#111827; font-weight:700; font-size:0.95rem; margin-bottom:8px;">Challenge a friend</h3>
+          <p style="color:#9ca3af; font-size:13px; line-height:1.6;">Send a direct challenge link. Beat their score to claim bragging rights.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.preview').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('preview-' + id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+</script>
+</body>
+</html>

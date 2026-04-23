@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 360">
+  <defs>
+    <!-- Warm amber glow gradient for main text -->
+    <linearGradient id="mainGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f5a623"/>
+      <stop offset="60%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+
+    <!-- Background: dark charcoal with very subtle warm center -->
+    <radialGradient id="bgGrad" cx="50%" cy="46%" r="58%">
+      <stop offset="0%" stop-color="#1e1c28"/>
+      <stop offset="100%" stop-color="#0e0e16"/>
+    </radialGradient>
+
+    <!-- Amber glow filter for main text -->
+    <filter id="amberGlow" x="-15%" y="-25%" width="130%" height="155%">
+      <feColorMatrix in="SourceGraphic" type="matrix"
+        values="1 0.4 0 0 0
+                0.4 0.2 0 0 0
+                0   0   0 0 0
+                0   0   0 1 0" result="colored"/>
+      <feGaussianBlur in="colored" stdDeviation="12" result="blur1"/>
+      <feGaussianBlur in="colored" stdDeviation="5"  result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle glow for decorative dots -->
+    <filter id="dotGlow">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="700" height="360" fill="url(#bgGrad)" rx="18"/>
+
+  <!-- Border: amber at low opacity -->
+  <rect x="2" y="2" width="696" height="356" fill="none"
+        stroke="#f5a623" stroke-width="1.2" stroke-opacity="0.25" rx="17"/>
+
+  <!-- Faint ? watermark -->
+  <text x="78%" y="108%" font-family="Georgia, 'Times New Roman', serif"
+        font-size="460" font-weight="bold" fill="#f5a623"
+        opacity="0.04" text-anchor="middle">?</text>
+
+  <!-- Top decorative rule -->
+  <line x1="60" y1="96" x2="278" y2="96" stroke="#f5a623" stroke-width="0.8" opacity="0.2"/>
+  <circle cx="350" cy="96" r="3.5" fill="#f5a623" opacity="0.6" filter="url(#dotGlow)"/>
+  <line x1="422" y1="96" x2="640" y2="96" stroke="#f5a623" stroke-width="0.8" opacity="0.2"/>
+
+  <!-- Small label above -->
+  <text x="350" y="124" text-anchor="middle"
+        font-family="'Courier New', Courier, monospace"
+        font-size="10" fill="#f5a623" opacity="0.45" letter-spacing="7">TRIVIA · GAME</text>
+
+  <!-- ═══ MAIN LOGO TEXT ═══ -->
+  <text x="352" y="216" text-anchor="middle"
+        font-family="'Arial Black', 'Impact', 'Haettenschweiler', 'Franklin Gothic Heavy', sans-serif"
+        font-size="114" font-weight="900" letter-spacing="14"
+        fill="url(#mainGrad)" filter="url(#amberGlow)">CNNDRM</text>
+
+  <!-- Bottom decorative rule -->
+  <line x1="60" y1="258" x2="278" y2="258" stroke="#f5a623" stroke-width="0.8" opacity="0.2"/>
+  <circle cx="350" cy="258" r="3.5" fill="#f5a623" opacity="0.6" filter="url(#dotGlow)"/>
+  <line x1="422" y1="258" x2="640" y2="258" stroke="#f5a623" stroke-width="0.8" opacity="0.2"/>
+
+  <!-- ═══ CONUNDRUM with vowels struck through ═══
+       Consonants = white, Vowels = amber dim + strikethrough
+       Monospace 14px, ~16px per char, 9 chars = 144px, start x = 350 - 72 = 278 -->
+
+  <!-- C -->
+  <text x="278" y="287" font-family="'Courier New', Courier, monospace"
+        font-size="14" font-weight="700" fill="#ffffff" opacity="0.75">C</text>
+
+  <!-- O — vowel -->
+  <text x="294" y="287" font-family="'Courier New', Courier, monospace"
+        font-size="14" font-weight="700" fill="#f5a623" opacity="0.4">O</text>
+  <line x1="293" y1="280" x2="304" y2="280" stroke="#f5a623" stroke-width="1.5" opacity="0.55"/>
+
+  <!-- N -->
+  <text x="310" y="287" font-family="'Courier New', Courier, monospace"
+        font-size="14" font-weight="700" fill="#ffffff" opacity="0.75">N</text>
+
+  <!-- U — vowel -->
+  <text x="326" y="287" font-family="'Courier New', Courier, monospace"
+        font-size="14" font-weight="700" fill="#f5a623" opacity="0.4">U</text>
+  <line x1="325" y1="280" x2="336" y2="280" stroke="#f5a623" stroke-width="1.5" opacity="0.55"/>
+
+  <!-- N -->
+  <text x="342" y="287" font-family="'Courier New', Courier, monospace"
+        font-size="14" font-weight="700" fill="#ffffff" opacity="0.75">N</text>
+
+  <!-- D -->
+  <text x="358" y="287" font-family="'Courier New', Courier, monospace"
+        font-size="14" font-weight="700" fill="#ffffff" opacity="0.75">D</text>
+
+  <!-- R -->
+  <text x="374" y="287" font-family="'Courier New', Courier, monospace"
+        font-size="14" font-weight="700" fill="#ffffff" opacity="0.75">R</text>
+
+  <!-- U — vowel -->
+  <text x="390" y="287" font-family="'Courier New', Courier, monospace"
+        font-size="14" font-weight="700" fill="#f5a623" opacity="0.4">U</text>
+  <line x1="389" y1="280" x2="400" y2="280" stroke="#f5a623" stroke-width="1.5" opacity="0.55"/>
+
+  <!-- M -->
+  <text x="406" y="287" font-family="'Courier New', Courier, monospace"
+        font-size="14" font-weight="700" fill="#ffffff" opacity="0.75">M</text>
+
+  <!-- Vowels-removed label -->
+  <text x="350" y="313" text-anchor="middle"
+        font-family="'Courier New', Courier, monospace"
+        font-size="9.5" fill="#f5a623" opacity="0.32" letter-spacing="4">VOWELS REMOVED</text>
+
+  <!-- Tagline -->
+  <text x="350" y="340" text-anchor="middle"
+        font-family="'Courier New', Courier, monospace"
+        font-size="9" fill="#ffffff" opacity="0.15" letter-spacing="8">CONUNDRUM</text>
+</svg>
