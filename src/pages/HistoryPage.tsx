@@ -12,7 +12,11 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (user) getMySessionHistory(user.id).then((data) => { setSessions(data); setLoading(false) })
+    if (!user) { setLoading(false); return }
+    getMySessionHistory(user.id)
+      .then((data) => setSessions(data))
+      .catch((err) => console.error('Failed to load history:', err))
+      .finally(() => setLoading(false))
   }, [user])
 
   return (

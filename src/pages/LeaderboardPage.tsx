@@ -35,7 +35,15 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  function fetchLeaderboard() {
+    setLoading(true)
+    setError(null)
+
+    const timer = setTimeout(() => {
+      setError('Taking too long to load — tap retry.')
+      setLoading(false)
+    }, 8000)
+
     async function load() {
       try {
         const [set, lifetime, days] = await Promise.all([
@@ -57,10 +65,17 @@ export default function LeaderboardPage() {
         console.error('Leaderboard load error:', err)
         setError('Failed to load leaderboard.')
       } finally {
+        clearTimeout(timer)
         setLoading(false)
       }
     }
     load()
+    return () => clearTimeout(timer)
+  }
+
+  useEffect(() => {
+    return fetchLeaderboard()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   const tabs: { id: Tab; label: string }[] = [
@@ -100,7 +115,15 @@ export default function LeaderboardPage() {
             <div className="animate-spin rounded-full h-10 w-10 border-4 border-amber-500 border-t-transparent" />
           </div>
         ) : error ? (
-          <div className="text-center py-20 text-red-500">{error}</div>
+          <div className="text-center py-20">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button
+              onClick={fetchLeaderboard}
+              className="px-5 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600"
+            >
+              Retry
+            </button>
+          </div>
         ) : tab === 'daily' ? (
           <>
             {/* Global / Friends sub-tabs */}

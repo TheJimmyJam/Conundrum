@@ -26,7 +26,10 @@ export default function EndlessHubPage() {
   const [selectedDiffs, setSelectedDiffs] = useState<Set<Difficulty>>(new Set())
 
   useEffect(() => {
-    getCategories().then((cats) => { setCategories(cats); setLoading(false) })
+    getCategories()
+      .then((cats) => setCategories(cats))
+      .catch((err) => console.error('Failed to load categories:', err))
+      .finally(() => setLoading(false))
     if (user) {
       getEndlessPersonalBests()
         .then(rows => {

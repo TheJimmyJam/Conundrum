@@ -30,6 +30,10 @@ export default function PlayPage() {
     if (!userId || initialized.current) return
     initialized.current = true
 
+    const loadTimer = setTimeout(() => {
+      if (initialized.current) setPhase('error')
+    }, 10000)
+
     async function init() {
       try {
         let dailySet = await getTodaysDailySet()
@@ -48,10 +52,12 @@ export default function PlayPage() {
       } catch (err) {
         console.error('PlayPage init error:', err)
         setPhase('error')
+      } finally {
+        clearTimeout(loadTimer)
       }
     }
     init()
-    return () => { reset(); initialized.current = false }
+    return () => { clearTimeout(loadTimer); reset(); initialized.current = false }
   }, [user?.id])
 
   // Timer
