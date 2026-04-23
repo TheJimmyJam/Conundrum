@@ -6,7 +6,6 @@ type Stats = {
   questions: number
   dailySets: number
   pendingSubmissions: number
-  pendingSetSubmissions: number
   categories: number
   players: number
   reports: number
@@ -27,13 +26,12 @@ export default function AdminDashboard() {
         supabase.from('question_submissions').select('*', { count: 'exact', head: true }).eq('status', 'flagged'),
       ])
       setStats({
-        questions:              questions.count     ?? 0,
-        dailySets:              dailySets.count     ?? 0,
-        pendingSubmissions:     submissions.count   ?? 0,
-        pendingSetSubmissions:  setSubmissions.count ?? 0,
-        categories:             categories.count    ?? 0,
-        players:                players.count       ?? 0,
-        reports:                reports.count       ?? 0,
+        questions:           questions.count   ?? 0,
+        dailySets:           dailySets.count   ?? 0,
+        pendingSubmissions:  (submissions.count ?? 0) + (setSubmissions.count ?? 0),
+        categories:          categories.count  ?? 0,
+        players:             players.count     ?? 0,
+        reports:             reports.count     ?? 0,
       })
     }
     loadStats()
@@ -42,14 +40,13 @@ export default function AdminDashboard() {
   const fmt = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
 
   const cards = [
-    { to: '/admin/questions',         label: 'Questions',        icon: '❓', count: stats?.questions },
-    { to: '/admin/daily-set',         label: 'Daily Sets',       icon: '📅', count: stats?.dailySets },
-    { to: '/admin/daily-submission',  label: 'Community Q',      icon: '📰', count: stats?.pendingSubmissions,    badge: true },
-    { to: '/admin/submissions',       label: 'Q Submissions',    icon: '💡', count: stats?.pendingSubmissions,    badge: true },
-    { to: '/admin/set-submissions',   label: 'Set Submissions',  icon: '📋', count: stats?.pendingSetSubmissions, badge: true },
-    { to: '/admin/categories',        label: 'Categories',       icon: '🏷', count: stats?.categories },
-    { to: '/admin/reports',           label: 'Reports',          icon: '🚩', count: stats?.reports, badge: true },
-    { to: '/admin/players',           label: 'Players',          icon: '👥', count: stats?.players },
+    { to: '/admin/questions',        label: 'Questions',     icon: '❓', count: stats?.questions },
+    { to: '/admin/daily-set',        label: 'Daily Sets',    icon: '📅', count: stats?.dailySets },
+    { to: '/admin/daily-submission', label: 'Community Q',   icon: '📰', count: undefined },
+    { to: '/admin/submissions',      label: 'Submissions',   icon: '💡', count: stats?.pendingSubmissions, badge: true },
+    { to: '/admin/categories',       label: 'Categories',    icon: '🏷', count: stats?.categories },
+    { to: '/admin/reports',          label: 'Reports',       icon: '🚩', count: stats?.reports, badge: true },
+    { to: '/admin/players',          label: 'Players',       icon: '👥', count: stats?.players },
   ]
 
   return (

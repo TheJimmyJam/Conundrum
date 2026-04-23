@@ -31,7 +31,6 @@ import AdminReports from './pages/admin/AdminReports'
 import AdminCategories from './pages/admin/AdminCategories'
 import AdminCategoryQuestions from './pages/admin/AdminCategoryQuestions'
 import AdminDailySubmission from './pages/admin/AdminDailySubmission'
-import AdminDailySetSubmissions from './pages/admin/AdminDailySetSubmissions'
 import AdminPlayers from './pages/admin/AdminPlayers'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -83,7 +82,6 @@ function App() {
           <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AuthLayout><AdminReports /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/submissions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminSubmissions /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/daily-submission" element={<ProtectedRoute requireAdmin><AuthLayout><AdminDailySubmission /></AuthLayout></ProtectedRoute>} />
-          <Route path="/admin/set-submissions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminDailySetSubmissions /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/categories" element={<ProtectedRoute requireAdmin><AuthLayout><AdminCategories /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/categories/:categoryId/questions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminCategoryQuestions /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/players" element={<ProtectedRoute requireAdmin><AuthLayout><AdminPlayers /></AuthLayout></ProtectedRoute>} />
