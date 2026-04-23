@@ -187,7 +187,7 @@ export default function AdminDailySubmission() {
           ← Admin
         </Link>
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-3xl font-bold text-white">Daily Submission</h1>
+          <h1 className="text-3xl font-bold text-white">Community Question</h1>
           <span className="text-xs bg-amber-500/100/10 text-amber-400 font-semibold px-3 py-1.5 rounded-full">
             🕕 Auto-rotates daily at 6 AM EST
           </span>

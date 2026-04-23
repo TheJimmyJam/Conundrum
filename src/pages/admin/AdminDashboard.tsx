@@ -44,7 +44,7 @@ export default function AdminDashboard() {
   const cards = [
     { to: '/admin/questions',         label: 'Questions',        icon: '❓', count: stats?.questions },
     { to: '/admin/daily-set',         label: 'Daily Sets',       icon: '📅', count: stats?.dailySets },
-    { to: '/admin/daily-submission',  label: 'Daily Submission', icon: '📰', count: stats?.pendingSubmissions,    badge: true },
+    { to: '/admin/daily-submission',  label: 'Community Q',      icon: '📰', count: stats?.pendingSubmissions,    badge: true },
     { to: '/admin/submissions',       label: 'Q Submissions',    icon: '💡', count: stats?.pendingSubmissions,    badge: true },
     { to: '/admin/set-submissions',   label: 'Set Submissions',  icon: '📋', count: stats?.pendingSetSubmissions, badge: true },
     { to: '/admin/categories',        label: 'Categories',       icon: '🏷', count: stats?.categories },
