@@ -162,7 +162,7 @@ CREATE OR REPLACE FUNCTION admin_get_daily_set_submission_questions(
   p_set_id uuid
 ) RETURNS TABLE (
   id                uuid,
-  position          int,
+  "position"        int,
   prompt            text,
   option_a          text,
   option_b          text,
