@@ -1041,6 +1041,9 @@ export default function AdminQuestions() {
                             ) : detailCache[q.id] ? (
                               /* ── View mode ── */
                               <div>
+                                <p className="text-white text-sm font-medium leading-relaxed mb-4 pb-4 border-b border-white/10">
+                                  {q.prompt}
+                                </p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                                   {detailCache[q.id].options.map((opt, idx) => (
                                     <div key={opt.id} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm ${opt.is_correct ? 'border-amber-500/60 bg-amber-500/10 text-amber-300' : 'border-white/10 bg-white/5 text-gray-300'}`}>
