@@ -20,6 +20,7 @@ import FriendsPage from './pages/FriendsPage'
 import ChallengePlayPage from './pages/ChallengePlayPage'
 import ChallengeResultsPage from './pages/ChallengeResultsPage'
 import SubmitQuestionPage from './pages/SubmitQuestionPage'
+import SubmitDailySetPage from './pages/SubmitDailySetPage'
 import AwardsPage from './pages/AwardsPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
@@ -31,6 +32,7 @@ import AdminReports from './pages/admin/AdminReports'
 import AdminCategories from './pages/admin/AdminCategories'
 import AdminCategoryQuestions from './pages/admin/AdminCategoryQuestions'
 import AdminDailySubmission from './pages/admin/AdminDailySubmission'
+import AdminDailySetSubmissions from './pages/admin/AdminDailySetSubmissions'
 import AdminPlayers from './pages/admin/AdminPlayers'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -68,8 +70,9 @@ function App() {
           <Route path="/challenge/:challengeId/play" element={<ProtectedRoute><ChallengePlayPage /></ProtectedRoute>} />
           <Route path="/challenge/:challengeId/results" element={<ProtectedRoute><AuthLayout><ChallengeResultsPage /></AuthLayout></ProtectedRoute>} />
 
-          {/* Submit Question */}
+          {/* Submit */}
           <Route path="/submit" element={<ProtectedRoute><AuthLayout><SubmitQuestionPage /></AuthLayout></ProtectedRoute>} />
+          <Route path="/submit-set" element={<ProtectedRoute><AuthLayout><SubmitDailySetPage /></AuthLayout></ProtectedRoute>} />
 
           {/* Awards */}
           <Route path="/awards" element={<ProtectedRoute><AuthLayout><AwardsPage /></AuthLayout></ProtectedRoute>} />
@@ -81,6 +84,7 @@ function App() {
           <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AuthLayout><AdminReports /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/submissions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminSubmissions /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/daily-submission" element={<ProtectedRoute requireAdmin><AuthLayout><AdminDailySubmission /></AuthLayout></ProtectedRoute>} />
+          <Route path="/admin/set-submissions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminDailySetSubmissions /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/categories" element={<ProtectedRoute requireAdmin><AuthLayout><AdminCategories /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/categories/:categoryId/questions" element={<ProtectedRoute requireAdmin><AuthLayout><AdminCategoryQuestions /></AuthLayout></ProtectedRoute>} />
           <Route path="/admin/players" element={<ProtectedRoute requireAdmin><AuthLayout><AdminPlayers /></AuthLayout></ProtectedRoute>} />

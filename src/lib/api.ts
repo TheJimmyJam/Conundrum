@@ -923,6 +923,103 @@ export async function adminReorderSetQuestions(setId: string, orderedDsqIds: str
   if (error) throw error
 }
 
+// ─── Daily Set Submissions (community) ───────────────────────────────────────
+
+export type DailySetSubmissionQuestion = {
+  prompt: string
+  option_a: string
+  option_b: string
+  option_c: string
+  option_d: string
+  correct_option: 'a' | 'b' | 'c' | 'd'
+  explanation: string | null
+  category_id: string | null
+}
+
+export async function submitDailySet(title: string, questions: DailySetSubmissionQuestion[]): Promise<string> {
+  const { data, error } = await supabase.rpc('submit_daily_set', {
+    p_title: title,
+    p_questions: questions,
+  })
+  if (error) throw error
+  return data as string
+}
+
+export async function getMyDailySetSubmissions() {
+  const { data, error } = await supabase
+    .from('daily_set_submissions')
+    .select('id, title, status, created_at, admin_notes')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+// ─── Admin: Daily Set Submissions ─────────────────────────────────────────────
+
+export type AdminDailySetSubmission = {
+  id: string
+  user_id: string
+  username: string
+  title: string
+  status: string
+  admin_notes: string | null
+  reviewed_by: string | null
+  reviewed_at: string | null
+  created_at: string
+  question_count: number
+}
+
+export type AdminDailySetSubmissionQuestion = {
+  id: string
+  position: number
+  prompt: string
+  option_a: string
+  option_b: string
+  option_c: string
+  option_d: string
+  correct_option: string
+  explanation: string | null
+  category_id: string | null
+  category_name: string | null
+  vault_question_id: string | null
+}
+
+export async function adminGetDailySetSubmissions(status?: string): Promise<AdminDailySetSubmission[]> {
+  const { data, error } = await supabase.rpc('admin_get_daily_set_submissions', {
+    p_status: status ?? null,
+  })
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({ ...r, question_count: Number(r.question_count ?? 0) }))
+}
+
+export async function adminGetDailySetSubmissionQuestions(setId: string): Promise<AdminDailySetSubmissionQuestion[]> {
+  const { data, error } = await supabase.rpc('admin_get_daily_set_submission_questions', {
+    p_set_id: setId,
+  })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function adminReviewDailySetSubmission(id: string, status: 'approved' | 'rejected', notes?: string): Promise<{ question_ids?: string[] }> {
+  const { data, error } = await supabase.rpc('admin_review_daily_set_submission', {
+    p_id: id,
+    p_status: status,
+    p_notes: notes ?? null,
+  })
+  if (error) throw error
+  return data ?? {}
+}
+
+export async function adminCreateSetFromSubmission(submissionId: string, date: string, title?: string): Promise<string> {
+  const { data, error } = await supabase.rpc('admin_create_set_from_submission', {
+    p_submission_id: submissionId,
+    p_date: date,
+    p_title: title ?? null,
+  })
+  if (error) throw error
+  return data as string
+}
+
 // ─── Admin: Question Rankings ─────────────────────────────────────────────────
 
 export type RankedQuestion = {

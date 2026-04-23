@@ -6,6 +6,7 @@ type Stats = {
   questions: number
   dailySets: number
   pendingSubmissions: number
+  pendingSetSubmissions: number
   categories: number
   players: number
   reports: number
@@ -16,21 +17,23 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function loadStats() {
-      const [questions, dailySets, submissions, categories, players, reports] = await Promise.all([
+      const [questions, dailySets, submissions, setSubmissions, categories, players, reports] = await Promise.all([
         supabase.from('questions').select('*', { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('daily_sets').select('*', { count: 'exact', head: true }),
         supabase.from('question_submissions').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('daily_set_submissions').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('categories').select('*', { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('question_submissions').select('*', { count: 'exact', head: true }).eq('status', 'flagged'),
       ])
       setStats({
-        questions:           questions.count  ?? 0,
-        dailySets:           dailySets.count  ?? 0,
-        pendingSubmissions:  submissions.count ?? 0,
-        categories:          categories.count ?? 0,
-        players:             players.count    ?? 0,
-        reports:             reports.count    ?? 0,
+        questions:              questions.count     ?? 0,
+        dailySets:              dailySets.count     ?? 0,
+        pendingSubmissions:     submissions.count   ?? 0,
+        pendingSetSubmissions:  setSubmissions.count ?? 0,
+        categories:             categories.count    ?? 0,
+        players:                players.count       ?? 0,
+        reports:                reports.count       ?? 0,
       })
     }
     loadStats()
@@ -41,8 +44,9 @@ export default function AdminDashboard() {
   const cards = [
     { to: '/admin/questions',         label: 'Questions',        icon: '❓', count: stats?.questions },
     { to: '/admin/daily-set',         label: 'Daily Sets',       icon: '📅', count: stats?.dailySets },
-    { to: '/admin/daily-submission',  label: 'Daily Submission', icon: '📰', count: stats?.pendingSubmissions, badge: true },
-    { to: '/admin/submissions',       label: 'Submissions',      icon: '💡', count: stats?.pendingSubmissions, badge: true },
+    { to: '/admin/daily-submission',  label: 'Daily Submission', icon: '📰', count: stats?.pendingSubmissions,    badge: true },
+    { to: '/admin/submissions',       label: 'Q Submissions',    icon: '💡', count: stats?.pendingSubmissions,    badge: true },
+    { to: '/admin/set-submissions',   label: 'Set Submissions',  icon: '📋', count: stats?.pendingSetSubmissions, badge: true },
     { to: '/admin/categories',        label: 'Categories',       icon: '🏷', count: stats?.categories },
     { to: '/admin/reports',           label: 'Reports',          icon: '🚩', count: stats?.reports, badge: true },
     { to: '/admin/players',           label: 'Players',          icon: '👥', count: stats?.players },
