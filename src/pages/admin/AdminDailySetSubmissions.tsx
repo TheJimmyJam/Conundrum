@@ -92,7 +92,7 @@ export default function AdminDailySetSubmissions() {
     if (!scheduleDate) { alert('Pick a date first.'); return }
     setScheduling(true)
     try {
-      const setId = await adminCreateSetFromSubmission(id, scheduleDate)
+      await adminCreateSetFromSubmission(id, scheduleDate)
       setScheduleId(null)
       setScheduleDate('')
       setSuccessMsg(`Draft daily set created for ${scheduleDate}.`)
