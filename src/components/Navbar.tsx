@@ -32,7 +32,7 @@ export function Navbar() {
   const [questionCount, setQuestionCount] = useState<number | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
-  const [submitOpen, setSubmitOpen] = useState(false)
+  
   const [notifications, setNotifications] = useState<AppNotification[]>([])
 
   useEffect(() => {
@@ -106,46 +106,9 @@ export function Navbar() {
           <Link to="/friends" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/friends') || isActive('/challenge') ? 'bg-amber-500/10 text-amber-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
             Friends
           </Link>
-          {/* Submit dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => { setSubmitOpen(o => !o); setMenuOpen(false); setNotifOpen(false) }}
-              className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1 ${
-                isActive('/submit') || isActive('/submit-set')
-                  ? 'bg-amber-500/10 text-amber-400'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              Submit
-              <svg className={`w-3 h-3 transition-transform ${submitOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {submitOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setSubmitOpen(false)} />
-                <div className="absolute left-0 mt-1 w-44 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
-                  <Link
-                    to="/submit"
-                    onClick={() => setSubmitOpen(false)}
-                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white"
-                  >
-                    💡 Daily Community
-                    <span className="block text-xs text-gray-500 mt-0.5">1 question</span>
-                  </Link>
-                  <div className="border-t border-white/10" />
-                  <Link
-                    to="/submit-set"
-                    onClick={() => setSubmitOpen(false)}
-                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white"
-                  >
-                    📋 Daily Set
-                    <span className="block text-xs text-gray-500 mt-0.5">10 questions</span>
-                  </Link>
-                </div>
-              </>
-            )}
-          </div>
+          <Link to="/submit" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/submit') ? 'bg-amber-500/10 text-amber-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+            Submit
+          </Link>
           {profile?.role === 'admin' && (
             <Link to="/admin" className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${isActive('/admin') ? 'bg-red-500/10 text-red-400' : 'text-red-400 hover:text-red-300 hover:bg-red-500/10'}`}>
               Admin

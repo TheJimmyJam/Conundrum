@@ -19,8 +19,7 @@ import EndlessResultsPage from './pages/EndlessResultsPage'
 import FriendsPage from './pages/FriendsPage'
 import ChallengePlayPage from './pages/ChallengePlayPage'
 import ChallengeResultsPage from './pages/ChallengeResultsPage'
-import SubmitQuestionPage from './pages/SubmitQuestionPage'
-import SubmitDailySetPage from './pages/SubmitDailySetPage'
+import SubmitPage from './pages/SubmitPage'
 import AwardsPage from './pages/AwardsPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
@@ -71,8 +70,8 @@ function App() {
           <Route path="/challenge/:challengeId/results" element={<ProtectedRoute><AuthLayout><ChallengeResultsPage /></AuthLayout></ProtectedRoute>} />
 
           {/* Submit */}
-          <Route path="/submit" element={<ProtectedRoute><AuthLayout><SubmitQuestionPage /></AuthLayout></ProtectedRoute>} />
-          <Route path="/submit-set" element={<ProtectedRoute><AuthLayout><SubmitDailySetPage /></AuthLayout></ProtectedRoute>} />
+          <Route path="/submit" element={<ProtectedRoute><AuthLayout><SubmitPage /></AuthLayout></ProtectedRoute>} />
+          <Route path="/submit-set" element={<ProtectedRoute><AuthLayout><SubmitPage /></AuthLayout></ProtectedRoute>} />
 
           {/* Awards */}
           <Route path="/awards" element={<ProtectedRoute><AuthLayout><AwardsPage /></AuthLayout></ProtectedRoute>} />
