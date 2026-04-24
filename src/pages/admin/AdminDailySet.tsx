@@ -15,6 +15,8 @@ import {
   adminDeleteUpcomingSets,
   adminGoLiveNow,
   adminReorderSetQuestions,
+  adminQueueDailySet,
+  adminReorderDailySetQueue,
   type AdminDailySet,
   type AdminSetQuestion,
   type DailyQuestionUsage,
@@ -36,9 +38,10 @@ type PickerQuestion = {
 function UsageBadge({ usage }: { usage: DailyQuestionUsage | undefined }) {
   if (!usage) return null
   if (usage.upcoming_date) {
+    const isQueued = usage.upcoming_date.startsWith('#')
     return (
-      <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-amber-500/100/15 text-amber-400 border border-amber-500/30 whitespace-nowrap">
-        📅 Scheduled {usage.upcoming_date}
+      <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 whitespace-nowrap">
+        {isQueued ? `⏳ ${usage.upcoming_date}` : `📅 ${usage.upcoming_date}`}
       </span>
     )
   }
@@ -61,7 +64,6 @@ export default function AdminDailySet() {
 
   // New set form
   const [showNew, setShowNew] = useState(false)
-  const [newDate, setNewDate] = useState('')
   const [newTitle, setNewTitle] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -143,12 +145,9 @@ export default function AdminDailySet() {
     try {
       const result = await adminAutoPopulateDailySets(7)
       if (result.created_count === 0) {
-        showToast(`✓ All 7 days already have sets — nothing to create.`)
+        showToast(`✓ No new sets created — review existing drafts to queue them.`)
       } else {
-        const dateList = result.dates_created.map(d =>
-          new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-        ).join(', ')
-        showToast(`✓ Created ${result.created_count} set${result.created_count !== 1 ? 's' : ''}: ${dateList}`)
+        showToast(`✓ Created ${result.created_count} draft set${result.created_count !== 1 ? 's' : ''} — review and publish to add to queue.`)
       }
       await load()
       await loadUsage()
@@ -176,13 +175,11 @@ export default function AdminDailySet() {
 
   async function handleCreate() {
     setCreateError(null)
-    if (!newDate) return setCreateError('Pick a date.')
     setCreating(true)
     try {
-      const id = await adminCreateDailySet(newDate, newTitle.trim() || undefined)
+      const id = await adminCreateDailySet(null, newTitle.trim() || undefined)
       await load()
       setShowNew(false)
-      setNewDate('')
       setNewTitle('')
       setExpanded(id)
     } catch (err: any) {
@@ -207,15 +204,28 @@ export default function AdminDailySet() {
   }
 
   async function handleTogglePublish(s: AdminDailySet) {
-    const qs = setQuestions[s.id]
-    if (!s.is_published && (!qs || qs.length < SLOT_COUNT)) {
-      showToast(`⚠ Set needs ${SLOT_COUNT} questions before publishing (has ${qs?.length ?? '?'}).`)
-      return
-    }
     setTogglingPublish(s.id)
     try {
-      await adminUpdateDailySet(s.id, s.title ?? null, !s.is_published)
-      setSets(prev => prev.map(x => x.id === s.id ? { ...x, is_published: !x.is_published } : x))
+      if (!s.is_published) {
+        // Publishing = add to queue (requires 10 questions)
+        const qs = setQuestions[s.id]
+        if (!qs || qs.length < SLOT_COUNT) {
+          showToast(`⚠ Set needs ${SLOT_COUNT} questions before queuing (has ${qs?.length ?? '?'}).`)
+          setTogglingPublish(null)
+          return
+        }
+        const pos = await adminQueueDailySet(s.id)
+        setSets(prev => prev.map(x => x.id === s.id
+          ? { ...x, is_published: true, queue_position: pos, set_date: null }
+          : x))
+        showToast(`✓ Set added to queue at position #${pos}`)
+      } else {
+        // Unpublishing = back to draft (clears queue_position)
+        await adminUpdateDailySet(s.id, s.title ?? null, false)
+        setSets(prev => prev.map(x => x.id === s.id
+          ? { ...x, is_published: false, queue_position: null }
+          : x))
+      }
     } catch (err: any) {
       showToast(`✗ ${err?.message ?? 'Failed'}`)
     } finally {
@@ -291,10 +301,10 @@ export default function AdminDailySet() {
     setDeletingAll(true)
     try {
       const count = await adminDeleteUpcomingSets()
-      setSets(prev => prev.filter(s => s.set_date <= new Date().toISOString().slice(0, 10) || s.is_published))
+      setSets(prev => prev.filter(s => s.is_published))
       await load()
       setConfirmDeleteAll(false)
-      showToast(`✓ Deleted ${count} upcoming draft set${count !== 1 ? 's' : ''}.`)
+      showToast(`✓ Deleted ${count} draft set${count !== 1 ? 's' : ''}.`)
     } catch (err: any) {
       showToast(`✗ ${err?.message ?? 'Delete failed'}`)
     } finally {
@@ -459,6 +469,7 @@ export default function AdminDailySet() {
 
   // Use ET date so 'live' detection matches the DB function (which also uses ET)
   const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date())
+  const isLiveNow = (s: AdminDailySet) => s.is_published && s.set_date === todayISO
 
   const diffBadge = (d: string) =>
     d === 'easy'   ? 'bg-green-500/100/15 text-green-400' :
@@ -504,35 +515,32 @@ export default function AdminDailySet() {
           </div>
         </div>
         <p className="text-gray-400 mb-8">
-          10-question sets that reset daily at 6 AM ET — questions go easiest → hardest.
-          Use <strong className="font-semibold text-gray-200">Add 7 days</strong> to queue 7 more draft sets after the latest scheduled date — click it multiple times to build further out. Review and publish each one before it goes live.
+          10-question sets that rotate automatically at 6 AM ET — questions go easiest → hardest.
+          Build a set, fill all 10 slots, then <strong className="font-semibold text-gray-200">toggle publish</strong> to add it to the queue. The next queued set goes live automatically each day at 6 AM.
         </p>
 
         {/* New set form */}
         {showNew && (
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6 shadow-lg shadow-black/20">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-white">New Daily Set</h2>
+              <div>
+                <h2 className="text-lg font-bold text-white">New Daily Set</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Creates a draft — fill 10 slots, then publish to add it to the queue.</p>
+              </div>
               <button onClick={() => setShowNew(false)} className="text-gray-400 hover:text-gray-300 text-2xl leading-none">×</button>
             </div>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1">Date *</label>
-                <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
-                  className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1">Title (optional)</label>
-                <input type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)}
-                  placeholder="e.g. Science Special"
-                  className="w-full border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
-              </div>
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-400 mb-1">Title (optional)</label>
+              <input type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)}
+                placeholder="e.g. Science Special"
+                autoFocus
+                className="w-full max-w-sm border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
             </div>
             {createError && <p className="text-sm text-red-500 mb-3">{createError}</p>}
             <div className="flex gap-2">
               <button onClick={handleCreate} disabled={creating}
                 className="bg-amber-500/100 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-600 disabled:opacity-50">
-                {creating ? 'Creating…' : 'Create Set'}
+                {creating ? 'Creating…' : 'Create Draft Set'}
               </button>
               <button onClick={() => setShowNew(false)}
                 className="border border-white/10 text-gray-300 text-sm px-4 py-2.5 rounded-xl hover:bg-white/5">
@@ -562,8 +570,10 @@ export default function AdminDailySet() {
 
               return (
                 <div key={s.id} className={`rounded-2xl overflow-hidden border ${
-                  s.is_published && s.set_date === todayISO
+                  isLiveNow(s)
                     ? 'bg-green-500/5 border-green-500/40 ring-1 ring-green-500/20'
+                    : s.is_published && s.queue_position !== null
+                    ? 'bg-indigo-500/5 border-indigo-500/20'
                     : 'bg-white/5 border-white/10'
                 }`}>
                   {/* Header row */}
@@ -572,13 +582,30 @@ export default function AdminDailySet() {
                       onClick={() => expand(s.id)}
                       className="flex-1 text-left flex items-center gap-4 min-w-0"
                     >
-                      <div className="flex-shrink-0 text-center">
-                        <p className="text-xs font-semibold text-amber-400 uppercase tracking-wide">
-                          {new Date(s.set_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {new Date(s.set_date + 'T12:00:00').getFullYear()}
-                        </p>
+                      <div className="flex-shrink-0 text-center min-w-[48px]">
+                        {isLiveNow(s) ? (
+                          <>
+                            <p className="text-xs font-bold text-green-400 uppercase tracking-wide">Live</p>
+                            <p className="text-xs text-gray-400">{new Date(s.set_date! + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                          </>
+                        ) : s.queue_position !== null ? (
+                          <>
+                            <p className="text-xs font-bold text-indigo-400 uppercase tracking-wide">#{s.queue_position}</p>
+                            <p className="text-xs text-gray-400">queue</p>
+                          </>
+                        ) : s.set_date ? (
+                          <>
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                              {new Date(s.set_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-gray-500">{new Date(s.set_date + 'T12:00:00').getFullYear()}</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Draft</p>
+                            <p className="text-xs text-gray-600">—</p>
+                          </>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         {isEditingTitle ? (
@@ -646,7 +673,7 @@ export default function AdminDailySet() {
                           )}
 
                           {/* Go Live Now — only for sets not already live today */}
-                          {!(s.is_published && s.set_date === todayISO) && (
+                          {!isLiveNow(s) && (
                             confirmGoLive === s.id ? (
                               <>
                                 <span className="text-xs text-amber-700 font-semibold">Go live now?</span>
@@ -678,18 +705,22 @@ export default function AdminDailySet() {
                           <button
                             onClick={() => handleTogglePublish(s)}
                             disabled={togglingPublish === s.id}
-                            title={s.is_published ? 'Unpublish' : 'Publish'}
-                            className={`relative inline-flex h-5 w-9 rounded-full transition-colors focus:outline-none disabled:opacity-40 ${s.is_published ? 'bg-amber-500/100' : 'bg-gray-200'}`}>
+                            title={s.is_published ? 'Remove from queue (back to draft)' : 'Publish — adds to queue (needs 10 questions)'}
+                            className={`relative inline-flex h-5 w-9 rounded-full transition-colors focus:outline-none disabled:opacity-40 ${s.is_published ? 'bg-amber-500' : 'bg-gray-600'}`}>
                             <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${s.is_published ? 'translate-x-4' : 'translate-x-0.5'}`} />
                           </button>
-                          {s.is_published && s.set_date === todayISO ? (
+                          {isLiveNow(s) ? (
                             <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/40">
                               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
                               LIVE NOW
                             </span>
+                          ) : s.is_published && s.queue_position !== null ? (
+                            <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                              #{s.queue_position} in queue
+                            </span>
                           ) : (
                             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.is_published ? 'bg-green-500/15 text-green-400' : 'bg-white/10 text-gray-400'}`}>
-                              {s.is_published ? 'Published' : 'Draft'}
+                              {s.is_published ? 'Queued' : 'Draft'}
                             </span>
                           )}
                           <button
@@ -703,11 +734,17 @@ export default function AdminDailySet() {
 
                   {/* Expanded: slots */}
                   {isOpen && (
-                    <div className={`border-t px-5 py-4 ${s.is_published && s.set_date === todayISO ? 'border-green-500/20' : 'border-white/10'}`}>
-                      {s.is_published && s.set_date === todayISO && (
+                    <div className={`border-t px-5 py-4 ${isLiveNow(s) ? 'border-green-500/20' : 'border-white/10'}`}>
+                      {isLiveNow(s) && (
                         <div className="mb-4 px-4 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-2 text-sm text-green-400 font-medium">
                           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
                           This set is live on the homepage right now. Players who refresh will see these questions.
+                        </div>
+                      )}
+                      {s.is_published && s.queue_position !== null && (
+                        <div className="mb-4 px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-2 text-sm text-indigo-400 font-medium">
+                          <span className="w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0" />
+                          #{s.queue_position} in queue — goes live automatically at 6 AM ET.
                         </div>
                       )}
                       {loadingQs === s.id ? (
@@ -729,7 +766,7 @@ export default function AdminDailySet() {
                             {Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map(slot => {
                               const q = slots[slot]
                               const usage = q ? usageMap[q.question_id] : undefined
-                              const usedElsewhere = usage && (usage.times_used > 1 || (usage.times_used === 1 && usage.upcoming_date && usage.upcoming_date !== s.set_date?.toString()))
+                              const usedElsewhere = usage && (usage.times_used > 1 || (usage.times_used === 1 && usage.upcoming_date !== null))
                               const isDraggingThis = dragFromSlot?.setId === s.id && dragFromSlot?.slot === slot
                               const isDragOver = dragFromSlot?.setId === s.id && dragOverSlot === slot && !isDraggingThis
 
@@ -880,13 +917,13 @@ export default function AdminDailySet() {
           </div>
         )}
 
-        {/* Bulk delete upcoming drafts */}
-        {sets.some(s => s.set_date > new Date().toISOString().slice(0, 10) && !s.is_published) && (
+        {/* Bulk delete drafts */}
+        {sets.some(s => !s.is_published) && (
           <div className="mt-6 border border-red-100 rounded-2xl px-5 py-4 bg-red-500/10">
             {confirmDeleteAll ? (
               <div className="flex items-center gap-3 flex-wrap">
                 <p className="text-sm text-red-400 font-semibold flex-1">
-                  Delete all upcoming draft sets? This cannot be undone.
+                  Delete all draft sets? This cannot be undone.
                 </p>
                 <button
                   onClick={handleDeleteAllUpcoming}
@@ -905,13 +942,13 @@ export default function AdminDailySet() {
             ) : (
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm text-red-400">
-                  Remove all upcoming draft sets so you can regenerate them fresh.
+                  Remove all draft sets so you can regenerate them fresh.
                 </p>
                 <button
                   onClick={() => setConfirmDeleteAll(true)}
                   className="text-sm border border-red-500/30 text-red-400 font-semibold px-4 py-2 rounded-xl hover:bg-red-500/10 whitespace-nowrap"
                 >
-                  🗑 Delete all upcoming drafts
+                  🗑 Delete all drafts
                 </button>
               </div>
             )}
@@ -1027,4 +1064,3 @@ export default function AdminDailySet() {
     </div>
   )
 }
-

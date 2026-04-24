@@ -97,16 +97,10 @@ export async function getCategories(): Promise<Category[]> {
 // ─── Daily Set ───────────────────────────────────────────────────────────────
 
 export async function getTodaysDailySet(): Promise<DailySet | null> {
-  // Uses Eastern Time with 6:00 AM reset — before 6 AM ET shows previous day's set
-  const activeDate = getActiveDailyDate()
-  const { data, error } = await supabase
-    .from('daily_sets')
-    .select('*')
-    .eq('set_date', activeDate)
-    .eq('is_published', true)
-    .maybeSingle()
+  // Uses get_live_daily_set RPC which handles 6am ET cutoff and auto-promotes from queue
+  const { data, error } = await supabase.rpc('get_live_daily_set')
   if (error) throw error
-  return data
+  return (data as any[])?.[0] ?? null
 }
 
 export async function getMostRecentPublishedDailySet(): Promise<DailySet | null> {
@@ -792,11 +786,12 @@ export async function adminResetPlayerLifetime(userId: string): Promise<number> 
 
 export type AdminDailySet = {
   id: string
-  set_date: string
+  set_date: string | null       // null when in queue (not yet live)
   title: string | null
   is_published: boolean
   created_at: string
   question_count: number
+  queue_position: number | null // position in queue; null when live or draft
 }
 
 export type AdminSetQuestion = {
@@ -815,13 +810,24 @@ export async function adminGetDailySets(): Promise<AdminDailySet[]> {
   return (data ?? []).map((r: any) => ({ ...r, question_count: Number(r.question_count ?? 0) }))
 }
 
-export async function adminCreateDailySet(date: string, title?: string): Promise<string> {
+export async function adminCreateDailySet(date?: string | null, title?: string): Promise<string> {
   const { data, error } = await supabase.rpc('admin_create_daily_set', {
-    p_date: date,
+    p_date: date ?? null,
     p_title: title ?? null,
   })
   if (error) throw error
   return data as string
+}
+
+export async function adminQueueDailySet(id: string): Promise<number> {
+  const { data, error } = await supabase.rpc('admin_queue_daily_set', { p_set_id: id })
+  if (error) throw error
+  return data as number
+}
+
+export async function adminReorderDailySetQueue(ids: string[]): Promise<void> {
+  const { error } = await supabase.rpc('admin_reorder_daily_set_queue', { p_ids: ids })
+  if (error) throw error
 }
 
 export async function adminUpdateDailySet(id: string, title: string | null, isPublished: boolean) {
