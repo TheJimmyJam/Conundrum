@@ -19,6 +19,13 @@ type EditState = {
   option_d: string
   correct_option: string
   explanation: string
+  difficulty: string
+}
+
+const DIFFICULTY_COLORS: Record<string, string> = {
+  easy:   'bg-green-500/15 text-green-400 border-green-500/30',
+  medium: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+  hard:   'bg-red-500/15 text-red-400 border-red-500/30',
 }
 
 function emptyEdit(s: QueuedSubmission): EditState {
@@ -30,6 +37,7 @@ function emptyEdit(s: QueuedSubmission): EditState {
     option_d: s.option_d,
     correct_option: s.correct_option,
     explanation: s.explanation ?? '',
+    difficulty: s.difficulty ?? 'medium',
   }
 }
 
@@ -78,6 +86,7 @@ export default function AdminDailySubmission() {
       await adminUpdateSubmission(id, {
         ...editState,
         explanation: editState.explanation || null,
+        difficulty: editState.difficulty,
       })
       await load()
       cancelEdit()
@@ -356,7 +365,12 @@ function SubmissionCard({
         {dragHandle}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white truncate">{s.prompt}</p>
-          <p className="text-xs text-gray-400 mt-0.5">by @{s.username} · submitted {new Date(s.created_at).toLocaleDateString()}</p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <p className="text-xs text-gray-400">by @{s.username} · submitted {new Date(s.created_at).toLocaleDateString()}</p>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border capitalize ${DIFFICULTY_COLORS[s.difficulty ?? 'medium'] ?? DIFFICULTY_COLORS.medium}`}>
+              {s.difficulty ?? 'medium'}
+            </span>
+          </div>
         </div>
         {badge}
       </div>
@@ -388,17 +402,31 @@ function SubmissionCard({
             ))}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-400 mb-1">Correct Answer</label>
-            <select
-              value={editState.correct_option}
-              onChange={e => onEditChange({ ...editState, correct_option: e.target.value })}
-              className="border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-            >
-              {OPTIONS.map(opt => (
-                <option key={opt} value={opt}>Option {opt.toUpperCase()}</option>
-              ))}
-            </select>
+          <div className="flex gap-4 flex-wrap">
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-1">Correct Answer</label>
+              <select
+                value={editState.correct_option}
+                onChange={e => onEditChange({ ...editState, correct_option: e.target.value })}
+                className="border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-[#0f0f1a] text-white"
+              >
+                {OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>Option {opt.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-1">Difficulty</label>
+              <select
+                value={editState.difficulty}
+                onChange={e => onEditChange({ ...editState, difficulty: e.target.value })}
+                className="border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-[#0f0f1a] text-white capitalize"
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
           </div>
 
           <div>

@@ -620,6 +620,7 @@ export type QueuedSubmission = {
   option_d: string
   correct_option: string
   explanation: string | null
+  difficulty: string
   status: string
   featured_date: string | null
   created_at: string
@@ -641,6 +642,7 @@ export async function adminUpdateSubmission(
     option_d: string
     correct_option: string
     explanation: string | null
+    difficulty?: string
   }
 ) {
   const { error } = await supabase.rpc('admin_update_submission', {
@@ -652,6 +654,7 @@ export async function adminUpdateSubmission(
     p_option_d:      updates.option_d,
     p_correct_option: updates.correct_option,
     p_explanation:   updates.explanation ?? '',
+    p_difficulty:    updates.difficulty ?? 'medium',
   })
   if (error) throw error
 }
