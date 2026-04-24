@@ -1,6 +1,5 @@
 import { supabase } from './supabase'
 import { tierFromRate } from './questionTier'
-import { getActiveDailyDate } from './dailyTime'
 import type {
   Profile,
   Category,
