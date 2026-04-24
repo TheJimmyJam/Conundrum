@@ -21,6 +21,8 @@ import {
   adminGetSetQuestions,
   adminReorderSetQuestions,
   adminScheduleQuestionAsCommunity,
+  adminCreateDailySet,
+  adminAddQuestionToSet,
   adminGetQuestionRankings,
   type AdminDailySet,
   type AdminSetQuestion,
@@ -127,7 +129,9 @@ function SortableQuestionRow({
   )
 }
 
-// ── Queue as Community Question modal ───────────────────────────────────────
+// ── Queue modal (Community Question OR Daily Set) ────────────────────────────
+
+type QueueRoute = 'community' | 'daily-set'
 
 function ScheduleCommunityModal({
   question,
@@ -138,10 +142,39 @@ function ScheduleCommunityModal({
   onClose: () => void
   onScheduled: (msg: string) => void
 }) {
+  const [route, setRoute] = useState<QueueRoute>('community')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleQueue() {
+  // Daily-set state
+  const [sets, setSets] = useState<AdminDailySet[]>([])
+  const [setsLoading, setSetsLoading] = useState(false)
+  const [selectedSetId, setSelectedSetId] = useState<string>('new')
+  const [newSetDate, setNewSetDate] = useState('')
+
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const minDate = tomorrow.toISOString().split('T')[0]
+
+  // Load draft sets when switching to daily-set tab
+  useEffect(() => {
+    if (route !== 'daily-set') return
+    setSetsLoading(true)
+    adminGetDailySets()
+      .then(all => {
+        // Only show unpublished sets with room for more questions
+        const drafts = all.filter(
+          (s: AdminDailySet & { question_count?: number }) =>
+            !s.is_published && (s as any).question_count < 10
+        )
+        setSets(drafts)
+        setSelectedSetId(drafts.length > 0 ? drafts[0].id : 'new')
+      })
+      .catch(console.error)
+      .finally(() => setSetsLoading(false))
+  }, [route])
+
+  async function handleCommunityQueue() {
     setSaving(true)
     setError(null)
     try {
@@ -151,7 +184,6 @@ function ScheduleCommunityModal({
       onClose()
     } catch (err: any) {
       const msg: string = err?.message ?? 'Failed to queue'
-      // Reformat the cooldown error into something readable
       if (msg.includes('cannot be queued again until')) {
         const match = msg.match(/until ([^.]+)/)
         const until = match ? new Date(match[1]).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'next year'
@@ -164,33 +196,159 @@ function ScheduleCommunityModal({
     }
   }
 
+  async function handleDailySetQueue() {
+    setSaving(true)
+    setError(null)
+    try {
+      let setId = selectedSetId
+      let setDateLabel = ''
+
+      if (selectedSetId === 'new') {
+        if (!newSetDate) { setError('Pick a date for the new set.'); setSaving(false); return }
+        setId = await adminCreateDailySet(newSetDate)
+        setDateLabel = new Date(newSetDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      } else {
+        const chosen = sets.find(s => s.id === selectedSetId)
+        setDateLabel = chosen
+          ? new Date(chosen.set_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+          : selectedSetId
+      }
+
+      // Find the next open slot
+      const existing = sets.find(s => s.id === setId)
+      const slot = existing ? (existing as any).question_count + 1 : 1
+
+      await adminAddQuestionToSet(setId, question.id, slot)
+      onScheduled(`✓ Added to daily set for ${setDateLabel} (slot ${slot}).`)
+      onClose()
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to add to daily set')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white/5 rounded-2xl w-full max-w-md shadow-xl p-6">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-[#1a1a2e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6">
+
+        {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-bold text-white">Queue as Community Question</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Added to the next available daily slot</p>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-300 text-2xl leading-none">×</button>
+          <h3 className="font-bold text-white text-lg">Queue Question</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-200 text-2xl leading-none">×</button>
         </div>
 
-        <p className="text-sm text-gray-200 bg-white/5 rounded-xl px-3 py-2.5 line-clamp-3 mb-5">{question.prompt}</p>
+        {/* Question preview */}
+        <p className="text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 line-clamp-3 mb-5">{question.prompt}</p>
 
-        {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
-
-        <div className="flex gap-2">
+        {/* Route toggle */}
+        <div className="flex gap-2 mb-5">
           <button
-            onClick={handleQueue}
-            disabled={saving}
-            className="bg-amber-500/100 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-600 disabled:opacity-50"
+            onClick={() => { setRoute('community'); setError(null) }}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+              route === 'community'
+                ? 'bg-amber-500/15 border-amber-500/50 text-amber-400'
+                : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:text-gray-200'
+            }`}
           >
-            {saving ? 'Queuing…' : '📅 Add to Queue'}
+            💡 Community Queue
           </button>
-          <button onClick={onClose} className="border border-white/10 text-gray-300 text-sm px-4 py-2.5 rounded-xl hover:bg-white/5">
-            Cancel
+          <button
+            onClick={() => { setRoute('daily-set'); setError(null) }}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+              route === 'daily-set'
+                ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-300'
+                : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:text-gray-200'
+            }`}
+          >
+            📋 Daily Set
           </button>
         </div>
+
+        {/* Community Queue panel */}
+        {route === 'community' && (
+          <div>
+            <p className="text-xs text-gray-400 mb-4">
+              Appends to the community question queue — gets the next available daily slot.
+            </p>
+            {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={handleCommunityQueue}
+                disabled={saving}
+                className="bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50 transition-colors"
+              >
+                {saving ? 'Queuing…' : '📅 Add to Community Queue'}
+              </button>
+              <button onClick={onClose} className="border border-white/10 text-gray-400 text-sm px-4 py-2.5 rounded-xl hover:bg-white/5">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Daily Set panel */}
+        {route === 'daily-set' && (
+          <div>
+            <p className="text-xs text-gray-400 mb-4">
+              Add directly to a daily question set. Pick an existing draft or create a new one.
+            </p>
+
+            {setsLoading ? (
+              <div className="flex justify-center py-4">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-400 border-t-transparent" />
+              </div>
+            ) : (
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="text-xs text-gray-400 block mb-1.5">Target set</label>
+                  <select
+                    value={selectedSetId}
+                    onChange={e => setSelectedSetId(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  >
+                    {sets.map(s => (
+                      <option key={s.id} value={s.id} className="bg-[#1a1a2e]">
+                        {new Date(s.set_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        {s.title ? ` — ${s.title}` : ''}
+                        {' '}({(s as any).question_count ?? 0}/10 questions)
+                      </option>
+                    ))}
+                    <option value="new" className="bg-[#1a1a2e]">+ Create new set…</option>
+                  </select>
+                </div>
+
+                {selectedSetId === 'new' && (
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-1.5">Set date</label>
+                    <input
+                      type="date"
+                      value={newSetDate}
+                      min={minDate}
+                      onChange={e => setNewSetDate(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleDailySetQueue}
+                disabled={saving || setsLoading || (selectedSetId === 'new' && !newSetDate)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50 transition-colors"
+              >
+                {saving ? 'Adding…' : '📋 Add to Set'}
+              </button>
+              <button onClick={onClose} className="border border-white/10 text-gray-400 text-sm px-4 py-2.5 rounded-xl hover:bg-white/5">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
