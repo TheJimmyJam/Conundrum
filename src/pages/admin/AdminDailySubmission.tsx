@@ -5,7 +5,7 @@ import {
   adminUpdateSubmission,
   adminDeleteSubmission,
   adminFeatureSubmissionNow,
-  adminReviewSubmission,
+  adminReorderSubmissionQueue,
   type QueuedSubmission,
 } from '../../lib/api'
 
@@ -98,7 +98,7 @@ export default function AdminDailySubmission() {
   }
 
   async function handleDelete(s: QueuedSubmission) {
-    const label = (s.status === 'featured' && s.featured_date === todayISO) ? "today's live submission" : 'this queued submission'
+    const label = s.status === 'featured' ? "today's live submission" : 'this queued submission'
     if (!confirm(`Delete ${label}?\n\n"${s.prompt.slice(0, 80)}…"\n\nIt will be rejected and removed from the queue.`)) return
     setActing(s.id)
     try {
@@ -149,45 +149,30 @@ export default function AdminDailySubmission() {
     const [moved] = newQueue.splice(dragFromIdx, 1)
     newQueue.splice(toIdx, 0, moved)
 
-    // Redistribute original featured_dates across new positions
-    const originalDates = currentQueue.map(item => item.featured_date)
-    const updatedQueue = newQueue.map((item, i) => ({ ...item, featured_date: originalDates[i] }))
-
-    // Optimistic update — splice updated queue back into items
+    // Optimistic update
     setItems(prev => {
-      const featuredItem = prev.find(x => x.status === 'featured' && x.featured_date === todayISO)
-      return [...(featuredItem ? [featuredItem] : []), ...updatedQueue]
+      const liveItem = prev.find(x => x.status === 'featured')
+      return [...(liveItem ? [liveItem] : []), ...newQueue]
     })
     handleDragEnd()
 
-    // Persist date changes for items whose date shifted
+    // Persist new order via queue_position
     setReordering(true)
     try {
-      await Promise.all(
-        updatedQueue
-          .filter((item) => {
-            const orig = currentQueue.find(q => q.id === item.id)
-            return orig && orig.featured_date !== item.featured_date
-          })
-          .map(item =>
-            adminReviewSubmission(item.id, item.featured_date ? 'featured' : 'approved', item.featured_date ?? undefined)
-          )
-      )
-    } catch (err: any) {
-      // Rollback
-      await load()
+      await adminReorderSubmissionQueue(newQueue.map(item => item.id))
+    } catch {
+      await load() // rollback on error
     } finally {
       setReordering(false)
     }
   }
 
-  const todayISO = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
   const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
-  // Today's live = featured with today's date
-  const featured = items.find(i => i.status === 'featured' && i.featured_date === todayISO)
-  // Queue = everything else: future-dated featured + undated approved
-  const queue = items.filter(i => !(i.status === 'featured' && i.featured_date === todayISO))
+  // Today's live = the 'featured' item (only one at a time)
+  const featured = items.find(i => i.status === 'featured')
+  // Queue = all 'approved' items, already ordered by queue_position from the RPC
+  const queue = items.filter(i => i.status === 'approved')
 
   return (
     <div className="min-h-screen bg-[#0f0f1a]">
@@ -271,9 +256,6 @@ export default function AdminDailySubmission() {
                     </p>
                   )}
                   {queue.map((s, i) => {
-                    const dateBadge = s.featured_date
-                      ? new Date(s.featured_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-                      : null
                     const isDraggingThis = dragFromIdx === i
                     const isDragOver = dragOverIdx === i && dragFromIdx !== i
                     return (
@@ -292,15 +274,9 @@ export default function AdminDailySubmission() {
                         <SubmissionCard
                           s={s}
                           badge={
-                            dateBadge ? (
-                              <span className="text-xs bg-amber-500/15 text-amber-400 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
-                                📅 {dateBadge}
-                              </span>
-                            ) : (
-                              <span className="text-xs bg-white/10 text-gray-400 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
-                                #{i + 1} in queue
-                              </span>
-                            )
+                            <span className="text-xs bg-white/10 text-gray-400 font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
+                              #{i + 1} in queue
+                            </span>
                           }
                           dragHandle={
                             <div className="flex flex-col gap-0.5 cursor-grab active:cursor-grabbing opacity-30 hover:opacity-70 flex-shrink-0 px-1 py-0.5" title="Drag to reorder">

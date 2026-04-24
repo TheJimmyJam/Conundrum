@@ -108,11 +108,8 @@ export default function AdminSubmissions() {
     setQProcessing(id)
     setQueuedMsg(null)
     try {
-      const date = await adminQueueSubmission(id)
-      const friendly = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {
-        weekday: 'short', month: 'short', day: 'numeric',
-      })
-      setQueuedMsg(`✓ Added to Community Question queue — scheduled for ${friendly}`)
+      const position = await adminQueueSubmission(id)
+      setQueuedMsg(`✓ Added to Community Question queue — position #${position}`)
       await loadQuestions()
       setQExpanded(null)
     } catch (err: any) { alert(err?.message ?? 'Error queueing') }

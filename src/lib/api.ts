@@ -622,7 +622,8 @@ export type QueuedSubmission = {
   explanation: string | null
   difficulty: string
   status: string
-  featured_date: string | null
+  featured_date: string | null   // set when live, null when queued
+  queue_position: number | null  // position in queue, null when live
   created_at: string
 }
 
@@ -714,12 +715,18 @@ export async function adminReviewSubmission(id: string, status: string, featured
   if (status === 'approved') invalidateQuestionCount()
 }
 
-// Schedules a submission as the next available community question date.
-// Returns the date string it was queued for (e.g. "2026-04-25").
-export async function adminQueueSubmission(id: string): Promise<string> {
+// Adds a submission to the community question queue (FIFO, no dates).
+// Returns the queue position it was assigned.
+export async function adminQueueSubmission(id: string): Promise<number> {
   const { data, error } = await supabase.rpc('admin_queue_submission', { p_id: id })
   if (error) throw error
-  return data as string
+  return data as number
+}
+
+// Reorders the community question queue by providing IDs in the desired order.
+export async function adminReorderSubmissionQueue(ids: string[]): Promise<void> {
+  const { error } = await supabase.rpc('admin_reorder_submission_queue', { p_ids: ids })
+  if (error) throw error
 }
 
 // ─── Admin: Players ───────────────────────────────────────────────────────────
