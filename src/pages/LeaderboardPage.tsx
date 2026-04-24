@@ -8,11 +8,12 @@ import {
   getDailyLeaderboardFriends,
   getEndlessLifetimeStreaks,
   getEndlessDailyStreaks,
+  getDailyLifetimeLeaderboard,
 } from '../lib/api'
 import { GlobalCrownBadge, FriendsCrownBadge } from '../components/CrownIcons'
 import type { LeaderboardEntry } from '../types'
 
-type Tab = 'daily' | 'lifetime' | 'days'
+type Tab = 'daily' | 'lifetime' | 'days' | 'lifetime-daily'
 type DailySubTab = 'global' | 'friends'
 
 function RankBadge({ rank }: { rank: number }) {
@@ -31,6 +32,7 @@ export default function LeaderboardPage() {
   const [friendEntries, setFriendEntries] = useState<LeaderboardEntry[]>([])
   const [lifetimeEntries, setLifetimeEntries] = useState<{ rank: number; user_id: string; username: string; display_name: string | null; best_streak: number }[]>([])
   const [dayStreakEntries, setDayStreakEntries] = useState<{ rank: number; user_id: string; username: string; display_name: string | null; best_streak: number }[]>([])
+  const [lifetimeDailyEntries, setLifetimeDailyEntries] = useState<{ rank: number; user_id: string; username: string; display_name: string | null; total_score: number; games_played: number }[]>([])
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -50,14 +52,16 @@ export default function LeaderboardPage() {
 
     async function load() {
       try {
-        const [set, lifetime, days] = await Promise.all([
+        const [set, lifetime, days, lifetimeDaily] = await Promise.all([
           getTodaysDailySet(),
           getEndlessLifetimeStreaks(),
           getEndlessDailyStreaks(),
+          getDailyLifetimeLeaderboard(),
         ])
         if (cancelled) return
         setLifetimeEntries(lifetime)
         setDayStreakEntries(days)
+        setLifetimeDailyEntries(lifetimeDaily)
         if (set) {
           const [global, friends] = await Promise.all([
             getDailyLeaderboard(set.id),
@@ -89,9 +93,10 @@ export default function LeaderboardPage() {
   }, [authLoading, user?.id])
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'daily',    label: "Today's Daily" },
-    { id: 'lifetime', label: 'Endless Best Streak' },
-    { id: 'days',     label: 'Endless Day Streak' },
+    { id: 'daily',          label: "Today's Daily" },
+    { id: 'lifetime-daily', label: 'Lifetime Daily' },
+    { id: 'lifetime',       label: 'Endless Best Streak' },
+    { id: 'days',           label: 'Endless Day Streak' },
   ]
 
   const subDesc: Record<DailySubTab, string> = {
@@ -176,6 +181,11 @@ export default function LeaderboardPage() {
               <DailyTable entries={friendEntries} userId={user?.id} crownType="friends" />
             )}
           </>
+        ) : tab === 'lifetime-daily' ? (
+          <>
+            <p className="text-xs text-gray-400 mb-5">Cumulative score across all daily sets ever played</p>
+            <LifetimeDailyTable entries={lifetimeDailyEntries} userId={user?.id} />
+          </>
         ) : tab === 'lifetime' ? (
           <>
             <p className="text-xs text-gray-400 mb-5">Longest question streak ever in a single endless session</p>
@@ -231,6 +241,51 @@ function DailyTable({ entries, userId, crownType }: { entries: LeaderboardEntry[
             <div className="text-right flex-shrink-0">
               <p className={`font-bold ${isFlagged ? 'text-gray-400' : 'text-white'}`}>{entry.score.toLocaleString()}</p>
               <p className="text-xs text-gray-400">pts</p>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function LifetimeDailyTable({
+  entries,
+  userId,
+}: {
+  entries: { rank: number; user_id: string; username: string; display_name: string | null; total_score: number; games_played: number }[]
+  userId?: string
+}) {
+  if (entries.length === 0) return (
+    <div className="text-center py-20 text-gray-400">No daily sets played yet — be the first!</div>
+  )
+  return (
+    <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+      {entries.map((entry) => {
+        const isMe = entry.user_id === userId
+        const isFirst = entry.rank === 1
+        return (
+          <div
+            key={entry.user_id}
+            className={`flex items-center gap-4 px-5 py-4 border-b border-white/5 last:border-0 ${
+              isMe ? 'bg-amber-500/10' : isFirst ? 'bg-yellow-50/50' : ''
+            }`}
+          >
+            <div className="w-8 flex justify-center flex-shrink-0">
+              <RankBadge rank={entry.rank} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-semibold text-white text-sm truncate">
+                  {entry.display_name ?? entry.username}
+                </p>
+                {isMe && <span className="text-xs text-amber-400 font-normal">you</span>}
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">{entry.games_played} {entry.games_played === 1 ? 'set' : 'sets'} played</p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="font-bold text-white">{entry.total_score.toLocaleString()}</p>
+              <p className="text-xs text-gray-400">total pts</p>
             </div>
           </div>
         )

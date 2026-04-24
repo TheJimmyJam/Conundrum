@@ -385,6 +385,19 @@ export async function getEndlessDailyStreaks(limit = 50): Promise<{ rank: number
   }))
 }
 
+export async function getDailyLifetimeLeaderboard(limit = 50): Promise<{ rank: number; user_id: string; username: string; display_name: string | null; total_score: number; games_played: number }[]> {
+  const { data, error } = await supabase.rpc('get_lifetime_daily_leaderboard', { p_limit: limit })
+  if (error) throw error
+  return (data ?? []).map((r: any) => ({
+    rank: Number(r.rank),
+    user_id: r.user_id,
+    username: r.username ?? 'unknown',
+    display_name: r.display_name ?? null,
+    total_score: Number(r.total_score),
+    games_played: Number(r.games_played),
+  }))
+}
+
 // ─── Friends ─────────────────────────────────────────────────────────────────
 
 export async function searchUsers(query: string) {
