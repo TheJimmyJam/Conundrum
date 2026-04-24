@@ -30,34 +30,39 @@ export default function PlayPage() {
     if (!userId || initialized.current) return
     initialized.current = true
 
+    let cancelled = false
+
     const loadTimer = setTimeout(() => {
-      if (initialized.current) setPhase('error')
+      if (!cancelled) setPhase('error')
     }, 10000)
 
     async function init() {
       try {
         let dailySet = await getTodaysDailySet()
         if (!dailySet) dailySet = await getMostRecentPublishedDailySet()
-        if (!dailySet) { setPhase('no_set'); return }
+        if (!dailySet) { if (!cancelled) setPhase('no_set'); return }
 
         const existing = await getExistingDailySession(userId!, dailySet.id)
-        if (existing) { setExistingSessionId(existing.id); setPhase('already_played'); return }
+        if (existing) { if (!cancelled) { setExistingSessionId(existing.id); setPhase('already_played') } return }
 
         const session = await createGameSession(userId!, dailySet.id, 'daily')
         const qs = await getDailySetQuestions(dailySet.id)
+        if (cancelled) return
         setSession(session.id, 'daily')
         setQuestions(qs)
         setPhase('playing')
         startQuestion()
       } catch (err) {
-        console.error('PlayPage init error:', err)
-        setPhase('error')
+        if (!cancelled) {
+          console.error('PlayPage init error:', err)
+          setPhase('error')
+        }
       } finally {
         clearTimeout(loadTimer)
       }
     }
     init()
-    return () => { clearTimeout(loadTimer); reset(); initialized.current = false }
+    return () => { cancelled = true; clearTimeout(loadTimer); reset(); initialized.current = false }
   }, [user?.id])
 
   // Timer

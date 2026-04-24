@@ -23,7 +23,7 @@ function RankBadge({ rank }: { rank: number }) {
 }
 
 export default function LeaderboardPage() {
-  const { user } = useAuthStore()
+  const { user, loading: authLoading } = useAuthStore()
   const [tab, setTab] = useState<Tab>('daily')
   const [dailySub, setDailySub] = useState<DailySubTab>('global')
 
@@ -39,9 +39,13 @@ export default function LeaderboardPage() {
     setLoading(true)
     setError(null)
 
+    let cancelled = false
+
     const timer = setTimeout(() => {
-      setError('Taking too long to load — tap retry.')
-      setLoading(false)
+      if (!cancelled) {
+        setError('Taking too long to load — tap retry.')
+        setLoading(false)
+      }
     }, 8000)
 
     async function load() {
@@ -51,6 +55,7 @@ export default function LeaderboardPage() {
           getEndlessLifetimeStreaks(),
           getEndlessDailyStreaks(),
         ])
+        if (cancelled) return
         setLifetimeEntries(lifetime)
         setDayStreakEntries(days)
         if (set) {
@@ -58,25 +63,30 @@ export default function LeaderboardPage() {
             getDailyLeaderboard(set.id),
             user ? getDailyLeaderboardFriends(set.id) : Promise.resolve([]),
           ])
+          if (cancelled) return
           setGlobalEntries(global)
           setFriendEntries(friends)
         }
       } catch (err) {
+        if (cancelled) return
         console.error('Leaderboard load error:', err)
         setError('Failed to load leaderboard.')
       } finally {
         clearTimeout(timer)
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
     load()
-    return () => clearTimeout(timer)
+    return () => { cancelled = true; clearTimeout(timer) }
   }
 
   useEffect(() => {
+    // Wait for auth to fully resolve before fetching — prevents double-fetch
+    // race where user flips null → real ID and fires two concurrent loads
+    if (authLoading) return
     return fetchLeaderboard()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
+  }, [authLoading, user?.id])
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'daily',    label: "Today's Daily" },
