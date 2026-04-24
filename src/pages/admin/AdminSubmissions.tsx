@@ -80,7 +80,16 @@ export default function AdminSubmissions() {
   async function loadQuestions() {
     setQLoading(true)
     try {
-      setQuestions(await adminGetSubmissions(qFilter))
+      const all = await adminGetSubmissions(qFilter)
+      // 'featured' tab = submissions already shown to users (today or past).
+      // Future-queued items share the same status but belong in the Community
+      // Question Queue page, not here.
+      if (qFilter === 'featured') {
+        const todayISO = new Date().toLocaleDateString('en-CA')
+        setQuestions(all.filter((s: QuestionSubmission) => s.featured_date != null && s.featured_date <= todayISO))
+      } else {
+        setQuestions(all)
+      }
     } catch (err) { console.error(err) }
     finally { setQLoading(false) }
   }
