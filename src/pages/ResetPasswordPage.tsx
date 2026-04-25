@@ -32,10 +32,21 @@ export default function ResetPasswordPage() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.updateUser({ password })
-    setLoading(false)
+    try {
+      const result = await Promise.race([
+        supabase.auth.updateUser({ password }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Request timed out. Your reset link may have expired — please request a new one.')), 10000)
+        ),
+      ]) as Awaited<ReturnType<typeof supabase.auth.updateUser>>
 
-    if (error) { setError(error.message); return }
+      if (result.error) { setError(result.error.message); return }
+    } catch (err: any) {
+      setError(err.message ?? 'Something went wrong. Please try again.')
+      return
+    } finally {
+      setLoading(false)
+    }
 
     setDone(true)
     setTimeout(() => navigate('/play'), 2500)
