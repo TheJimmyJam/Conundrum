@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { formatDuration } from '../lib/scoring'
 import {
-  getTodaysDailySet,
+  getActiveDailySet,
   getDailyLeaderboard,
   getDailyLeaderboardFriends,
   getEndlessLifetimeStreaks,
@@ -53,7 +53,7 @@ export default function LeaderboardPage() {
     async function load() {
       try {
         const [set, lifetime, days, lifetimeDaily] = await Promise.all([
-          getTodaysDailySet(),
+          getActiveDailySet(),
           getEndlessLifetimeStreaks(),
           getEndlessDailyStreaks(),
           getDailyLifetimeLeaderboard(),

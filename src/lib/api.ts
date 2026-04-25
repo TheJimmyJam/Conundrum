@@ -114,6 +114,15 @@ export async function getMostRecentPublishedDailySet(): Promise<DailySet | null>
   return data
 }
 
+// Returns today's live set, falling back to the most recent published set.
+// Use this anywhere you need the "current" set — keeps PlayPage and
+// LeaderboardPage in sync when get_live_daily_set returns null.
+export async function getActiveDailySet(): Promise<DailySet | null> {
+  const live = await getTodaysDailySet()
+  if (live) return live
+  return getMostRecentPublishedDailySet()
+}
+
 // ─── Game Sessions ───────────────────────────────────────────────────────────
 
 export async function getExistingDailySession(userId: string, dailySetId: string): Promise<GameSession | null> {

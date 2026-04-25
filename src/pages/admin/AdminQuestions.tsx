@@ -534,7 +534,7 @@ function UpcomingDaily({ diffBadge }: { diffBadge: (d: string) => string }) {
   useEffect(() => {
     adminGetDailySets()
       .then(all => {
-        const upcoming = all.filter(s => s.set_date >= today).sort((a, b) => a.set_date.localeCompare(b.set_date))
+        const upcoming = all.filter(s => s.set_date != null && s.set_date >= today).sort((a, b) => (a.set_date ?? '').localeCompare(b.set_date ?? ''))
         setSets(upcoming)
       })
       .catch(err => showToast(`✗ ${err?.message}`))
