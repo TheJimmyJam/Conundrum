@@ -28,8 +28,13 @@ export default function ProfilePage() {
     if (newPw.length < 8) { setPwError('Password must be at least 8 characters.'); return }
     setPwLoading(true)
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPw })
-      if (error) { setPwError(error.message); return }
+      const result = await Promise.race([
+        supabase.auth.updateUser({ password: newPw }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Request timed out — please try again.')), 10000)
+        ),
+      ]) as Awaited<ReturnType<typeof supabase.auth.updateUser>>
+      if (result.error) { setPwError(result.error.message); return }
       setPwSuccess(true)
       setNewPw('')
       setConfirmPw('')
