@@ -63,7 +63,7 @@ BEGIN
       v_noun[ 1 + (floor(random() * array_length(v_noun, 1)))::int ] ||
       lpad((floor(random() * 99 + 1))::int::text, 2, '0');
 
-    -- Insert auth user (triggers handle_new_user → creates profile)
+    -- Insert auth user
     INSERT INTO auth.users (
       id, instance_id, aud, role,
       email, encrypted_password,
@@ -88,8 +88,10 @@ BEGIN
     )
     ON CONFLICT DO NOTHING;
 
-    -- Update display name (trigger already created profile with username)
-    UPDATE profiles SET display_name = v_display_name WHERE profiles.id = v_user_id;
+    -- Explicitly ensure profile exists (don't rely solely on trigger)
+    INSERT INTO profiles (id, username, display_name)
+    VALUES (v_user_id, v_username, v_display_name)
+    ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name;
 
     -- Realistic score distribution (bell-curve centered ~7/10)
     v_rand    := random();
