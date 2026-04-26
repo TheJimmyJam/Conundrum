@@ -55,7 +55,7 @@ BEGIN
     v_user_id := gen_random_uuid();
 
     -- Unique username from UUID
-    v_username := 'demo_' || substr(replace(v_user_id::text, '-', ''), 1, 12);
+    v_username := 'demo' || substr(replace(v_user_id::text, '-', ''), 1, 14);
 
     -- Fun display name: Adjective + Noun + 2-digit number
     v_display_name :=
