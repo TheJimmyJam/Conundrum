@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const expandJimmy = (v: string) => (v.trim().toLowerCase() === 'jimmy' ? 'jimmy@cannoncodeconnect.com' : v)
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -17,7 +19,9 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const signInEmail = expandJimmy(email)
+    if (signInEmail !== email) setEmail(signInEmail)
+    const { error } = await supabase.auth.signInWithPassword({ email: signInEmail, password })
     if (error) {
       setError(error.message)
       setLoading(false)
@@ -37,7 +41,11 @@ export default function LoginPage() {
           <div>
             <label className="block text-sm font-medium text-gray-200 mb-1">Email</label>
             <input
-              type="email"
+              type="text"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
